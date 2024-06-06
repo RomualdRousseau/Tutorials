@@ -1,8 +1,10 @@
+from logging.config import valid_ident
 import math
+import random
 import numpy as np
 import pyray as pr
 
-from tutorial1.util.geom import Point
+from tutorial1.util.geom import Point, collision_circle_segment
 import tutorial1.util.resources as res
 import tutorial1.world as world
 
@@ -14,6 +16,7 @@ C_POWER = 200  # kN
 C_DRAG_ROAD = 0.9  # Concrete/Rubber
 C_DRAG_ROLLING = 0.01  # Concrete/Rubber
 C_G = 9.81  # m.s-2
+C_START_OFFSET = 2 # m
 
 
 class Car:
@@ -24,25 +27,31 @@ class Car:
             pr.Vector2(-C_LENGTH * 0.5, C_WIDTH * 0.5),
         ]
         self.color = color
-        
-        self.pos = pr.Vector2(300, 300)
-        self.vel = pr.Vector2(0, 0)
-        self.head = pr.Vector2(0, -1)
+
+        start_seg = random.choice(world._world.borders.skeleton)
+        start_pos, end_pos = start_seg.start.to_np(), start_seg.end.to_np()
+        start_dir = (end_pos - start_pos) / np.linalg.norm(end_pos - start_pos)
+        start_off = np.array([-start_dir[1], start_dir[0]]) * C_START_OFFSET
+
+        self.pos = start_pos + start_off
+        self.vel = np.array([0.0, 0.0])
+        self.head = start_dir
 
         self.wheel = 0
         self.throttle = 0
-        
+
         self.rays = []
+        self.damaged = False
 
     def get_speed_in_kmh(self) -> int:
-        return int(pr.vector2_length(self.vel) * 3.6)
+        return int(np.linalg.norm(self.vel) * 3.6)
 
-    def turn_wheel(self, t: float):
+    def turn_wheel(self, t: float) -> None:
         self.wheel = float(
             np.interp(t, [-1, 1], [-C_WHEEL_ANGLE_RATE, C_WHEEL_ANGLE_RATE])
         )
 
-    def push_throttle(self, t: float):
+    def push_throttle(self, t: float) -> None:
         self.throttle = C_POWER * 1000 * t
 
     def is_alive(self) -> bool:
@@ -60,48 +69,59 @@ class Car:
 
         # Second Newton law
 
-        forces = pr.vector2_zero()
+        forces = np.array([0.0, 0.0])
 
         if self.wheel != 0:
             circ_radius = C_LENGTH / (math.sin(self.wheel))
-            ang_vel = pr.vector2_length(self.vel) / circ_radius
-            self.head = pr.vector2_rotate(self.head, ang_vel)
+            ang_vel = np.linalg.norm(self.vel) / circ_radius
+            c, s = np.cos(ang_vel), np.sin(ang_vel)
+            self.head = [[c, -s], [s, c]] @ self.head
+        tract = self.head * self.throttle
+        forces += tract
 
-        tract = pr.vector2_scale(self.head, self.throttle)
-        forces = pr.vector2_add(forces, tract)
+        drag_rd = self.vel * -C_DRAG_ROAD * C_MASS * C_G
+        forces += drag_rd
 
-        drag_rd = pr.vector2_scale(self.vel, -C_DRAG_ROAD * C_MASS * C_G)
-        forces = pr.vector2_add(forces, drag_rd)
+        drag_rr = self.vel * -C_DRAG_ROLLING * C_MASS * C_G
+        forces += drag_rr
 
-        drag_rr = pr.vector2_scale(self.vel, -C_DRAG_ROLLING * C_MASS * C_G)
-        forces = pr.vector2_add(forces, drag_rr)
-
-        acc = pr.vector2_scale(forces, 1 / C_MASS)
+        acc = forces / C_MASS
 
         # Simple Euler integration
 
-        self.vel = pr.vector2_add(self.vel, pr.vector2_scale(acc, dt))
-        self.pos = pr.vector2_add(self.pos, pr.vector2_scale(self.vel, dt))
+        self.vel = self.vel + acc * dt
+        self.pos = self.pos + self.vel * dt
 
+        # Collisions
+        
+        pos = Point(self.pos[0], self.pos[1])
+
+        match world.collision(pos, C_WIDTH * 0.5):
+            case v if v is not None:
+                self.vel = self.vel * 0.5 + v
+                self.pos += v
+                self.head = self.vel / np.linalg.norm(self.vel)
+                self.damaged = True
+            case _:
+                self.damaged = False
+                
         # Sensors
 
-        self.rays = [
-            ray for ray in world.cast_rays(Point(self.pos.x, self.pos.y), self.head)
-        ]
+        self.rays = list(world.cast_rays(pos, pr.Vector2(*self.head)))
 
     def draw(self, layer: int) -> None:
         if layer != 1:
             return
-        
+
         for ray in self.rays:
             pr.draw_line_v(ray.start.to_vec(), ray.end.to_vec(), pr.YELLOW)  # type: ignore
 
-        sprite = res.load_texture("car")
+        tex = res.load_texture("car")
         pr.draw_texture_pro(
-            sprite,
-            pr.Rectangle(0, 0, sprite.width, sprite.height),
-            pr.Rectangle(self.pos.x, self.pos.y, C_LENGTH, C_LENGTH),
-            pr.Vector2(C_LENGTH / 2, C_LENGTH / 2),
-            math.atan2(self.head.y, self.head.x) * 180 / math.pi + 90,
-            self.color
+            tex,
+            pr.Rectangle(0, 0, tex.width, tex.height),
+            pr.Rectangle(self.pos[0], self.pos[1], C_LENGTH, C_LENGTH),
+            pr.Vector2(C_LENGTH * 0.5, C_LENGTH * 0.5),
+            np.rad2deg(np.arctan2(self.head[1], self.head[0]) + math.pi / 2),
+            self.color,
         )

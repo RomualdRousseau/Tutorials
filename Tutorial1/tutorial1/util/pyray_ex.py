@@ -1,6 +1,11 @@
 import pyray as pr
 
 
+def draw_text_shadow(text: str, pos: pr.Vector2, font_size: int, color: pr.Color):
+    pr.draw_text(text, int(pos.x + 1), int(pos.y + 1), font_size, pr.BLACK)  # type: ignore
+    pr.draw_text(text, int(pos.x), int(pos.y), font_size, color)
+
+
 def draw_line(
     start: pr.Vector2,
     end: pr.Vector2,

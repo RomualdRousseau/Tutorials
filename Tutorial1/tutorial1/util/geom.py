@@ -1,7 +1,6 @@
 from __future__ import annotations
 from dataclasses import dataclass
 from functools import partial
-import math
 from typing import Optional
 
 import pyray as pr
@@ -67,10 +66,12 @@ class Segment:
 def distance(p1: Point, p2: Point) -> float:
     return float(np.linalg.norm(p2.to_np() - p1.to_np()))
 
+
 def angle(seg: Segment) -> float:
     x1, y1 = seg.start.x, seg.start.y
     x2, y2 = seg.end.x, seg.end.y
     return np.arctan2(y2 - y1, x2 - x1)
+
 
 def intersect(seg1: Segment, seg2: Segment, strict: bool = True) -> Optional[Point]:
     x1, y1 = seg1.start.x, seg1.start.y
@@ -97,6 +98,7 @@ def intersect(seg1: Segment, seg2: Segment, strict: bool = True) -> Optional[Poi
                     return None
         case _:
             return None
+
 
 def point_on_segment(p: Point, seg: Segment) -> bool:
     px, py = p.x, p.y
@@ -140,3 +142,36 @@ def distance_point_segment(p: Point, seg: Segment) -> float:
             return float(np.linalg.norm(p.to_np() - i))
         case _:
             return np.Infinity
+
+
+def nearest_point_segment(p: Point, seg: Segment) -> Point | None:
+    u = p.to_np() - seg.start.to_np()
+    v = seg.end.to_np() - seg.start.to_np()
+    l = np.linalg.norm(v)
+    v = v / l
+    match np.dot(u, v):
+        case i if 0 <= i <= l:
+            i = seg.start.to_np() + v * i
+            return Point(i[0], i[1])
+        case _:
+            return None
+
+
+def collision_circle_segment(
+    center: Point, radius: float, seg: Segment
+) -> np.ndarray | None:
+    u = center.to_np() - seg.start.to_np()
+    v = seg.end.to_np() - seg.start.to_np()
+    v_l = np.linalg.norm(v)
+    v = v / v_l
+    match np.dot(u, v):
+        case i if 0 <= i <= v_l:
+            i = seg.start.to_np() + v * i
+            w = center.to_np() - i
+            match float(np.linalg.norm(w)):
+                case w_d if w_d <= radius:
+                    return w * (radius - w_d) / w_d
+                case _:
+                    return None
+        case _:
+            return None

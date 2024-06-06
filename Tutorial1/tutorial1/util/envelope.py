@@ -1,16 +1,16 @@
 from dataclasses import dataclass
 
 import math
-
 import numpy as np
 
-import tutorial1.util.graph as graph
 from tutorial1.util.geom import (
     Point,
     Segment,
     point_in_polygon,
     intersect,
 )
+
+import tutorial1.util.graph as graph
 
 
 @dataclass
