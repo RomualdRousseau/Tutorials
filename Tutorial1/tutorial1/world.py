@@ -2,6 +2,7 @@ from dataclasses import dataclass
 
 import math
 import random
+from typing import Iterable, Optional
 import numpy as np
 import pyray as pr
 
@@ -10,6 +11,7 @@ from tutorial1.util.geom import (
     Point,
     Segment,
     angle,
+    cast_ray_segments,
     collision_circle_segment,
     distance,
     distance_point_segment,
@@ -21,6 +23,7 @@ import tutorial1.util.envelope as envelope
 import tutorial1.util.graph as graph
 import tutorial1.util.resources as res
 
+ROAD_WIDTH = 10
 GRASS_COLOR = pr.Color(0, 192, 0, 255)
 ROAD_COLOR = pr.Color(192, 192, 192, 255)
 BORDER1_COLOR = pr.Color(255, 255, 255, 255)
@@ -60,7 +63,7 @@ class World:
 
 def init() -> World:
     borders, anchors = envelope.generare_from_spatial_graph(
-        graph.generate_random(5), 10, 20
+        graph.generate_random(5), ROAD_WIDTH, 20
     )
     houses = [
         House(
@@ -97,13 +100,13 @@ def draw(layer: int) -> None:
     def draw_bg():
         pr.clear_background(GRASS_COLOR)
         for s in _world.borders.skeleton:
-            s.draw(_world.borders.width + 4, ROAD_COLOR, None, True)
+            s.draw(_world.borders.width + 2, ROAD_COLOR, None, True)
         for house in _world.houses:
             house.path.draw(4, ROAD_COLOR)
         for s in _world.borders.segments:
-            s.draw(2, BORDER1_COLOR, None, True)
+            s.draw(1, BORDER1_COLOR, None, True)
         for s in _world.borders.skeleton:
-            s.draw(1, BORDER1_COLOR, (3, ROAD_COLOR), False)
+            s.draw(0.5, BORDER1_COLOR, (3, ROAD_COLOR), False)
 
     def draw_fg():
         for tree in _world.trees:
@@ -128,56 +131,52 @@ def draw(layer: int) -> None:
                 pr.WHITE,  # type: ignore
             )
 
-    match layer:
-        case 0:
-            draw_bg()
-        case 2:
-            draw_fg()
+    [draw_bg, draw_fg][layer]()
+
+
+def get_location(position: Point) -> Optional[tuple[Point, Segment]]:
+    nearest = lambda x: (nearest_point_segment(position, x), x)
+    closest = lambda x: distance(position, x[0]) if x[0] is not None else np.Infinity
+    location = min(map(nearest, _world.borders.skeleton), key=closest)
+    return location if location[0] is not None else None  # type: ignore
+
+
+def get_nearest_segments(position: Point, length: float = 50) -> Iterable[Segment]:
+    nearest = lambda x: distance_point_segment(position, x) < length
+    return filter(nearest, _world.borders.segments)
+
+
+def cast_ray(
+    position: Point,
+    direction: np.ndarray,
+    length: float = 50,
+) -> Segment:
+    nearest_segments = get_nearest_segments(position, length)
+    return cast_ray_segments(position, direction, length, nearest_segments)
 
 
 def cast_rays(
     position: Point,
-    direction: pr.Vector2,
-    length: float = 100,
+    direction: np.ndarray,
+    length: float = 50,
     sampling: int = 10,
 ):
-    def cast_ray(target: Point) -> Point:
-        ray = Segment(position, target)
-        d = distance(position, target)
-        point = target
-        for segment in _world.borders.segments:
-            match intersect(ray, segment):
-                case p if p:
-                    match distance(position, p):
-                        case dd if dd < d:
-                            point = p
-                            d = dd
-        return point
-
-    alpha = math.atan2(direction.y, direction.x)
+    rays = []
+    alpha = np.arctan2(direction[1], direction[0])
+    nearest_segments = list(get_nearest_segments(position, length))
     for i in range(sampling):
         beta = np.interp(
             i / sampling, [0, 1], [alpha - math.pi / 4, alpha + math.pi / 4]
         )
-        target = Point(
-            length * math.cos(beta) + position.x,
-            length * math.sin(beta) + position.y,
-        )
-        yield Segment(position, cast_ray(target))
+        direction = np.array([math.cos(beta), math.sin(beta)])
+        rays.append(cast_ray_segments(position, direction, length, nearest_segments))
+    return rays
 
 
-def collision(pos: Point, radius: float) -> np.ndarray | None:
-    cols = np.array(
-        list(
-            filter(
-                lambda x: x is not None,
-                [
-                    collision_circle_segment(pos, radius, s)
-                    for s in _world.borders.segments
-                ],
-            )
-        )
-    )
+def collision(position: Point, radius: float) -> Optional[np.ndarray]:
+    nearest_segments = list(get_nearest_segments(position, radius))
+    collide = curry(collision_circle_segment)(position, radius)
+    cols = np.array([x for x in map(collide, nearest_segments) if x is not None])
     return np.average(cols, axis=0) if len(cols) > 0 else None
 
 

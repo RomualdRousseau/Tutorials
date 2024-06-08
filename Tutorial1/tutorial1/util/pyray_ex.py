@@ -12,11 +12,10 @@ def draw_line(
     thick: float,
     color: pr.Color,
     rounded: bool,
-) -> None:
-    if rounded and thick > 1:
-        pr.draw_circle_v(start, thick / 2, color)
+) -> None: 
     pr.draw_line_ex(start, end, thick, color)
-    if rounded and thick > 1:
+    if rounded:
+        pr.draw_circle_v(start, thick / 2, color)
         pr.draw_circle_v(end, thick / 2, color)
 
 
@@ -33,19 +32,23 @@ def draw_dashed_line(
     if l == 0:
         return
 
-    if rounded and thick > 1:
+    step, color2 = dashed
+    
+    pr.draw_line_ex(start, end, thick, color2)
+    if rounded:
         pr.draw_circle_v(start, thick / 2, color)
 
-    step, color2 = dashed
     v = pr.vector2_scale(u, 1 / l)
     p1 = start
     flip = True
     for _ in range(0, int(l - step), step):
         p2 = pr.vector2_add(p1, pr.vector2_scale(v, step))
-        pr.draw_line_ex(p1, p2, thick, color if flip else color2)
+        if flip:
+            pr.draw_line_ex(p1, p2, thick, color)
         p1 = p2
-        flip = not flip
-
-    pr.draw_line_ex(p1, end, thick, color if flip else color2)
-    if rounded and thick > 1:
+        flip = not flip   
+    if flip:
+        pr.draw_line_ex(p1, end, thick, color)
+        
+    if rounded:
         pr.draw_circle_v(end, thick / 2, color if flip else color2)

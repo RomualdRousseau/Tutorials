@@ -73,22 +73,21 @@ def update_game_mode(dt: float) -> str:
 
 
 update = lambda dt: _context.update_state(dt)
-# def update(dt: float) -> str:
-#     return _context.update_state(dt)
 
 
 def draw() -> None:
     pr.begin_mode_2d(_context.camera)
-    for l in range(3):
+    for l in range(2):
         [x.draw(l) for x in _context.entities]
     pr.end_mode_2d()
 
     if _context.update_state == update_game_mode:
-        prx.draw_text_shadow(f"Speed: {_context.player.get_speed_in_kmh()}km/h", pr.Vector2(2, 2), 22, pr.WHITE)  # type: ignore
+        prx.draw_text_shadow(f"Distance: {_context.player.get_travel_distance_in_km():.3f}km", pr.Vector2(2, 2), 22, pr.WHITE)  # type: ignore
+        prx.draw_text_shadow(f"Speed: {_context.player.get_speed_in_kmh():.1f}km/h", pr.Vector2(2, 23), 22, pr.WHITE)  # type: ignore
+        prx.draw_text_shadow(f"{pr.get_fps()}fps", pr.Vector2(2, 44), 22, pr.WHITE)  # type: ignore
     elif _context.update_state == update_free_mode:
         prx.draw_text_shadow(f"Zoom: x{_context.camera.zoom}", pr.Vector2(2, 2), 22, pr.WHITE)  # type: ignore
-
-    prx.draw_text_shadow(f"{pr.get_fps()}fps", pr.Vector2(2, 23), 22, pr.WHITE)  # type: ignore
+        prx.draw_text_shadow(f"{pr.get_fps()}fps", pr.Vector2(2, 23), 22, pr.WHITE)  # type: ignore
 
 
 _context = init()

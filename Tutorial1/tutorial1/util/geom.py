@@ -1,11 +1,12 @@
 from __future__ import annotations
 from dataclasses import dataclass
 from functools import partial
-from typing import Optional
+from typing import Iterable, Optional
 
 import pyray as pr
 import numpy as np
 
+from tutorial1.util.funcs import curry
 import tutorial1.util.pyray_ex as prx
 
 
@@ -31,6 +32,10 @@ class Point:
 class Segment:
     start: Point
     end: Point
+
+    @property
+    def length(self):
+        return distance(self.start, self.end)
 
     def draw(
         self,
@@ -144,7 +149,7 @@ def distance_point_segment(p: Point, seg: Segment) -> float:
             return np.Infinity
 
 
-def nearest_point_segment(p: Point, seg: Segment) -> Point | None:
+def nearest_point_segment(p: Point, seg: Segment) -> Optional[Point]:
     u = p.to_np() - seg.start.to_np()
     v = seg.end.to_np() - seg.start.to_np()
     l = np.linalg.norm(v)
@@ -159,7 +164,7 @@ def nearest_point_segment(p: Point, seg: Segment) -> Point | None:
 
 def collision_circle_segment(
     center: Point, radius: float, seg: Segment
-) -> np.ndarray | None:
+) -> Optional[np.ndarray]:
     u = center.to_np() - seg.start.to_np()
     v = seg.end.to_np() - seg.start.to_np()
     v_l = np.linalg.norm(v)
@@ -175,3 +180,15 @@ def collision_circle_segment(
                     return None
         case _:
             return None
+
+
+def cast_ray_segments(
+    position: Point, direction: np.ndarray, length: float, segments: Iterable[Segment]
+) -> Segment:
+    target = Point(*(length * direction + position.to_np()))
+    ray = Segment(position, target)
+    map_not_none = curry(filter)(lambda x: x is not None)
+    inter_ray = curry(intersect)(ray)
+    closest = curry(distance)(position)
+    point = min(map_not_none(map(inter_ray, segments)), key=closest, default=target)
+    return Segment(position, point)
