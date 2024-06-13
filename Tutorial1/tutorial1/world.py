@@ -77,8 +77,8 @@ def init() -> World:
     ]
     trees = [
         Tree(
-            Point(a.x + random.randint(-10, 10), a.y + random.randint(-10, 10)),
-            random.random() * math.pi * 2,
+            Point(a.xy + [random.randint(-5, 5), random.randint(-5, 5)]),
+            random.random() * math.pi,
         )
         for a in anchors
         if min(map(curry(distance_point_segment)(a), borders.segments)) > 20
@@ -114,7 +114,7 @@ def draw(layer: int) -> None:
             pr.draw_texture_pro(
                 tex,
                 pr.Rectangle(0, 0, tex.width, tex.height),
-                pr.Rectangle(tree.position.x, tree.position.y, 8, 8),
+                pr.Rectangle(tree.position.xy[0], tree.position.xy[1], 8, 8),
                 pr.Vector2(4, 4),
                 np.rad2deg(tree.angle),
                 pr.WHITE,  # type: ignore
@@ -125,7 +125,7 @@ def draw(layer: int) -> None:
             pr.draw_texture_pro(
                 tex,
                 pr.Rectangle(0, 0, tex.width, tex.height),
-                pr.Rectangle(house.position.x, house.position.y, sx, sy),
+                pr.Rectangle(house.position.xy[0], house.position.xy[1], sx, sy),
                 pr.Vector2(sx * 0.5, sy * 0.5),
                 np.rad2deg(house.angle),
                 pr.WHITE,  # type: ignore

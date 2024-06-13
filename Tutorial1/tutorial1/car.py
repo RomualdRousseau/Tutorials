@@ -3,7 +3,7 @@ import random
 import numpy as np
 import pyray as pr
 
-from tutorial1.util.geom import Point
+from tutorial1.util.geom import Point, distance
 import tutorial1.util.resources as res
 import tutorial1.world as world
 
@@ -23,7 +23,7 @@ class Car:
         self.color = color
 
         start_seg = random.choice(world._world.borders.skeleton)
-        start_pos, end_pos = start_seg.start.to_np(), start_seg.end.to_np()
+        start_pos, end_pos = start_seg.start.xy, start_seg.end.xy
         start_dir = (end_pos - start_pos) / np.linalg.norm(end_pos - start_pos)
         start_off = np.array([-start_dir[1], start_dir[0]]) * START_OFFSET
 
@@ -34,14 +34,21 @@ class Car:
         self.wheel = 0
         self.throttle = 0
         self.damaged = False
-        
-        self.visited = set()
-        self.current = start_seg
+
+        self.total_distance = 0
+        self.current_seg = start_seg
+        self.current_start = (
+            self.current_seg.start
+            if distance(Point(self.pos), self.current_seg.start)
+            < distance(Point(self.pos), self.current_seg.end)
+            else self.current_seg.end
+        )
+        self.current_pos = self.current_start
         
         self._update_sensors()
-        
+
     def get_travel_distance_in_km(self) -> float:
-        return sum(map(lambda x: x.length, self.visited)) / 1000
+        return (self.total_distance + distance(self.current_start, self.current_pos)) * 0.001
 
     def get_speed_in_kmh(self) -> float:
         return float(np.linalg.norm(self.vel) * 3.6)
@@ -60,13 +67,20 @@ class Car:
     def update(self, dt: float) -> None:
         self._think()
         self._update_physic(dt)
-        self._update_sensors() # very slow
+        self._update_sensors()  # very slow
 
-        match world.get_location(Point(*self.pos)):
+        match world.get_location(Point(self.pos)):
             case r if r is not None:
-                if self.current != r[1]:
-                    self.visited.add(r[1])
-                    self.current = r[1]
+                if self.current_seg != r[1]:
+                    self.total_distance +=  r[1].length
+                    self.current_seg = r[1]
+                    self.current_start = (
+                        self.current_seg.start
+                        if distance(Point(self.pos), self.current_seg.start)
+                        < distance(Point(self.pos), self.current_seg.end)
+                        else self.current_seg.end
+                    )
+                self.current_pos = r[0]
 
     def draw(self, layer: int) -> None:
         if layer != 0:
@@ -76,10 +90,8 @@ class Car:
         for ray in self.camera:
             pr.draw_line_v(ray.start.to_vec(), ray.end.to_vec(), color)  # type: ignore
         pr.draw_line_v(self.proximity.start.to_vec(), self.proximity.end.to_vec(), color)  # type: ignore
-        match world.get_location(Point(*self.pos)):
-            case r if r is not None:
-                pr.draw_line_v(self.current.start.to_vec(), r[0].to_vec(), color)  # type: ignore
-                pr.draw_circle_v(r[0].to_vec(), 1, color)  # type: ignore
+        pr.draw_line_v(self.current_start.to_vec(), self.current_pos.to_vec(), color)  # type: ignore
+        pr.draw_circle_v(self.current_pos.to_vec(), 1, color)  # type: ignore
 
         tex = res.load_texture("car")
         pr.draw_texture_pro(
@@ -95,9 +107,9 @@ class Car:
         self.wheel = 0
         self.throttle = 0
         if pr.is_key_down(pr.KeyboardKey.KEY_RIGHT):
-            self.turn_wheel(0.5)
+            self.turn_wheel(0.25)
         if pr.is_key_down(pr.KeyboardKey.KEY_LEFT):
-            self.turn_wheel(-0.5)
+            self.turn_wheel(-0.25)
         if pr.is_key_down(pr.KeyboardKey.KEY_UP):
             self.push_throttle(0.5)
 
@@ -129,7 +141,7 @@ class Car:
 
         # Collisions
 
-        match world.collision(Point(*self.pos), WIDTH * 0.5):
+        match world.collision(Point(self.pos), WIDTH * 0.5):
             case v if v is not None:
                 self.vel = self.vel * 0.5 + v
                 self.pos += v
@@ -139,7 +151,7 @@ class Car:
                 self.damaged = False
 
     def _update_sensors(self) -> None:
-        pos = Point(*self.pos)
+        pos = Point(self.pos)
         right = np.array([-self.head[1], self.head[0]])
         self.camera = world.cast_rays(pos, self.head)
         self.proximity = world.cast_ray(pos, right, world.ROAD_WIDTH)

@@ -12,8 +12,8 @@ import tutorial1.car as car
 
 
 CAR_COLOR = pr.Color(255, 255, 255, 255)
-ZOOM_DEFAULT = 10
-ZOOM_ACCELERATION_COEF = 0.05
+ZOOM_DEFAULT = 20
+ZOOM_ACCELERATION_COEF = 0.2
 
 
 @dataclass
@@ -28,8 +28,8 @@ def init() -> Context:
     _player = car.Car(CAR_COLOR)
     _entities: list[Entity] = [world, _player]
     _camera = pr.Camera2D(
+        pr.Vector2(300, 300),
         pr.Vector2(*_player.pos),
-        pr.Vector2(pr.get_screen_width() * 0.5, pr.get_screen_height() * 0.5),
         0,
         ZOOM_DEFAULT,
     )

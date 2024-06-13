@@ -2,6 +2,7 @@ from dataclasses import dataclass
 from random import choice
 
 import random
+import numpy as np
 import pyray as pr
 
 from tutorial1.util.geom import (
@@ -60,7 +61,7 @@ def _generate_vertice(num: int, min: int) -> list[SpatialVertex]:
     vertice = []
     n = 0
     while n < num:
-        v = SpatialVertex(Point(random.randrange(50, 550), random.randrange(50, 550)))
+        v = SpatialVertex(Point(np.array([random.randrange(50, 550), random.randrange(50, 550)])))
         is_valid = lambda x: distance(x.point, v.point) > min
         if all(map(is_valid, vertice)):
             vertice.append(v)
