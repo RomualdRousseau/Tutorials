@@ -1,17 +1,21 @@
 from dataclasses import dataclass
+from functools import reduce
 
 import numpy as np
 import pyray as pr
 
-from tutorial1.util.geom import (
+from tutorial1.constants import VIRTUAL_MARGIN, VIRTUAL_WIDTH
+from tutorial1.math.geom import (
     Point,
     Segment,
+    break_segment,
     point_in_polygon,
     intersect,
     points_to_segments,
 )
 
-import tutorial1.util.graph as graph
+import tutorial1.math.graph as graph
+from tutorial1.util.funcs import curry, flatmap
 
 
 @dataclass
@@ -26,13 +30,13 @@ class Envelope:
 
 
 def generare_from_spatial_graph(
-    graph: graph.SpatialGraph, width: int, step: int
+    graph: graph.SpatialGraph, width: int
 ) -> tuple[Envelope, list[Point]]:
     pr.trace_log(pr.TraceLogLevel.LOG_INFO, "ENVELOPE: Generate Envelopes")
     envelopes = [_generate_envelope(e, width) for e in graph.edges]
 
     pr.trace_log(pr.TraceLogLevel.LOG_INFO, "ENVELOPE: Generate Anchors")
-    anchors = _generate_anchors(envelopes, step)
+    anchors = _generate_anchors(envelopes)
 
     pr.trace_log(pr.TraceLogLevel.LOG_INFO, "ENVELOPE: Break Envelopes")
     envelopes = _break_envelopes(envelopes)
@@ -74,37 +78,29 @@ def _generate_envelope(
     return Envelope(segments, [edge.segment], width)
 
 
-def _generate_anchors(envelopes: list[Envelope], step: int):
+def _generate_anchors(envelopes: list[Envelope], step: int = 20):
+    width = VIRTUAL_WIDTH + VIRTUAL_MARGIN * 2 + 1
     anchors = []
-    for i in range(0, 601, step):
-        for j in range(0, 601, step):
+    for i in range(0, width, step):
+        for j in range(0, width, step):
             anchor = Point(np.array([j, i]))
-            pip = lambda e: point_in_polygon(anchor, e.points, False)
-            if not any(map(pip, envelopes)):
+            anchor_in_polygon = lambda e: point_in_polygon(anchor, e.points, False)
+            if not any(map(anchor_in_polygon, envelopes)):
                 anchors.append(anchor)
     return anchors
 
 
 def _break_envelopes(envelopes: list[Envelope]) -> list[Envelope]:
 
-    def _break_envelope(seg: Segment, env: Envelope) -> Envelope:
-        env_segments = []
-        for s in env.segments:
-            match intersect(seg, s, False):
-                case None:
-                    env_segments += [s]
-                case p if not s.start.almost(p) and not s.end.almost(p):
-                    env_segments += [Segment(s.start, p), Segment(p, s.end)]
-        return Envelope(env_segments, env.skeleton, env.width)
+    def _break_envelope(e: Envelope, s: Segment) -> Envelope:
+        segments = flatmap(curry(break_segment)(s), e.segments)
+        return Envelope(segments, e.skeleton, e.width)
 
     def _break_two_envelopes(e1: Envelope, e2: Envelope) -> tuple[Envelope, Envelope]:
-        new_e1 = e1
-        for s in e2.segments:
-            new_e1 = _break_envelope(s, new_e1)
-        new_e2 = e2
-        for s in e1.segments:
-            new_e2 = _break_envelope(s, new_e2)
-        return new_e1, new_e2
+        return (
+            reduce(_break_envelope, e2.segments, e1),
+            reduce(_break_envelope, e1.segments, e2),
+        )
 
     result = envelopes
     N = len(envelopes)
@@ -128,7 +124,6 @@ def _union_envelopes(envelopes: list[Envelope]) -> Envelope:
             mid = Point(s.start.xy * 0.5 + s.end.xy * 0.5)
             segment_in_polygon = lambda x: point_in_polygon(mid, x.points)
             inside = any(map(segment_in_polygon, filter(lambda x: x != e, envelopes)))
-
             if not (
                 inside
                 or s.start.almost(s.end)

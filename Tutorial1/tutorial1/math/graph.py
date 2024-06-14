@@ -5,7 +5,8 @@ import random
 import numpy as np
 import pyray as pr
 
-from tutorial1.util.geom import (
+from tutorial1.constants import VIRTUAL_WIDTH, VIRTUAL_MARGIN
+from tutorial1.math.geom import (
     Point,
     Segment,
     distance,
@@ -58,10 +59,11 @@ def generate_random(seed: int):
 
 
 def _generate_vertice(num: int, min: int) -> list[SpatialVertex]:
+    rand = lambda: random.randrange(0, VIRTUAL_WIDTH) + VIRTUAL_MARGIN
     vertice = []
     n = 0
     while n < num:
-        v = SpatialVertex(Point(np.array([random.randrange(50, 550), random.randrange(50, 550)])))
+        v = SpatialVertex(Point(np.array([rand(), rand()])))
         is_valid = lambda x: distance(x.point, v.point) > min
         if all(map(is_valid, vertice)):
             vertice.append(v)

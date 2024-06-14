@@ -1,13 +1,13 @@
 from dataclasses import dataclass
 
-import math
 import random
 from typing import Iterable, Optional
 import numpy as np
 import pyray as pr
 
+from tutorial1.constants import GAME_SEED
 from tutorial1.util.funcs import curry
-from tutorial1.util.geom import (
+from tutorial1.math.geom import (
     Point,
     Segment,
     angle,
@@ -15,12 +15,11 @@ from tutorial1.util.geom import (
     collision_circle_segment,
     distance,
     distance_point_segment,
-    intersect,
     nearest_point_segment,
 )
 
-import tutorial1.util.envelope as envelope
-import tutorial1.util.graph as graph
+import tutorial1.math.envelope as envelope
+import tutorial1.math.graph as graph
 import tutorial1.util.resources as res
 
 ROAD_WIDTH = 10
@@ -63,7 +62,7 @@ class World:
 
 def init() -> World:
     borders, anchors = envelope.generare_from_spatial_graph(
-        graph.generate_random(5), ROAD_WIDTH, 20
+        graph.generate_random(GAME_SEED), ROAD_WIDTH
     )
     houses = [
         House(
@@ -78,7 +77,7 @@ def init() -> World:
     trees = [
         Tree(
             Point(a.xy + [random.randint(-5, 5), random.randint(-5, 5)]),
-            random.random() * math.pi,
+            random.random() * np.pi,
         )
         for a in anchors
         if min(map(curry(distance_point_segment)(a), borders.segments)) > 20
@@ -166,9 +165,9 @@ def cast_rays(
     nearest_segments = list(get_nearest_segments(position, length))
     for i in range(sampling):
         beta = np.interp(
-            i / sampling, [0, 1], [alpha - math.pi / 4, alpha + math.pi / 4]
+            i / sampling, [0, 1], [alpha - np.pi / 4, alpha + np.pi / 4]
         )
-        direction = np.array([math.cos(beta), math.sin(beta)])
+        direction = np.array([np.cos(beta), np.sin(beta)])
         rays.append(cast_ray_segments(position, direction, length, nearest_segments))
     return rays
 

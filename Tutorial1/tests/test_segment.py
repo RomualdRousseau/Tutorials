@@ -1,6 +1,6 @@
 import numpy as np
 
-from tutorial1.util.geom import (
+from tutorial1.math.geom import (
     Point,
     Segment,
     distance_point_segment,

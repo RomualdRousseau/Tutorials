@@ -1,6 +1,6 @@
 import numpy as np
 
-from tutorial1.util.geom import Point, distance
+from tutorial1.math.geom import Point, distance
 
 
 def test_points_equals():

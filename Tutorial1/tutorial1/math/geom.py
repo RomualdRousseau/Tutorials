@@ -205,3 +205,11 @@ def points_to_segments(points: list[Point], closed: bool = True) -> list[Segment
         segments.append(Segment(p1, p2))
         p1 = p2
     return segments
+
+
+def break_segment(seg1: Segment, seg2: Segment) -> list[Segment]:
+    p = intersect(seg1, seg2, False)
+    if p is not None and not seg2.start.almost(p) and not seg2.end.almost(p):
+        return [Segment(seg2.start, p), Segment(p, seg2.end)]
+    else:
+        return [seg2]
