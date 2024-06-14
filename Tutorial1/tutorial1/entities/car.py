@@ -9,7 +9,7 @@ import tutorial1.entities.world as world
 MASS = 650  # kg
 LENGTH = 5  # m
 WIDTH = 2  # m
-WHEEL_ANGLE_RATE = np.pi / 50  # rad
+WHEEL_ANGLE_RATE = np.pi / 100  # rad
 MAX_ENGINE_POWER = 200  # kN
 DRAG_ROAD = 0.9  # Concrete/Rubber
 DRAG_ROLLING = 0.01  # Concrete/Rubber
@@ -81,11 +81,11 @@ class Car:
                     )
                 self.current_pos = r[0]
                 
-        if self.damaged and not pr.is_sound_playing(res.load_sound("crash")):
-            pr.play_sound(res.load_sound("crash"))
+        # if self.damaged and not pr.is_sound_playing(res.load_sound("crash")):
+        #     pr.play_sound(res.load_sound("crash"))
             
-        if self.out_of_track and not pr.is_sound_playing(res.load_sound("klaxon")):
-            pr.play_sound(res.load_sound("klaxon"))
+        # if self.out_of_track and not pr.is_sound_playing(res.load_sound("klaxon")):
+        #     pr.play_sound(res.load_sound("klaxon"))
 
     def draw(self, layer: int) -> None:
         if layer != 0:
@@ -111,17 +111,13 @@ class Car:
     def _think(self) -> None:
         self.wheel = 0
         self.throttle = 0
-        if pr.is_key_down(pr.KeyboardKey.KEY_RIGHT):
-            self.turn_wheel(0.25)
-        if pr.is_key_down(pr.KeyboardKey.KEY_LEFT):
-            self.turn_wheel(-0.25)
-        if pr.is_key_down(pr.KeyboardKey.KEY_UP):
-            self.push_throttle(0.5)
+        self.turn_wheel(pr.get_gamepad_axis_movement(1, 2) ** 3)
+        self.push_throttle(-1.0 * pr.get_gamepad_axis_movement(1, 1) ** 3)
 
     def _update_physic(self, dt: float) -> None:
         # Second Newton law
 
-        forces = np.array([0.0, 0.0])
+        forces = np.zeros(2)
 
         if self.wheel != 0:
             circ_radius = LENGTH / (np.sin(self.wheel))

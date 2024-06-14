@@ -14,7 +14,7 @@ import tutorial1.entities.car as car
 
 CAR_COLOR = pr.Color(255, 255, 255, 255)
 ZOOM_DEFAULT = 20
-ZOOM_ACCELERATION_COEF = 0.2
+ZOOM_ACCELERATION_COEF = 0.1
 
 
 @dataclass
@@ -82,7 +82,11 @@ def _update_game_mode(dt: float) -> str:
     else:
         _context.camera.target = pr.Vector2(*_context.player.pos)
         _context.camera.zoom = 0.8 * _context.camera.zoom + 0.2 * (
-            ZOOM_DEFAULT - _context.player.get_speed_in_kmh() * ZOOM_ACCELERATION_COEF
+            max(
+                1,
+                ZOOM_DEFAULT
+                - _context.player.get_speed_in_kmh() * ZOOM_ACCELERATION_COEF,
+            )
         )
         _context.entities = [
             compose(constant(x))(apply(dt))(x.update)
