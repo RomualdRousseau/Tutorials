@@ -2,6 +2,7 @@ import random
 import numpy as np
 import pyray as pr
 
+from tutorial1.constants import GAMEPAD_AXIS_X, GAMEPAD_AXIS_Y, GAMEPAD_ID
 from tutorial1.math.geom import Point, distance
 import tutorial1.util.resources as res
 import tutorial1.entities.world as world
@@ -64,7 +65,7 @@ class Car:
         return True
 
     def update(self, dt: float) -> None:
-        self._think()
+        self._think_kb()
         self._update_physic(dt)
         self._update_sensors()  # very slow
 
@@ -81,11 +82,11 @@ class Car:
                     )
                 self.current_pos = r[0]
                 
-        # if self.damaged and not pr.is_sound_playing(res.load_sound("crash")):
-        #     pr.play_sound(res.load_sound("crash"))
+        if self.damaged and not pr.is_sound_playing(res.load_sound("crash")):
+            pr.play_sound(res.load_sound("crash"))
             
-        # if self.out_of_track and not pr.is_sound_playing(res.load_sound("klaxon")):
-        #     pr.play_sound(res.load_sound("klaxon"))
+        if self.out_of_track and not pr.is_sound_playing(res.load_sound("klaxon")):
+            pr.play_sound(res.load_sound("klaxon"))
 
     def draw(self, layer: int) -> None:
         if layer != 0:
@@ -108,11 +109,19 @@ class Car:
             self.color,
         )
 
-    def _think(self) -> None:
+    def _think_gp(self) -> None:
+        self.turn_wheel(pr.get_gamepad_axis_movement(GAMEPAD_ID, GAMEPAD_AXIS_X) ** 3)
+        self.push_throttle(-1.0 * pr.get_gamepad_axis_movement(GAMEPAD_ID, GAMEPAD_AXIS_Y) ** 3)
+        
+    def _think_kb(self) -> None:
         self.wheel = 0
         self.throttle = 0
-        self.turn_wheel(pr.get_gamepad_axis_movement(1, 2) ** 3)
-        self.push_throttle(-1.0 * pr.get_gamepad_axis_movement(1, 1) ** 3)
+        if pr.is_key_down(pr.KeyboardKey.KEY_RIGHT):
+            self.turn_wheel(0.5)
+        if pr.is_key_down(pr.KeyboardKey.KEY_LEFT):
+            self.turn_wheel(-0.5)
+        if pr.is_key_down(pr.KeyboardKey.KEY_UP):
+            self.push_throttle(0.5)
 
     def _update_physic(self, dt: float) -> None:
         # Second Newton law
