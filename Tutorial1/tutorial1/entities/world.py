@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from functools import lru_cache
 from typing import Iterable, Optional
 
 import random
@@ -112,7 +113,7 @@ def get_location(position: Point) -> Optional[tuple[Point, Segment]]:
     location = min(map(nearest, _world.borders.skeleton), key=closest)
     return location if location[0] is not None else None  # type: ignore
 
-
+@lru_cache
 def get_nearest_segments(position: Point, length: float = 50) -> Iterable[Segment]:
     nearest = lambda x: distance_point_segment(position, x) < length
     return filter(nearest, _world.borders.segments)

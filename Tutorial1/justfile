@@ -25,4 +25,4 @@ test:
 
 # Display the coverage report
 coverage: test
-    poetry run coverage report -m
+    poetry run coverage report -m --fail-under=80

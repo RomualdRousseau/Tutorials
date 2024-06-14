@@ -26,6 +26,9 @@ class Point:
 
     def __eq__(self, other):
         return isinstance(other, Point) and np.all(self.xy == other.xy)
+    
+    def __hash__(self) -> int:
+        return int(np.sum(self.xy))
 
 
 @dataclass

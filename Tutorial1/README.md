@@ -36,9 +36,17 @@ To run the tutorial1:
 just run
 ```
 
+### Display the coverage report
+
+Run the following command line:
+
+```bash
+just coverage
+```
+
 ### Documentation
 
-
+TBD
 
 ## Contribute
 

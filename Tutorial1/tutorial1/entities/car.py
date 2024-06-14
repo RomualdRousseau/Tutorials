@@ -80,6 +80,12 @@ class Car:
                         else self.current_seg.end
                     )
                 self.current_pos = r[0]
+                
+        if self.damaged and not pr.is_sound_playing(res.load_sound("crash")):
+            pr.play_sound(res.load_sound("crash"))
+            
+        if self.out_of_track and not pr.is_sound_playing(res.load_sound("klaxon")):
+            pr.play_sound(res.load_sound("klaxon"))
 
     def draw(self, layer: int) -> None:
         if layer != 0:
