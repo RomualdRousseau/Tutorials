@@ -10,7 +10,6 @@ from tutorial1.math.geom import (
     Segment,
     break_segment,
     point_in_polygon,
-    intersect,
     points_to_segments,
 )
 

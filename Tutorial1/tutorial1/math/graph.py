@@ -52,6 +52,7 @@ class SpatialGraph:
 
 
 def generate_random(seed: int):
+    pr.trace_log(pr.TraceLogLevel.LOG_INFO, f"GRAPH: Generate graph from seed {seed}")
     random.seed(seed)
     vertice = _generate_vertice(20, 100)
     edges = _generate_edges(vertice, 25, 3)

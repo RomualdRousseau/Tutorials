@@ -1,7 +1,7 @@
 from dataclasses import dataclass
+from typing import Iterable, Optional
 
 import random
-from typing import Iterable, Optional
 import numpy as np
 import pyray as pr
 
@@ -58,33 +58,6 @@ class World:
     borders: envelope.Envelope
     houses: list[House]
     trees: list[Tree]
-
-
-def init() -> World:
-    borders, anchors = envelope.generare_from_spatial_graph(
-        graph.generate_random(GAME_SEED), ROAD_WIDTH
-    )
-    houses = [
-        House(
-            a,
-            sorted(borders.segments, key=curry(distance_point_segment)(a))[0],
-            random.choice(["house1", "house2", "house3"]),
-        )
-        for a in anchors
-        if 10 <= min(map(curry(distance_point_segment)(a), borders.segments)) <= 20
-        and random.random() < HOUSE_DENSITY
-    ]
-    trees = [
-        Tree(
-            Point(a.xy + [random.randint(-5, 5), random.randint(-5, 5)]),
-            random.random() * np.pi,
-        )
-        for a in anchors
-        if min(map(curry(distance_point_segment)(a), borders.segments)) > 20
-        and random.random() < TREE_DENSITY
-    ]
-
-    return World(borders, houses, trees)
 
 
 def is_alive() -> bool:
@@ -164,9 +137,7 @@ def cast_rays(
     alpha = np.arctan2(direction[1], direction[0])
     nearest_segments = list(get_nearest_segments(position, length))
     for i in range(sampling):
-        beta = np.interp(
-            i / sampling, [0, 1], [alpha - np.pi / 4, alpha + np.pi / 4]
-        )
+        beta = np.interp(i / sampling, [0, 1], [alpha - np.pi / 4, alpha + np.pi / 4])
         direction = np.array([np.cos(beta), np.sin(beta)])
         rays.append(cast_ray_segments(position, direction, length, nearest_segments))
     return rays
@@ -179,4 +150,31 @@ def collision(position: Point, radius: float) -> Optional[np.ndarray]:
     return np.average(cols, axis=0) if len(cols) > 0 else None
 
 
-_world = init()
+def _init() -> World:
+    borders, anchors = envelope.generare_from_spatial_graph(
+        graph.generate_random(GAME_SEED), ROAD_WIDTH
+    )
+    houses = [
+        House(
+            a,
+            sorted(borders.segments, key=curry(distance_point_segment)(a))[0],
+            random.choice(["house1", "house2", "house3"]),
+        )
+        for a in anchors
+        if 10 <= min(map(curry(distance_point_segment)(a), borders.segments)) <= 20
+        and random.random() < HOUSE_DENSITY
+    ]
+    trees = [
+        Tree(
+            Point(a.xy + [random.randint(-5, 5), random.randint(-5, 5)]),
+            random.random() * np.pi,
+        )
+        for a in anchors
+        if min(map(curry(distance_point_segment)(a), borders.segments)) > 20
+        and random.random() < TREE_DENSITY
+    ]
+
+    return World(borders, houses, trees)
+
+
+_world = _init()

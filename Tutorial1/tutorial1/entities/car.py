@@ -1,4 +1,3 @@
-import math
 import random
 import numpy as np
 import pyray as pr
@@ -10,7 +9,7 @@ import tutorial1.entities.world as world
 MASS = 650  # kg
 LENGTH = 5  # m
 WIDTH = 2  # m
-WHEEL_ANGLE_RATE = math.pi / 50  # rad
+WHEEL_ANGLE_RATE = np.pi / 50  # rad
 MAX_ENGINE_POWER = 200  # kN
 DRAG_ROAD = 0.9  # Concrete/Rubber
 DRAG_ROLLING = 0.01  # Concrete/Rubber
@@ -99,7 +98,7 @@ class Car:
             pr.Rectangle(0, 0, tex.width, tex.height),
             pr.Rectangle(self.pos[0], self.pos[1], LENGTH, LENGTH),
             pr.Vector2(LENGTH * 0.5, LENGTH * 0.5),
-            np.rad2deg(np.arctan2(self.head[1], self.head[0]) + math.pi / 2),
+            np.rad2deg(np.arctan2(self.head[1], self.head[0]) + np.pi / 2),
             self.color,
         )
 
@@ -119,7 +118,7 @@ class Car:
         forces = np.array([0.0, 0.0])
 
         if self.wheel != 0:
-            circ_radius = LENGTH / (math.sin(self.wheel))
+            circ_radius = LENGTH / (np.sin(self.wheel))
             ang_vel = np.linalg.norm(self.vel) / circ_radius
             c, s = np.cos(ang_vel), np.sin(ang_vel)
             self.head = [[c, -s], [s, c]] @ self.head
