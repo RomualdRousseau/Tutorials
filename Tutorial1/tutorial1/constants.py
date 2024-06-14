@@ -1,4 +1,4 @@
-APP_NAME = "Tutorial1 - Racing AI"
+APP_NAME = "Tutorial1 - Self Driving Car"
 
 WINDOW_WIDTH = 1000
 WINDOW_HEIGHT = 1000

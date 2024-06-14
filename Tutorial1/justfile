@@ -1,0 +1,28 @@
+set dotenv-load
+
+# Default recipe to help
+default: help
+
+# Print the available recipes
+help:
+    @just --justfile {{justfile()}} --list
+
+# Install all tutorial dependencies
+install:
+    poetry install
+
+# Update all tutorial dependencies
+update:
+    poetry update
+
+# Run the tutorial
+run: test
+    poetry run python -m tutorial1
+
+# Run the tests
+test:
+    poetry run coverage run -m pytest -vv
+
+# Display the coverage report
+coverage: test
+    poetry run coverage report -m

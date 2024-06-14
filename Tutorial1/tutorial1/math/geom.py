@@ -7,6 +7,7 @@ import pyray as pr
 import numpy as np
 
 from tutorial1.util.funcs import curry
+
 import tutorial1.util.pyray_ex as prx
 
 
@@ -14,7 +15,7 @@ import tutorial1.util.pyray_ex as prx
 class Point:
     xy: np.ndarray
 
-    def draw(self, thick: float, color: pr.Color):
+    def draw(self, thick: float, color: pr.Color):  # pragma: no cover
         pr.draw_circle_v(self.to_vec(), thick, color)
 
     def to_vec(self):
@@ -42,7 +43,7 @@ class Segment:
         color: pr.Color,
         dashed: tuple[int, pr.Color] | None = None,
         rounded: bool = False,
-    ):
+    ):  # pragma: no cover
         if dashed:
             prx.draw_dashed_line(
                 self.start.to_vec(), self.end.to_vec(), thick, color, dashed, rounded
