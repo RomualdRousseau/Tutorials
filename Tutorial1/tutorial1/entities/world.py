@@ -23,15 +23,16 @@ import tutorial1.math.envelope as envelope
 import tutorial1.math.graph as graph
 import tutorial1.util.resources as res
 
-ROAD_WIDTH = 10
 GRASS_COLOR = pr.Color(0, 192, 0, 255)
 ROAD_COLOR = pr.Color(192, 192, 192, 255)
 BORDER1_COLOR = pr.Color(255, 255, 255, 255)
 BORDER2_COLOR = pr.Color(255, 0, 0, 255)
 
+ROAD_WIDTH = 10  # m
+START_OFFSET = 2  # m
+
 HOUSE_DENSITY = 0.9
 TREE_DENSITY = 0.5
-
 HOUSE_SIZES = {"house1": (10, 10), "house2": (16, 16), "house3": (16, 16)}
 
 
@@ -59,6 +60,7 @@ class World:
     borders: envelope.Envelope
     houses: list[House]
     trees: list[Tree]
+    corridor: envelope.Envelope
 
 
 def is_alive() -> bool:
@@ -80,6 +82,11 @@ def draw(layer: int) -> None:
             s.draw(1, BORDER1_COLOR, None, True)
         for s in _world.borders.skeleton:
             s.draw(0.5, BORDER1_COLOR, (3, ROAD_COLOR), False)
+            
+        for s in _world.corridor.skeleton:
+            s.draw(_world.corridor.width, pr.Color(255, 255, 0, 128), None, True)
+        _world.corridor.skeleton[0].start.draw(1, pr.GREEN)  # type: ignore
+        _world.corridor.skeleton[-1].end.draw(1, pr.RED)  # type: ignore
 
     def draw_fg():
         for tree in _world.trees:
@@ -103,20 +110,21 @@ def draw(layer: int) -> None:
                 np.rad2deg(house.angle),
                 pr.WHITE,  # type: ignore
             )
-
+    
     [draw_bg, draw_fg][layer]()
 
 
 def get_location(position: Point) -> Optional[tuple[Point, Segment]]:
     nearest = lambda x: (nearest_point_segment(position, x), x)
     closest = lambda x: distance(position, x[0]) if x[0] is not None else np.Infinity
-    location = min(map(nearest, _world.borders.skeleton), key=closest)
+    location = min(map(nearest, _world.corridor.skeleton), key=closest)
     return location if location[0] is not None else None  # type: ignore
+
 
 @lru_cache
 def get_nearest_segments(position: Point, length: float = 50) -> Iterable[Segment]:
     nearest = lambda x: distance_point_segment(position, x) < length
-    return filter(nearest, _world.borders.segments)
+    return filter(nearest, _world.corridor.segments)
 
 
 def cast_ray(
@@ -152,9 +160,13 @@ def collision(position: Point, radius: float) -> Optional[np.ndarray]:
 
 
 def _init() -> World:
-    borders, anchors = envelope.generare_from_spatial_graph(
-        graph.generate_random(GAME_SEED), ROAD_WIDTH
-    )
+    roads = graph.generate_random(GAME_SEED)
+
+    start = random.choice(roads.vertice)
+    stop = max(roads.vertice, key=lambda x: distance(start.point, x.point))
+    corridor, _ = envelope.generare_from_spatial_graph(roads.get_shortest_path(start, stop), ROAD_WIDTH)
+
+    borders, anchors = envelope.generare_from_spatial_graph(roads, ROAD_WIDTH)
     houses = [
         House(
             a,
@@ -174,8 +186,8 @@ def _init() -> World:
         if min(map(curry(distance_point_segment)(a), borders.segments)) > 20
         and random.random() < TREE_DENSITY
     ]
-
-    return World(borders, houses, trees)
+    
+    return World(borders, houses, trees, corridor)
 
 
 _world = _init()

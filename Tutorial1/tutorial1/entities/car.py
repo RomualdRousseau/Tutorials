@@ -22,8 +22,8 @@ class Car:
     def __init__(self, color: pr.Color) -> None:
         self.color = color
 
-        start_seg = random.choice(world._world.borders.skeleton)
-        start_pos, end_pos = start_seg.start.xy, start_seg.end.xy
+        start_seg = world._world.corridor.skeleton[0]
+        start_pos, end_pos = (start_seg.start.xy + start_seg.end.xy) * 0.5, start_seg.end.xy
         start_dir = (end_pos - start_pos) / np.linalg.norm(end_pos - start_pos)
         start_off = np.array([-start_dir[1], start_dir[0]]) * START_OFFSET
 

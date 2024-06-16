@@ -45,15 +45,15 @@ def draw() -> None:
 
 
 def _init() -> Context:
-    _player = car.Car(CAR_COLOR)
-    _entities: list[Entity] = [world, _player]
-    _camera = pr.Camera2D(
+    player = car.Car(CAR_COLOR)
+    entities: list[Entity] = [world, player]
+    camera = pr.Camera2D(
         pr.Vector2(WINDOW_WIDTH / 2, WINDOW_HEIGHT / 2),
-        pr.Vector2(*_player.pos),
+        pr.Vector2(*player.pos),
         0,
         ZOOM_DEFAULT,
     )
-    return Context(_player, _entities, _camera, _update_game_mode)
+    return Context(player, entities, camera, _update_game_mode)
 
 
 def _update_free_mode(dt: float) -> str:

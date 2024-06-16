@@ -30,7 +30,3 @@ def constant(value):
 
 def pack_args(*x):
     return x
-
-
-def flatmap(func, lst: list) -> list:
-    return sum(map(func, lst), [])
