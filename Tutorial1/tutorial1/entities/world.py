@@ -27,6 +27,7 @@ GRASS_COLOR = pr.Color(0, 192, 0, 255)
 ROAD_COLOR = pr.Color(192, 192, 192, 255)
 BORDER1_COLOR = pr.Color(255, 255, 255, 255)
 BORDER2_COLOR = pr.Color(255, 0, 0, 255)
+BORDER3_COLOR = pr.Color(255, 255, 0, 255)
 
 ROAD_WIDTH = 10  # m
 START_OFFSET = 2  # m
@@ -82,11 +83,12 @@ def draw(layer: int) -> None:
             s.draw(1, BORDER1_COLOR, None, True)
         for s in _world.borders.skeleton:
             s.draw(0.5, BORDER1_COLOR, (3, ROAD_COLOR), False)
-            
-        for s in _world.corridor.skeleton:
-            s.draw(_world.corridor.width, pr.Color(255, 255, 0, 128), None, True)
-        _world.corridor.skeleton[0].start.draw(1, pr.GREEN)  # type: ignore
-        _world.corridor.skeleton[-1].end.draw(1, pr.RED)  # type: ignore
+        for s in _world.corridor.segments:
+            s.draw(1, BORDER3_COLOR, None, True)
+        # for s in _world.corridor.skeleton:
+        #     s.draw(_world.corridor.width, pr.Color(255, 255, 0, 128), None, True)
+        # _world.corridor.skeleton[0].start.draw(1, pr.GREEN)  # type: ignore
+        # _world.corridor.skeleton[-1].end.draw(1, pr.RED)  # type: ignore
 
     def draw_fg():
         for tree in _world.trees:
@@ -162,10 +164,6 @@ def collision(position: Point, radius: float) -> Optional[np.ndarray]:
 def _init() -> World:
     roads = graph.generate_random(GAME_SEED)
 
-    start = random.choice(roads.vertice)
-    stop = max(roads.vertice, key=lambda x: distance(start.point, x.point))
-    corridor, _ = envelope.generare_from_spatial_graph(roads.get_shortest_path(start, stop), ROAD_WIDTH)
-
     borders, anchors = envelope.generare_from_spatial_graph(roads, ROAD_WIDTH)
     houses = [
         House(
@@ -186,6 +184,10 @@ def _init() -> World:
         if min(map(curry(distance_point_segment)(a), borders.segments)) > 20
         and random.random() < TREE_DENSITY
     ]
+    
+    start = random.choice(roads.vertice)
+    stop = max(roads.vertice, key=lambda x: distance(start.point, x.point))
+    corridor, _ = envelope.generare_from_spatial_graph(roads.get_shortest_path(start, stop), ROAD_WIDTH)
     
     return World(borders, houses, trees, corridor)
 
