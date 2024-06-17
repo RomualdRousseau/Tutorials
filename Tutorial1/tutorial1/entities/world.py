@@ -158,7 +158,7 @@ def draw(layer: int) -> None:
 
 def get_location(position: Point) -> Optional[tuple[Point, Segment]]:
     nearest = lambda x: (nearest_point_segment(position, x), x)
-    closest = lambda x: distance(position, x[0]) if x[0] is not None else np.Infinity
+    closest = lambda x: distance(position, x[0]) if x[0] is not None else np.inf
     location = min(map(nearest, _world.corridor.skeleton), key=closest)
     return location if location[0] is not None else None  # type: ignore
 

@@ -65,7 +65,7 @@ class SpatialGraph:
         self, start: SpatialVertex, stop: SpatialVertex
     ) -> SpatialGraph:
         weight = lambda x: x[0]
-        distances = {x: 0.0 if x == start else np.Infinity for x in self.vertice}
+        distances = {x: 0.0 if x == start else np.inf for x in self.vertice}
         unvisited = sorted(map(lambda x: (distances[x], x), self.vertice), key=weight)
         prev = {}
         

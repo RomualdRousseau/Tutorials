@@ -1,0 +1,15 @@
+[tool.poetry]
+name = "tutorial2"
+version = "0.1.0"
+description = ""
+authors = ["Romuald Rousseau <romualdrousseau@gmail.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.11"
+gymnasium = "^0.29.1"
+tutorial1 = { path = "../Tutorial1" }
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

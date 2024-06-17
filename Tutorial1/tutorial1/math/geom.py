@@ -157,7 +157,7 @@ def distance_point_segment(p: Point, seg: Segment) -> float:
             i = seg.start.xy + v * i
             return float(np.linalg.norm(p.xy - i))
         case _:
-            return np.Infinity
+            return np.inf
 
 def nearest_point_segment(p: Point, seg: Segment) -> Optional[Point]:
     u = p.xy - seg.start.xy
