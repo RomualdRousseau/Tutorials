@@ -22,6 +22,26 @@ class Car:
     def __init__(self, color: pr.Color) -> None:
         self.color = color
 
+    def get_travel_distance_in_km(self) -> float:
+        return (self.total_distance + distance(self.current_start, self.current_pos)) * 0.001
+
+    def get_speed_in_kmh(self) -> float:
+        return float(np.linalg.norm(self.vel) * 3.6)
+
+    def turn_wheel(self, torque: float) -> None:
+        self.wheel = float(
+            np.interp(torque, [-1, 1], [-WHEEL_ANGLE_RATE, WHEEL_ANGLE_RATE])
+        )
+
+    def push_throttle(self, power: float) -> None:
+        self.throttle = MAX_ENGINE_POWER * 1000 * power
+
+    def is_alive(self) -> bool:
+        return True
+    
+    def reset(self) -> None:
+        pr.trace_log(pr.TraceLogLevel.LOG_DEBUG, "CAR: reset")
+        
         start_seg = world._world.corridor.skeleton[0]
         start_pos, end_pos = (start_seg.start.xy + start_seg.end.xy) * 0.5, start_seg.end.xy
         start_dir = (end_pos - start_pos) / np.linalg.norm(end_pos - start_pos)
@@ -47,27 +67,12 @@ class Car:
         
         self._update_sensors()
 
-    def get_travel_distance_in_km(self) -> float:
-        return (self.total_distance + distance(self.current_start, self.current_pos)) * 0.001
-
-    def get_speed_in_kmh(self) -> float:
-        return float(np.linalg.norm(self.vel) * 3.6)
-
-    def turn_wheel(self, torque: float) -> None:
-        self.wheel = float(
-            np.interp(torque, [-1, 1], [-WHEEL_ANGLE_RATE, WHEEL_ANGLE_RATE])
-        )
-
-    def push_throttle(self, power: float) -> None:
-        self.throttle = MAX_ENGINE_POWER * 1000 * power
-
-    def is_alive(self) -> bool:
-        return True
-
     def update(self, dt: float) -> None:
-        self._think_kb()
+        prev_damaged = self.damaged
+        
+        self._think_gp()
         self._update_physic(dt)
-        self._update_sensors()  # very slow
+        self._update_sensors()
 
         match world.get_location(Point(self.pos)):
             case r if r is not None:
@@ -82,7 +87,7 @@ class Car:
                     )
                 self.current_pos = r[0]
                 
-        if self.damaged and not pr.is_sound_playing(res.load_sound("crash")):
+        if self.damaged and not prev_damaged and not pr.is_sound_playing(res.load_sound("crash")):
             pr.play_sound(res.load_sound("crash"))
             
         if self.out_of_track and not pr.is_sound_playing(res.load_sound("klaxon")):

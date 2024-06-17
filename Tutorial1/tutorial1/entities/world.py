@@ -58,14 +58,54 @@ class Tree:
 
 @dataclass
 class World:
+    roads: graph.SpatialGraph
     borders: envelope.Envelope
     houses: list[House]
     trees: list[Tree]
     corridor: envelope.Envelope
 
 
+def _init():
+    roads = graph.generate_random(GAME_SEED)
+
+    borders, anchors = envelope.generare_from_spatial_graph(roads, ROAD_WIDTH)
+    houses = [
+        House(
+            a,
+            sorted(borders.segments, key=curry(distance_point_segment)(a))[0],
+            random.choice(["house1", "house2", "house3"]),
+        )
+        for a in anchors
+        if 10 <= min(map(curry(distance_point_segment)(a), borders.segments)) <= 20
+        and random.random() < HOUSE_DENSITY
+    ]
+    trees = [
+        Tree(
+            Point(a.xy + [random.randint(-5, 5), random.randint(-5, 5)]),
+            random.random() * np.pi,
+        )
+        for a in anchors
+        if min(map(curry(distance_point_segment)(a), borders.segments)) > 20
+        and random.random() < TREE_DENSITY
+    ]
+    
+    corridor = envelope.Envelope([], [], ROAD_WIDTH)
+
+    return World(roads, borders, houses, trees, corridor)
+
+
 def is_alive() -> bool:
     return True
+
+
+def reset() -> None:
+    pr.trace_log(pr.TraceLogLevel.LOG_DEBUG, "WORLD: reset")
+    start = random.choice(_world.roads.vertice)
+    stop = max(_world.roads.vertice, key=lambda x: distance(start.point, x.point))
+    corridor, _ = envelope.generare_from_spatial_graph(
+        _world.roads.get_shortest_path(start, stop), ROAD_WIDTH
+    )
+    _world.corridor = corridor
 
 
 def update(dt: float) -> None:
@@ -112,7 +152,7 @@ def draw(layer: int) -> None:
                 np.rad2deg(house.angle),
                 pr.WHITE,  # type: ignore
             )
-    
+
     [draw_bg, draw_fg][layer]()
 
 
@@ -124,9 +164,13 @@ def get_location(position: Point) -> Optional[tuple[Point, Segment]]:
 
 
 @lru_cache
-def get_nearest_segments(position: Point, length: float = 50) -> Iterable[Segment]:
-    nearest = lambda x: distance_point_segment(position, x) < length
-    return filter(nearest, _world.corridor.segments)
+def get_nearest_segments(position: Point, length: float = 50) -> list[Segment]:
+    nearest = (
+        lambda x: distance_point_segment(position, x) < length
+        or distance(position, x.start) < length
+        or distance(position, x.end) < length
+    )
+    return list(filter(nearest, _world.corridor.segments))
 
 
 def cast_ray(
@@ -146,7 +190,7 @@ def cast_rays(
 ):
     rays = []
     alpha = np.arctan2(direction[1], direction[0])
-    nearest_segments = list(get_nearest_segments(position, length))
+    nearest_segments = get_nearest_segments(position, length)
     for i in range(sampling):
         beta = np.interp(i / sampling, [0, 1], [alpha - np.pi / 4, alpha + np.pi / 4])
         direction = np.array([np.cos(beta), np.sin(beta)])
@@ -155,41 +199,10 @@ def cast_rays(
 
 
 def collision(position: Point, radius: float) -> Optional[np.ndarray]:
-    nearest_segments = list(get_nearest_segments(position, radius))
+    nearest_segments = get_nearest_segments(position, radius)
     collide = curry(collision_circle_segment)(position, radius)
     cols = np.array([x for x in map(collide, nearest_segments) if x is not None])
     return np.average(cols, axis=0) if len(cols) > 0 else None
-
-
-def _init() -> World:
-    roads = graph.generate_random(GAME_SEED)
-
-    borders, anchors = envelope.generare_from_spatial_graph(roads, ROAD_WIDTH)
-    houses = [
-        House(
-            a,
-            sorted(borders.segments, key=curry(distance_point_segment)(a))[0],
-            random.choice(["house1", "house2", "house3"]),
-        )
-        for a in anchors
-        if 10 <= min(map(curry(distance_point_segment)(a), borders.segments)) <= 20
-        and random.random() < HOUSE_DENSITY
-    ]
-    trees = [
-        Tree(
-            Point(a.xy + [random.randint(-5, 5), random.randint(-5, 5)]),
-            random.random() * np.pi,
-        )
-        for a in anchors
-        if min(map(curry(distance_point_segment)(a), borders.segments)) > 20
-        and random.random() < TREE_DENSITY
-    ]
-    
-    start = random.choice(roads.vertice)
-    stop = max(roads.vertice, key=lambda x: distance(start.point, x.point))
-    corridor, _ = envelope.generare_from_spatial_graph(roads.get_shortest_path(start, stop), ROAD_WIDTH)
-    
-    return World(borders, houses, trees, corridor)
 
 
 _world = _init()

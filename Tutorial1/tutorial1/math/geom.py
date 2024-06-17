@@ -39,6 +39,10 @@ class Segment:
     @property
     def length(self):
         return distance(self.start, self.end)
+    
+    @property
+    def middle(self):
+        return Point((self.start.xy + self.end.xy) * 0.5)
 
     def draw(
         self,
@@ -154,7 +158,6 @@ def distance_point_segment(p: Point, seg: Segment) -> float:
             return float(np.linalg.norm(p.xy - i))
         case _:
             return np.Infinity
-
 
 def nearest_point_segment(p: Point, seg: Segment) -> Optional[Point]:
     u = p.xy - seg.start.xy

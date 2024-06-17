@@ -12,12 +12,17 @@ def main():
     pr.init_audio_device()
     
     scene = SCENES["title"]
+    scene.reset()
+    
     while not pr.window_should_close():
         next = scene.update(pr.get_frame_time())
         pr.begin_drawing()
         scene.draw()
         pr.end_drawing()
-        scene = SCENES[next]
+        
+        if scene != SCENES[next]:
+            scene = SCENES[next]
+            scene.reset()
         
     pr.close_window()
 

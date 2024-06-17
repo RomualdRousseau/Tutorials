@@ -107,8 +107,7 @@ def generare_from_spatial_graph(
 
         for e in envelopes:
             for s in e.segments:
-                mid = Point(s.start.xy * 0.5 + s.end.xy * 0.5)
-                segment_in_polygon = lambda x: point_in_polygon(mid, x.points)
+                segment_in_polygon = lambda x: point_in_polygon(s.middle, x.points)
                 inside = any(
                     map(segment_in_polygon, filter(lambda x: x != e, envelopes))
                 )

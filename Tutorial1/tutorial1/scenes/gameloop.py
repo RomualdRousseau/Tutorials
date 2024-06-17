@@ -25,6 +25,24 @@ class Context:
     update_state: Callable[[float], str]
 
 
+def _init() -> Context:
+    player = car.Car(CAR_COLOR)
+    entities: list[Entity] = [world, player]
+    camera = pr.Camera2D(
+        pr.Vector2(WINDOW_WIDTH / 2, WINDOW_HEIGHT / 2),
+        pr.Vector2(0, 0),
+        0,
+        ZOOM_DEFAULT,
+    )
+    return Context(player, entities, camera, _update_game_mode)
+
+
+def reset() -> None:
+    pr.trace_log(pr.TraceLogLevel.LOG_DEBUG, "GAMELOOP: reset")
+    [x.reset() for x in _context.entities]
+    _context.camera.target = pr.Vector2(*_context.player.pos)
+
+
 def update(dt: float) -> str:
     return _context.update_state(dt)
 
@@ -42,18 +60,6 @@ def draw() -> None:
     elif _context.update_state == _update_free_mode:
         prx.draw_text_shadow(f"Zoom: x{_context.camera.zoom}", pr.Vector2(2, 2), 22, pr.WHITE)  # type: ignore
         prx.draw_text_shadow(f"{pr.get_fps()}fps", pr.Vector2(2, 23), 22, pr.WHITE)  # type: ignore
-
-
-def _init() -> Context:
-    player = car.Car(CAR_COLOR)
-    entities: list[Entity] = [world, player]
-    camera = pr.Camera2D(
-        pr.Vector2(WINDOW_WIDTH / 2, WINDOW_HEIGHT / 2),
-        pr.Vector2(*player.pos),
-        0,
-        ZOOM_DEFAULT,
-    )
-    return Context(player, entities, camera, _update_game_mode)
 
 
 def _update_free_mode(dt: float) -> str:

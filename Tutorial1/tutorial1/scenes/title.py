@@ -3,6 +3,10 @@ import pyray as pr
 from tutorial1.constants import WINDOW_WIDTH, WINDOW_HEIGHT
 
 
+def reset() -> None:
+    pr.trace_log(pr.TraceLogLevel.LOG_DEBUG, "TITLE: reset")
+
+
 def update(_: float) -> str:
     return "gameloop" if pr.get_key_pressed() != 0 else "title"
 
