@@ -4,7 +4,7 @@ import pyray as pr
 
 from tutorial1.constants import GAMEPAD_AXIS_X, GAMEPAD_AXIS_Y, GAMEPAD_ID
 from tutorial1.math.geom import Point, distance
-import tutorial1.util.resources as res
+import tutorial1.resources as res
 import tutorial1.entities.world as world
 
 MASS = 650  # kg

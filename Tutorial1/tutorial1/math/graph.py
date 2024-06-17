@@ -67,22 +67,18 @@ class SpatialGraph:
         weight = lambda x: x[0]
         distances = {x: 0.0 if x == start else np.Infinity for x in self.vertice}
         unvisited = sorted(map(lambda x: (distances[x], x), self.vertice), key=weight)
-        # visited = set()
         prev = {}
         
         while unvisited:
             dist_u, u = heapq.heappop(unvisited)
             if u == stop:
                 break
-            # if u in visited:
-            #     continue
             for e, v in self.get_edges_from_vextex(u):
                 alt = dist_u + e.segment.length
                 if alt < distances[v]:
                     prev[v] = u
                     distances[v] = alt
-                    heapq.heappush(unvisited, (alt, v)) 
-            # visited.add(u)
+                    heapq.heappush(unvisited, (alt, v))
 
         vertice = []
         u = stop
@@ -105,6 +101,7 @@ class SpatialGraph:
 
 
 def generate_random(seed: int):
+    
     def generate_vertice(num: int, min: int) -> list[SpatialVertex]:
         rand = lambda: random.randrange(0, VIRTUAL_WIDTH) + VIRTUAL_MARGIN
         vertice = []

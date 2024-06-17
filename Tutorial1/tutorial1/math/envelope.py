@@ -64,7 +64,7 @@ def generare_from_spatial_graph(
         return Envelope(segments, [edge.segment], width)
 
     def generate_anchors(envelopes: list[Envelope], step: int = 20):
-
+        
         def anchors() -> Iterable[Point]:
             width = VIRTUAL_WIDTH + VIRTUAL_MARGIN * 2 + 1
             for i in range(0, width, step):

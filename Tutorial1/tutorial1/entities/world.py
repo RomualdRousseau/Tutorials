@@ -21,9 +21,9 @@ from tutorial1.math.geom import (
 
 import tutorial1.math.envelope as envelope
 import tutorial1.math.graph as graph
-import tutorial1.util.resources as res
+import tutorial1.resources as res
 
-GRASS_COLOR = pr.Color(0, 192, 0, 255)
+GRASS_COLOR = pr.Color(86, 180, 57, 255)
 ROAD_COLOR = pr.Color(192, 192, 192, 255)
 BORDER1_COLOR = pr.Color(255, 255, 255, 255)
 BORDER2_COLOR = pr.Color(255, 0, 0, 255)
