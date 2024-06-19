@@ -11,6 +11,11 @@ def main():
     pr.hide_cursor()
     pr.init_audio_device()
 
+    for i in range(5):
+        pr.trace_log(
+            pr.TraceLogLevel.LOG_INFO, f"GAMEPAD: id: {i} - {pr.get_gamepad_name(i)}"
+        )
+
     scene = SCENES["title"]
     scene.reset()
 
