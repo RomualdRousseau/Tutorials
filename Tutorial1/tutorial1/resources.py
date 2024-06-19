@@ -1,5 +1,6 @@
-import pyray as pr
 from functools import cache
+
+import pyray as pr
 
 RESOURCES = {
     "car": "resources/car.png",

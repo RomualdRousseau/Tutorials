@@ -1,14 +1,14 @@
 from __future__ import annotations
+
 from dataclasses import dataclass
 from functools import partial
 from typing import Iterable, Optional
 
-import pyray as pr
 import numpy as np
-
-from tutorial1.util.funcs import curry
+import pyray as pr
 
 import tutorial1.util.pyray_ex as prx
+from tutorial1.util.funcs import curry
 
 
 @dataclass
@@ -26,7 +26,7 @@ class Point:
 
     def __eq__(self, other):
         return isinstance(other, Point) and np.all(self.xy == other.xy)
-    
+
     def __hash__(self) -> int:
         return int(np.sum(self.xy))
 
@@ -39,7 +39,7 @@ class Segment:
     @property
     def length(self):
         return distance(self.start, self.end)
-    
+
     @property
     def middle(self):
         return Point((self.start.xy + self.end.xy) * 0.5)
@@ -129,12 +129,12 @@ def point_on_segment(p: Point, seg: Segment) -> bool:
 
 def point_in_polygon(point: Point, polygon: list[Point], strict: bool = True) -> bool:
     x, y = point.xy
-    N = len(polygon)
+    n = len(polygon)
     inside = False
 
     p1, (p1x, p1y) = polygon[0], polygon[0].xy
-    for i in range(1, N + 1):
-        p2, (p2x, p2y) = polygon[i % N], polygon[i % N].xy
+    for i in range(1, n + 1):
+        p2, (p2x, p2y) = polygon[i % n], polygon[i % n].xy
 
         if strict and point_on_segment(point, Segment(p1, p2)):
             return False
@@ -150,23 +150,24 @@ def point_in_polygon(point: Point, polygon: list[Point], strict: bool = True) ->
 def distance_point_segment(p: Point, seg: Segment) -> float:
     u = p.xy - seg.start.xy
     v = seg.end.xy - seg.start.xy
-    l = np.linalg.norm(v)
-    v = v / l
+    v_l = np.linalg.norm(v)
+    v = v / v_l
     match np.dot(u, v):
-        case i if 0 <= i <= l:
-            i = seg.start.xy + v * i
-            return float(np.linalg.norm(p.xy - i))
+        case x if 0 <= x <= v_l:
+            x = seg.start.xy + v * x
+            return float(np.linalg.norm(p.xy - x))
         case _:
             return np.inf
+
 
 def nearest_point_segment(p: Point, seg: Segment) -> Optional[Point]:
     u = p.xy - seg.start.xy
     v = seg.end.xy - seg.start.xy
-    l = np.linalg.norm(v)
-    v = v / l
+    v_l = np.linalg.norm(v)
+    v = v / v_l
     match np.dot(u, v):
-        case i if 0 <= i <= l:
-            return Point(seg.start.xy + v * i)
+        case x if 0 <= x <= v_l:
+            return Point(seg.start.xy + v * x)
         case _:
             return None
 
@@ -179,9 +180,9 @@ def collision_circle_segment(
     v_l = np.linalg.norm(v)
     v = v / v_l
     match np.dot(u, v):
-        case i if 0 <= i <= v_l:
-            i = seg.start.xy + v * i
-            w = center.xy - i
+        case x if 0 <= x <= v_l:
+            x = seg.start.xy + v * x
+            w = center.xy - x
             match float(np.linalg.norm(w)):
                 case w_d if w_d <= radius:
                     return w * (radius - w_d) / w_d
@@ -205,10 +206,10 @@ def cast_ray_segments(
 
 def points_to_segments(points: list[Point], closed: bool = True) -> list[Segment]:
     segments = []
-    N = len(points)
+    n = len(points)
     p1 = points[0]
-    for i in range(1, N + 1 if closed else N):
-        p2 = points[i % N]
+    for i in range(1, n + 1 if closed else n):
+        p2 = points[i % n]
         segments.append(Segment(p1, p2))
         p1 = p2
     return segments

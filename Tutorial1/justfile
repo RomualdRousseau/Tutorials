@@ -15,13 +15,21 @@ install:
 update:
     poetry update
 
-# Run the tutorial
-run: test
-    poetry run python -m tutorial1
+# Build package
+build:
+    rm -rf dist; poetry build
+
+# Execute the pre-commit hooks
+pre-commit:
+    poetry run pre-commit run --all-files
 
 # Run the tests
 test:
     poetry run coverage run -m pytest -vv
+
+# Run the tutorial
+run: pre-commit test
+    poetry run python -m tutorial1
 
 # Display the coverage report
 coverage: test

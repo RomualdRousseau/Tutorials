@@ -1,4 +1,3 @@
-import tutorial1.scenes.gameloop as gameloop
-import tutorial1.scenes.title as title
+from tutorial1.scenes import gameloop, title
 
 SCENES = {"title": title, "gameloop": gameloop}

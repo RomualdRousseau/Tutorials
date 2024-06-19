@@ -1,13 +1,14 @@
+import random
 from dataclasses import dataclass
 from functools import lru_cache
-from typing import Iterable, Optional
+from typing import Optional
 
-import random
 import numpy as np
 import pyray as pr
 
+import tutorial1.resources as res
 from tutorial1.constants import GAME_SEED
-from tutorial1.util.funcs import curry
+from tutorial1.math import envelope, graph
 from tutorial1.math.geom import (
     Point,
     Segment,
@@ -18,10 +19,7 @@ from tutorial1.math.geom import (
     distance_point_segment,
     nearest_point_segment,
 )
-
-import tutorial1.math.envelope as envelope
-import tutorial1.math.graph as graph
-import tutorial1.resources as res
+from tutorial1.util.funcs import curry
 
 GRASS_COLOR = pr.Color(86, 180, 57, 255)
 ROAD_COLOR = pr.Color(192, 192, 192, 255)
@@ -33,8 +31,12 @@ ROAD_WIDTH = 10  # m
 START_OFFSET = 2  # m
 
 HOUSE_DENSITY = 0.9
-TREE_DENSITY = 0.5
+HOUSE_DISTANCE = 10
 HOUSE_SIZES = {"house1": (10, 10), "house2": (16, 16), "house3": (16, 16)}
+
+TREE_DENSITY = 0.5
+TREE_DISTANCE = 20
+TREE_RANDOM = 5
 
 
 @dataclass
@@ -76,19 +78,27 @@ def _init():
             random.choice(["house1", "house2", "house3"]),
         )
         for a in anchors
-        if 10 <= min(map(curry(distance_point_segment)(a), borders.segments)) <= 20
+        if HOUSE_DISTANCE
+        <= min(map(curry(distance_point_segment)(a), borders.segments))
+        <= TREE_DISTANCE
         and random.random() < HOUSE_DENSITY
     ]
     trees = [
         Tree(
-            Point(a.xy + [random.randint(-5, 5), random.randint(-5, 5)]),
+            Point(
+                a.xy
+                + [
+                    random.randint(-TREE_RANDOM, TREE_RANDOM),
+                    random.randint(-TREE_RANDOM, TREE_RANDOM),
+                ]
+            ),
             random.random() * np.pi,
         )
         for a in anchors
-        if min(map(curry(distance_point_segment)(a), borders.segments)) > 20
+        if min(map(curry(distance_point_segment)(a), borders.segments)) > TREE_DISTANCE
         and random.random() < TREE_DENSITY
     ]
-    
+
     corridor = envelope.Envelope([], [], ROAD_WIDTH)
 
     return World(roads, borders, houses, trees, corridor)

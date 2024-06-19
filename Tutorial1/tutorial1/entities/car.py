@@ -1,11 +1,10 @@
-import random
 import numpy as np
 import pyray as pr
 
-from tutorial1.constants import GAMEPAD_AXIS_X, GAMEPAD_AXIS_Y, GAMEPAD_ID
-from tutorial1.math.geom import Point, distance
 import tutorial1.resources as res
-import tutorial1.entities.world as world
+from tutorial1.constants import GAMEPAD_AXIS_X, GAMEPAD_AXIS_Y, GAMEPAD_ID
+from tutorial1.entities import world
+from tutorial1.math.geom import Point, distance
 
 MASS = 650  # kg
 LENGTH = 5  # m
@@ -23,7 +22,9 @@ class Car:
         self.color = color
 
     def get_travel_distance_in_km(self) -> float:
-        return (self.total_distance + distance(self.current_start, self.current_pos)) * 0.001
+        return (
+            self.total_distance + distance(self.current_start, self.current_pos)
+        ) * 0.001
 
     def get_speed_in_kmh(self) -> float:
         return float(np.linalg.norm(self.vel) * 3.6)
@@ -38,12 +39,14 @@ class Car:
 
     def is_alive(self) -> bool:
         return True
-    
+
     def reset(self) -> None:
         pr.trace_log(pr.TraceLogLevel.LOG_DEBUG, "CAR: reset")
-        
+
         start_seg = world._world.corridor.skeleton[0]
-        start_pos, end_pos = (start_seg.start.xy + start_seg.end.xy) * 0.5, start_seg.end.xy
+        start_pos, end_pos = (
+            start_seg.start.xy + start_seg.end.xy
+        ) * 0.5, start_seg.end.xy
         start_dir = (end_pos - start_pos) / np.linalg.norm(end_pos - start_pos)
         start_off = np.array([-start_dir[1], start_dir[0]]) * START_OFFSET
 
@@ -64,12 +67,12 @@ class Car:
             else self.current_seg.end
         )
         self.current_pos = self.current_start
-        
+
         self._update_sensors()
 
     def update(self, dt: float) -> None:
         prev_damaged = self.damaged
-        
+
         self._think_gp()
         self._update_physic(dt)
         self._update_sensors()
@@ -77,7 +80,7 @@ class Car:
         match world.get_location(Point(self.pos)):
             case r if r is not None:
                 if self.current_seg != r[1]:
-                    self.total_distance +=  r[1].length
+                    self.total_distance += r[1].length
                     self.current_seg = r[1]
                     self.current_start = (
                         self.current_seg.start
@@ -86,10 +89,14 @@ class Car:
                         else self.current_seg.end
                     )
                 self.current_pos = r[0]
-                
-        if self.damaged and not prev_damaged and not pr.is_sound_playing(res.load_sound("crash")):
+
+        if (
+            self.damaged
+            and not prev_damaged
+            and not pr.is_sound_playing(res.load_sound("crash"))
+        ):
             pr.play_sound(res.load_sound("crash"))
-            
+
         if self.out_of_track and not pr.is_sound_playing(res.load_sound("klaxon")):
             pr.play_sound(res.load_sound("klaxon"))
 
@@ -116,8 +123,10 @@ class Car:
 
     def _think_gp(self) -> None:
         self.turn_wheel(pr.get_gamepad_axis_movement(GAMEPAD_ID, GAMEPAD_AXIS_X) ** 3)
-        self.push_throttle(-1.0 * pr.get_gamepad_axis_movement(GAMEPAD_ID, GAMEPAD_AXIS_Y) ** 3)
-        
+        self.push_throttle(
+            -1.0 * pr.get_gamepad_axis_movement(GAMEPAD_ID, GAMEPAD_AXIS_Y) ** 3
+        )
+
     def _think_kb(self) -> None:
         self.wheel = 0
         self.throttle = 0

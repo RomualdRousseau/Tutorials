@@ -1,22 +1,21 @@
 from __future__ import annotations
-from dataclasses import dataclass
-import heapq
-from random import choice
-from queue import PriorityQueue
 
+import heapq
 import random
+from dataclasses import dataclass
+from random import choice
 from typing import Iterable
+
 import numpy as np
 import pyray as pr
 
-from tutorial1.constants import VIRTUAL_WIDTH, VIRTUAL_MARGIN
+from tutorial1.constants import VIRTUAL_MARGIN, VIRTUAL_WIDTH
 from tutorial1.math.geom import (
     Point,
     Segment,
     distance,
     intersect,
 )
-
 
 EDGE_COLOR = pr.Color(0, 0, 0, 128)
 VERTEX_COLOR = pr.Color(0, 0, 255, 128)
@@ -66,9 +65,9 @@ class SpatialGraph:
     ) -> SpatialGraph:
         weight = lambda x: x[0]
         distances = {x: 0.0 if x == start else np.inf for x in self.vertice}
-        unvisited = sorted(map(lambda x: (distances[x], x), self.vertice), key=weight)
+        unvisited = sorted(((distances[x], x) for x in self.vertice), key=weight)
         prev = {}
-        
+
         while unvisited:
             dist_u, u = heapq.heappop(unvisited)
             if u == stop:
@@ -83,10 +82,10 @@ class SpatialGraph:
         vertice = []
         u = stop
         while prev.get(u) and u != start:
-            vertice = [u] + vertice
+            vertice = [u, *vertice]
             u = prev[u]
-        vertice = [start] + vertice
-        
+        vertice = [start, *vertice]
+
         edges = []
         for i in range(len(vertice) - 1):
             edges.append(SpatialEdge(vertice[i], vertice[i + 1]))
@@ -101,15 +100,16 @@ class SpatialGraph:
 
 
 def generate_random(seed: int):
-    
     def generate_vertice(num: int, min: int) -> list[SpatialVertex]:
         rand = lambda: random.randrange(0, VIRTUAL_WIDTH) + VIRTUAL_MARGIN
         vertice = []
         n = 0
+
+        is_valid = lambda y: lambda x: distance(x.point, y.point) > min
+
         while n < num:
             v = SpatialVertex(Point(np.array([rand(), rand()])))
-            is_valid = lambda x: distance(x.point, v.point) > min
-            if all(map(is_valid, vertice)):
+            if all(map(is_valid(v), vertice)):
                 vertice.append(v)
                 n += 1
         return vertice
@@ -117,12 +117,14 @@ def generate_random(seed: int):
     def generate_edges(vertice: list[SpatialVertex], num: int, k: int = 3):
         edges = []
         n = 0
+
+        is_valid = lambda y: lambda x: x.segment != y.segment and not intersect(
+            x.segment, y.segment
+        )
+
         while n < num:
             e = generate_edge(vertice, k)
-            is_valid = lambda x: x.segment != e.segment and not intersect(
-                x.segment, e.segment
-            )
-            if all(map(is_valid, edges)):
+            if all(map(is_valid(e), edges)):
                 edges.append(e)
                 n += 1
         return edges
@@ -137,8 +139,8 @@ def generate_random(seed: int):
 
     pr.trace_log(pr.TraceLogLevel.LOG_INFO, f"GRAPH: Generate graph from seed {seed}")
     random.seed(seed)
-    pr.trace_log(pr.TraceLogLevel.LOG_INFO, f"GRAPH: Generate vertices")
+    pr.trace_log(pr.TraceLogLevel.LOG_INFO, "GRAPH: Generate vertices")
     vertice = generate_vertice(20, 100)
-    pr.trace_log(pr.TraceLogLevel.LOG_INFO, f"GRAPH: Generate edges")
+    pr.trace_log(pr.TraceLogLevel.LOG_INFO, "GRAPH: Generate edges")
     edges = generate_edges(vertice, 25, 3)
     return SpatialGraph(vertice, edges)

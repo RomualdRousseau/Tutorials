@@ -1,5 +1,6 @@
 import gymnasium as gym
 
+
 def main():
     env = gym.make("tutorial1/Tutorial1-v1", render_mode="human")
 
@@ -8,7 +9,7 @@ def main():
     for _ in range(1000):
         action = env.action_space.sample()
         observation, reward, terminated, truncated, info = env.step(action)
-        
+
         if terminated or truncated:
             observation, info = env.reset()
 

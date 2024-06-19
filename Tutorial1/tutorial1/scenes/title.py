@@ -1,6 +1,6 @@
 import pyray as pr
 
-from tutorial1.constants import WINDOW_WIDTH, WINDOW_HEIGHT
+from tutorial1.constants import WINDOW_HEIGHT, WINDOW_WIDTH
 
 
 def reset() -> None:

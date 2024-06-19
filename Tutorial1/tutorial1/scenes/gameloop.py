@@ -3,14 +3,11 @@ from typing import Callable
 
 import pyray as pr
 
-from tutorial1.constants import WINDOW_WIDTH, WINDOW_HEIGHT
-from tutorial1.util.types import Entity
-from tutorial1.util.funcs import compose, constant, apply
-
 import tutorial1.util.pyray_ex as prx
-import tutorial1.entities.world as world
-import tutorial1.entities.car as car
-
+from tutorial1.constants import WINDOW_HEIGHT, WINDOW_WIDTH
+from tutorial1.entities import car, world
+from tutorial1.util.funcs import apply, compose, constant
+from tutorial1.util.types import Entity
 
 CAR_COLOR = pr.Color(255, 255, 255, 255)
 ZOOM_DEFAULT = 20
@@ -49,8 +46,8 @@ def update(dt: float) -> str:
 
 def draw() -> None:
     pr.begin_mode_2d(_context.camera)
-    for l in range(2):
-        [x.draw(l) for x in _context.entities]
+    for layer in range(2):
+        [x.draw(layer) for x in _context.entities]
     pr.end_mode_2d()
 
     if _context.update_state == _update_game_mode:

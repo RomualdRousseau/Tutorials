@@ -14,8 +14,8 @@ def test_segments_equals():
     b = Point(np.array([2, 2]))
     e1 = Segment(a, b)
     e2 = Segment(a, b)
-    assert e1 == e1
-    assert e2 == e2
+    assert e1 == Segment(a, b)
+    assert e2 == Segment(a, b)
     assert e1 == e2
 
 
@@ -25,8 +25,8 @@ def test_segments_not_equals():
     c = Point(np.array([3, 3]))
     e1 = Segment(a, b)
     e2 = Segment(a, c)
-    assert e1 == e1
-    assert e2 == e2
+    assert e1 == Segment(a, b)
+    assert e2 == Segment(a, c)
     assert e1 != e2
 
 
@@ -35,8 +35,8 @@ def test_segments_non_directed():
     b = Point(np.array([2, 2]))
     e1 = Segment(a, b)
     e2 = Segment(b, a)
-    assert e1 == e1
-    assert e2 == e2
+    assert e1 == Segment(a, b)
+    assert e2 == Segment(b, a)
     assert e1 == e2
 
 
@@ -87,9 +87,9 @@ def test_intersect_parallel():
     e1 = Segment(a, b)
     e2 = Segment(c, d)
     p = intersect(e1, e2)
-    assert p == None
+    assert p is None
     p = intersect(e2, e1)
-    assert p == None
+    assert p is None
 
 
 def test_not_intersect():
@@ -100,9 +100,9 @@ def test_not_intersect():
     e1 = Segment(a, b)
     e2 = Segment(c, d)
     p = intersect(e1, e2)
-    assert p == None
+    assert p is None
     p = intersect(e2, e1)
-    assert p == None
+    assert p is None
 
 
 def test_point_on_segment():

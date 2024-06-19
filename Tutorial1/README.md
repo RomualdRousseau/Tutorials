@@ -1,5 +1,6 @@
 # Tutorial 1 - Taxi Driver Environment
 
+![pre-commit](https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit)
 ![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)
 
 ## Description
@@ -117,4 +118,3 @@ Please make sure to update tests as appropriate.
 
 * 0.1.0
 * Initial Release
-
