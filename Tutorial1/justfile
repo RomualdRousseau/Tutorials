@@ -28,7 +28,7 @@ test:
     poetry run coverage run -m pytest -vv
 
 # Run the tutorial
-run: pre-commit test
+run: pre-commit coverage
     poetry run python -m tutorial1
 
 # Display the coverage report

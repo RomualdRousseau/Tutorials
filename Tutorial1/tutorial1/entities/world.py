@@ -12,7 +12,6 @@ from tutorial1.math import envelope, graph
 from tutorial1.math.geom import (
     Point,
     Segment,
-    angle,
     cast_ray_segments,
     collision_circle_segment,
     distance,
@@ -35,8 +34,8 @@ HOUSE_DISTANCE = 10
 HOUSE_SIZES = {"house1": (10, 10), "house2": (16, 16), "house3": (16, 16)}
 
 TREE_DENSITY = 0.5
-TREE_DISTANCE = 20
-TREE_RANDOM = 5
+TREE_DISTANCE = 25
+TREE_RANDOM = 5  # m
 
 
 @dataclass
@@ -46,7 +45,7 @@ class House:
     type: str
 
     def __post_init__(self):
-        self.angle = angle(self.segment)
+        self.angle = self.segment.angle
         path_end = nearest_point_segment(self.position, self.segment)
         if path_end:
             self.path = Segment(self.position, path_end)
