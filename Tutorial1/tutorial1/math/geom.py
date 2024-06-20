@@ -108,12 +108,8 @@ def intersect(seg1: Segment, seg2: Segment, strict: bool = True) -> Optional[Poi
                                     ]
                                 )
                             )
-                        case _:
-                            return None
-                case _:
-                    return None
-        case _:
-            return None
+
+    return None
 
 
 def point_on_segment(p: Point, seg: Segment) -> bool:
@@ -140,10 +136,11 @@ def point_in_polygon(point: Point, polygon: list[Point], strict: bool = True) ->
             return False
 
         if min(p1y, p2y) < y <= max(p1y, p2y) and x <= max(p1x, p2x):
-            xinters = np.interp(y, [p1y, p2y], [p1x, p2x], period=np.inf)
+            xinters = np.interp((y - p1y) / (p2y - p1y), [0, 1], [p1x, p2x])
             if p1x == p2x or x < xinters:
                 inside = not inside
         p1, (p1x, p1y) = p2, (p2x, p2y)
+
     return inside
 
 
@@ -156,8 +153,7 @@ def distance_point_segment(p: Point, seg: Segment) -> float:
         case x if 0 <= x <= v_l:
             x = seg.start.xy + v * x
             return float(np.linalg.norm(p.xy - x))
-        case _:
-            return np.inf
+    return np.inf
 
 
 def nearest_point_segment(p: Point, seg: Segment) -> Optional[Point]:
@@ -168,8 +164,7 @@ def nearest_point_segment(p: Point, seg: Segment) -> Optional[Point]:
     match np.dot(u, v):
         case x if 0 <= x <= v_l:
             return Point(seg.start.xy + v * x)
-        case _:
-            return None
+    return None
 
 
 def collision_circle_segment(
@@ -186,10 +181,7 @@ def collision_circle_segment(
             match float(np.linalg.norm(w)):
                 case w_d if w_d <= radius:
                     return w * (radius - w_d) / w_d
-                case _:
-                    return None
-        case _:
-            return None
+    return None
 
 
 def cast_ray_segments(

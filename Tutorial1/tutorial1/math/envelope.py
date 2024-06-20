@@ -5,7 +5,7 @@ from typing import Iterable
 import numpy as np
 import pyray as pr
 
-from tutorial1.constants import VIRTUAL_MARGIN, VIRTUAL_WIDTH
+from tutorial1.constants import VIRTUAL_WIDTH
 from tutorial1.math import graph
 from tutorial1.math.geom import (
     Point,
@@ -41,9 +41,9 @@ def generare_from_spatial_graph(
     envelopes = _break_envelopes(envelopes)
 
     pr.trace_log(pr.TraceLogLevel.LOG_INFO, "ENVELOPE: Union Envelopes")
-    envelopes = _union_envelopes(envelopes)
+    envelope = _union_envelopes(envelopes)
 
-    return envelopes, anchors
+    return envelope, anchors
 
 
 def _generate_envelope(
@@ -79,9 +79,8 @@ def _generate_envelope(
 
 def _generate_anchors(envelopes: list[Envelope], step: int = 20):
     def anchors() -> Iterable[Point]:
-        width = VIRTUAL_WIDTH + VIRTUAL_MARGIN * 2 + 1
-        for i in range(0, width, step):
-            for j in range(0, width, step):
+        for i in range(-VIRTUAL_WIDTH, VIRTUAL_WIDTH + 1, step):
+            for j in range(-VIRTUAL_WIDTH, VIRTUAL_WIDTH + 1, step):
                 yield Point(np.array([j, i]))
 
     anchor_in_polygon = lambda x: lambda y: point_in_polygon(x, y.points)
@@ -91,7 +90,7 @@ def _generate_anchors(envelopes: list[Envelope], step: int = 20):
 
 def _break_envelopes(envelopes: list[Envelope]) -> list[Envelope]:
     def break_envelope(e: Envelope, s: Segment) -> Envelope:
-        segments = sum(map(curry(break_segment)(s), e.segments), [])
+        segments: list[Segment] = sum(map(curry(break_segment)(s), e.segments), [])
         return Envelope(segments, e.skeleton, e.width)
 
     def break_two_envelopes(e1: Envelope, e2: Envelope) -> tuple[Envelope, Envelope]:
@@ -113,7 +112,7 @@ def _break_envelopes(envelopes: list[Envelope]) -> list[Envelope]:
 
 
 def _union_envelopes(envelopes: list[Envelope]) -> Envelope:
-    segments_to_keep = []
+    segments_to_keep: list[Segment] = []
     skeleton = [e.skeleton[0] for e in envelopes]
     width = envelopes[0].width
 

@@ -36,7 +36,8 @@ def _init() -> Context:
 
 def reset() -> None:
     pr.trace_log(pr.TraceLogLevel.LOG_DEBUG, "GAMELOOP: reset")
-    [x.reset() for x in _context.entities]
+    for x in _context.entities:
+        x.reset()
     _context.camera.target = pr.Vector2(*_context.player.pos)
 
 
@@ -47,7 +48,8 @@ def update(dt: float) -> str:
 def draw() -> None:
     pr.begin_mode_2d(_context.camera)
     for layer in range(2):
-        [x.draw(layer) for x in _context.entities]
+        for x in _context.entities:
+            x.draw(layer)
     pr.end_mode_2d()
 
     if _context.update_state == _update_game_mode:

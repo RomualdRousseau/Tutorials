@@ -9,7 +9,7 @@ from typing import Iterable
 import numpy as np
 import pyray as pr
 
-from tutorial1.constants import VIRTUAL_MARGIN, VIRTUAL_WIDTH
+from tutorial1.constants import VIRTUAL_WIDTH
 from tutorial1.math.geom import (
     Point,
     Segment,
@@ -79,14 +79,14 @@ class SpatialGraph:
                     distances[v] = alt
                     heapq.heappush(unvisited, (alt, v))
 
-        vertice = []
+        vertice: list[SpatialVertex] = []
         u = stop
         while prev.get(u) and u != start:
             vertice = [u, *vertice]
             u = prev[u]
         vertice = [start, *vertice]
 
-        edges = []
+        edges: list[SpatialEdge] = []
         for i in range(len(vertice) - 1):
             edges.append(SpatialEdge(vertice[i], vertice[i + 1]))
 
@@ -101,8 +101,8 @@ class SpatialGraph:
 
 def generate_random(seed: int):
     def generate_vertice(num: int, min: int) -> list[SpatialVertex]:
-        rand = lambda: random.randrange(0, VIRTUAL_WIDTH) + VIRTUAL_MARGIN
-        vertice = []
+        rand = lambda: random.randrange(-VIRTUAL_WIDTH, VIRTUAL_WIDTH)
+        vertice: list[SpatialVertex] = []
         n = 0
 
         is_valid = lambda y: lambda x: distance(x.point, y.point) > min
@@ -115,7 +115,7 @@ def generate_random(seed: int):
         return vertice
 
     def generate_edges(vertice: list[SpatialVertex], num: int, k: int = 3):
-        edges = []
+        edges: list[SpatialEdge] = []
         n = 0
 
         is_valid = lambda y: lambda x: x.segment != y.segment and not intersect(
