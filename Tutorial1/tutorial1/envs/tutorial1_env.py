@@ -7,7 +7,7 @@ from tutorial1.scenes import gameloop
 
 
 class Tutorial1Env(gym.Env):
-    metadata = frozenset({"render_modes": ["human"], "render_fps": FRAME_RATE})  # type: ignore
+    metadata = {"render_modes": ["human"], "render_fps": FRAME_RATE}  # type: ignore # noqa: RUF012
 
     def __init__(self, render_mode=None, size=5):
         self.observation_space = gym.spaces.Dict(
