@@ -2,7 +2,13 @@ import gymnasium as gym
 import numpy as np
 import pyray as pr
 
-from tutorial1.constants import APP_NAME, FRAME_RATE, WINDOW_HEIGHT, WINDOW_WIDTH
+from tutorial1.constants import (
+    APP_NAME,
+    FRAME_RATE,
+    VIRTUAL_WIDTH,
+    WINDOW_HEIGHT,
+    WINDOW_WIDTH,
+)
 from tutorial1.scenes import gameloop
 
 
@@ -13,10 +19,10 @@ class Tutorial1Env(gym.Env):
         self.observation_space = gym.spaces.Dict(
             {
                 "agent_pos": gym.spaces.Box(
-                    0, WINDOW_WIDTH, shape=(2,), dtype=np.float64
+                    -VIRTUAL_WIDTH, VIRTUAL_WIDTH, shape=(2,), dtype=np.float64
                 ),
                 "agent_vel": gym.spaces.Box(
-                    -WINDOW_WIDTH, WINDOW_WIDTH, shape=(2,), dtype=np.float64
+                    -VIRTUAL_WIDTH, VIRTUAL_WIDTH, shape=(2,), dtype=np.float64
                 ),
             }
         )
