@@ -18,8 +18,10 @@ START_OFFSET = 2  # m
 
 
 class Car:
-    def __init__(self, color: pr.Color) -> None:
+    def __init__(self, color: pr.Color, input_mode: str = "human") -> None:
         self.color = color
+        assert input_mode in ("human", "ai")
+        self.input_mode = input_mode
 
     def get_travel_distance_in_km(self) -> float:
         return (
@@ -71,24 +73,13 @@ class Car:
         self._update_sensors()
 
     def update(self, dt: float) -> None:
-        prev_damaged = self.damaged
+        if self.input_mode == "human":
+            self._input_human()
 
-        self._think_gp()
+        prev_damaged = self.damaged
         self._update_physic(dt)
         self._update_sensors()
-
-        match world.get_location(Point(self.pos)):
-            case r if r is not None:
-                if self.current_seg != r[1]:
-                    self.total_distance += r[1].length
-                    self.current_seg = r[1]
-                    self.current_start = (
-                        self.current_seg.start
-                        if distance(Point(self.pos), self.current_seg.start)
-                        < distance(Point(self.pos), self.current_seg.end)
-                        else self.current_seg.end
-                    )
-                self.current_pos = r[0]
+        self._update_localisation()
 
         if (
             self.damaged
@@ -121,15 +112,12 @@ class Car:
             self.color,
         )
 
-    def _think_gp(self) -> None:
+    def _input_human(self) -> None:
         self.turn_wheel(pr.get_gamepad_axis_movement(GAMEPAD_ID, GAMEPAD_AXIS_X) ** 3)
         self.push_throttle(
             -1.0 * pr.get_gamepad_axis_movement(GAMEPAD_ID, GAMEPAD_AXIS_Y) ** 3
         )
 
-    def _think_kb(self) -> None:
-        self.wheel = 0
-        self.throttle = 0
         if pr.is_key_down(pr.KeyboardKey.KEY_RIGHT):
             self.turn_wheel(0.5)
         if pr.is_key_down(pr.KeyboardKey.KEY_LEFT):
@@ -180,3 +168,17 @@ class Car:
         self.camera = world.cast_rays(pos, self.head)
         self.proximity = world.cast_ray(pos, right, world.ROAD_WIDTH)
         self.out_of_track = self.proximity.length > (world.ROAD_WIDTH / 2 - 1)
+
+    def _update_localisation(self) -> None:
+        match world.get_location(Point(self.pos)):
+            case r if r is not None:
+                if self.current_seg != r[1]:
+                    self.total_distance += r[1].length
+                    self.current_seg = r[1]
+                    self.current_start = (
+                        self.current_seg.start
+                        if distance(Point(self.pos), self.current_seg.start)
+                        < distance(Point(self.pos), self.current_seg.end)
+                        else self.current_seg.end
+                    )
+                self.current_pos = r[0]

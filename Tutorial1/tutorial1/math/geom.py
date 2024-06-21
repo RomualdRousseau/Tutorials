@@ -105,14 +105,11 @@ def point_in_polygon(point: Point, polygon: list[Point], strict: bool = True) ->
     for i in range(1, n + 1):
         p2, (p2x, p2y) = polygon[i % n], polygon[i % n].xy
 
-        if strict and point_on_segment(point, Segment(p1, p2)):
-            return False
+        if point_on_segment(point, Segment(p1, p2)):
+            inside = not strict
+            break
 
-        if (
-            min(p1y, p2y) < y <= max(p1y, p2y)
-            and (strict or x < min(p1x, p2x))
-            and x <= max(p1x, p2x)
-        ):
+        if min(p1y, p2y) < y <= max(p1y, p2y) and x <= max(p1x, p2x):
             xinters = np.interp((y - p1y) / (p2y - p1y), [0, 1], [p1x, p2x])
             if p1x == p2x or x < xinters:
                 inside = not inside
@@ -215,5 +212,4 @@ def break_segment(seg1: Segment, seg2: Segment) -> list[Segment]:
     p = intersect(seg1, seg2, False)
     if p is not None and not seg2.start.almost(p) and not seg2.end.almost(p):
         return [Segment(seg2.start, p), Segment(p, seg2.end)]
-    else:
-        return [seg2]
+    return [seg2]

@@ -9,7 +9,7 @@ from tutorial1.constants import (
     WINDOW_HEIGHT,
     WINDOW_WIDTH,
 )
-from tutorial1.scenes import gameloop
+from tutorial1.scenes import trainer
 
 
 class Tutorial1Env(gym.Env):
@@ -36,11 +36,11 @@ class Tutorial1Env(gym.Env):
 
     def reset(self, seed=None, options=None):
         super().reset(seed=seed)
-        gameloop.reset()
+        trainer.reset()
         return self._get_obs(), {}
 
     def step(self, action):
-        gameloop.update(pr.get_frame_time())
+        trainer.update(pr.get_frame_time())
 
         if self.render_mode == "human":
             if not self._gfx_initialized:
@@ -56,8 +56,8 @@ class Tutorial1Env(gym.Env):
 
     def _get_obs(self):
         return {
-            "agent_pos": gameloop._context.player.pos,
-            "agent_vel": gameloop._context.player.vel,
+            "agent_pos": trainer._context.player.pos,
+            "agent_vel": trainer._context.player.vel,
         }
 
     def _gfx_init(self):
@@ -69,7 +69,7 @@ class Tutorial1Env(gym.Env):
 
     def _gfx_render(self):
         pr.begin_drawing()
-        gameloop.draw()
+        trainer.draw()
         pr.end_drawing()
 
     def _gfx_close(self):
