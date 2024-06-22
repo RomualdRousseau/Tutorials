@@ -58,9 +58,7 @@ class Segment:
         rounded: bool = False,
     ):  # pragma: no cover
         if dashed:
-            prx.draw_dashed_line(
-                self.start.to_vec(), self.end.to_vec(), thick, color, dashed, rounded
-            )
+            prx.draw_dashed_line(self.start.to_vec(), self.end.to_vec(), thick, color, dashed, rounded)
         else:
             prx.draw_line(self.start.to_vec(), self.end.to_vec(), thick, color, rounded)
 
@@ -74,10 +72,7 @@ class Segment:
 
     def __eq__(self, other):
         return isinstance(other, Segment) and (
-            self.start == other.start
-            and self.end == other.end
-            or self.end == other.start
-            and self.start == other.end
+            self.start == other.start and self.end == other.end or self.end == other.start and self.start == other.end
         )
 
 
@@ -168,9 +163,7 @@ def intersect(seg1: Segment, seg2: Segment, strict: bool = True) -> Optional[Poi
     return None
 
 
-def collision_circle_segment(
-    center: Point, radius: float, seg: Segment
-) -> Optional[np.ndarray]:
+def collision_circle_segment(center: Point, radius: float, seg: Segment) -> Optional[np.ndarray]:
     u = center.xy - seg.start.xy
     v = seg.end.xy - seg.start.xy
     v_l = np.linalg.norm(v)
@@ -185,9 +178,7 @@ def collision_circle_segment(
     return None
 
 
-def cast_ray_segments(
-    position: Point, direction: np.ndarray, length: float, segments: Iterable[Segment]
-) -> Segment:
+def cast_ray_segments(position: Point, direction: np.ndarray, length: float, segments: Iterable[Segment]) -> Segment:
     target = Point(length * direction + position.xy)
     ray = Segment(position, target)
     map_not_none = curry(filter)(lambda x: x is not None)

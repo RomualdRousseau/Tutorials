@@ -77,9 +77,7 @@ def _init():
             random.choice(["house1", "house2", "house3"]),
         )
         for a in anchors
-        if HOUSE_DISTANCE
-        <= min(map(curry(distance_point_segment)(a), borders.segments))
-        <= TREE_DISTANCE
+        if HOUSE_DISTANCE <= min(map(curry(distance_point_segment)(a), borders.segments)) <= TREE_DISTANCE
         and random.random() < HOUSE_DENSITY
     ]
     trees = [
@@ -98,7 +96,9 @@ def _init():
         and random.random() < TREE_DENSITY
     ]
 
-    corridor = envelope.Envelope([], [], ROAD_WIDTH)
+    start = random.choice(roads.vertice)
+    stop = max(roads.vertice, key=lambda x: distance(start.point, x.point))
+    corridor, _ = envelope.generare_from_spatial_graph(roads.get_shortest_path(start, stop), ROAD_WIDTH)
 
     return World(roads, borders, houses, trees, corridor)
 
@@ -108,13 +108,7 @@ def is_alive() -> bool:
 
 
 def reset() -> None:
-    pr.trace_log(pr.TraceLogLevel.LOG_DEBUG, "WORLD: reset")
-    start = random.choice(_world.roads.vertice)
-    stop = max(_world.roads.vertice, key=lambda x: distance(start.point, x.point))
-    corridor, _ = envelope.generare_from_spatial_graph(
-        _world.roads.get_shortest_path(start, stop), ROAD_WIDTH
-    )
-    _world.corridor = corridor
+    pass
 
 
 def update(dt: float) -> None:

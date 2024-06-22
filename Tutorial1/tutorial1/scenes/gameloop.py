@@ -69,12 +69,8 @@ def _update_free_mode(dt: float) -> str:
         _context.update_state = _update_game_mode
     else:
         if pr.is_mouse_button_down(pr.MouseButton.MOUSE_BUTTON_LEFT):
-            _context.camera.target = pr.vector2_subtract(
-                _context.camera.target, pr.get_mouse_delta()
-            )
-        _context.camera.zoom = max(
-            1, _context.camera.zoom + pr.get_mouse_wheel_move() * 0.5
-        )
+            _context.camera.target = pr.vector2_subtract(_context.camera.target, pr.get_mouse_delta())
+        _context.camera.zoom = max(1, _context.camera.zoom + pr.get_mouse_wheel_move() * 0.5)
     return "gameloop"
 
 
@@ -89,15 +85,10 @@ def _update_game_mode(dt: float) -> str:
         _context.camera.zoom = 0.8 * _context.camera.zoom + 0.2 * (
             max(
                 1,
-                ZOOM_DEFAULT
-                - _context.player.get_speed_in_kmh() * ZOOM_ACCELERATION_COEF,
+                ZOOM_DEFAULT - _context.player.get_speed_in_kmh() * ZOOM_ACCELERATION_COEF,
             )
         )
-        _context.entities = [
-            compose(constant(x))(apply(dt))(x.update)
-            for x in _context.entities
-            if x.is_alive()
-        ]
+        _context.entities = [compose(constant(x))(apply(dt))(x.update) for x in _context.entities if x.is_alive()]
     return "gameloop"
 
 

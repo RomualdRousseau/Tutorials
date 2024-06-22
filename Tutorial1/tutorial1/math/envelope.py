@@ -28,9 +28,7 @@ class Envelope:
         return [s.start for s in self.segments]
 
 
-def generare_from_spatial_graph(
-    agraph: graph.SpatialGraph, width: int
-) -> tuple[Envelope, list[Point]]:
+def generare_from_spatial_graph(agraph: graph.SpatialGraph, width: int) -> tuple[Envelope, list[Point]]:
     pr.trace_log(pr.TraceLogLevel.LOG_INFO, "ENVELOPE: Generate Envelopes")
     envelopes = [_generate_envelope(e, width) for e in agraph.edges]
 
@@ -46,9 +44,7 @@ def generare_from_spatial_graph(
     return envelope, anchors
 
 
-def _generate_envelope(
-    edge: graph.SpatialEdge, width: int, slices: int = 10
-) -> Envelope:
+def _generate_envelope(edge: graph.SpatialEdge, width: int, slices: int = 10) -> Envelope:
     x1, y1 = edge.start.point.xy
     x2, y2 = edge.end.point.xy
     vx, vy = np.array([x2 - x1, y2 - y1]) / np.linalg.norm([x2 - x1, y2 - y1])
@@ -126,11 +122,7 @@ def _union_envelopes(envelopes: list[Envelope]) -> Envelope:
                     filter(lambda x: x != e, envelopes),
                 )
             )
-            if not (
-                inside
-                or s.start.almost(s.end)
-                or any((x.almost(s) for x in segments_to_keep))
-            ):
+            if not (inside or s.start.almost(s.end) or any((x.almost(s) for x in segments_to_keep))):
                 segments_to_keep.append(s)
 
     return Envelope(segments_to_keep, skeleton, width)

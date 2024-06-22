@@ -53,16 +53,12 @@ class SpatialGraph:
     vertice: list[SpatialVertex]
     edges: list[SpatialEdge]
 
-    def get_edges_from_vextex(
-        self, v: SpatialVertex
-    ) -> Iterable[tuple[SpatialEdge, SpatialVertex]]:
+    def get_edges_from_vextex(self, v: SpatialVertex) -> Iterable[tuple[SpatialEdge, SpatialVertex]]:
         is_neighbor = lambda x: x.start == v or x.end == v
         other_vertex = lambda x: (x, x.end if x.start == v else x.start)
         return map(other_vertex, filter(is_neighbor, self.edges))
 
-    def get_shortest_path(
-        self, start: SpatialVertex, stop: SpatialVertex
-    ) -> SpatialGraph:
+    def get_shortest_path(self, start: SpatialVertex, stop: SpatialVertex) -> SpatialGraph:
         weight = lambda x: x[0]
         distances = {x: 0.0 if x == start else np.inf for x in self.vertice}
         unvisited = sorted(((distances[x], x) for x in self.vertice), key=weight)
@@ -118,9 +114,7 @@ def generate_random(seed: int):
         edges: list[SpatialEdge] = []
         n = 0
 
-        is_valid = lambda y: lambda x: x.segment != y.segment and not intersect(
-            x.segment, y.segment
-        )
+        is_valid = lambda y: lambda x: x.segment != y.segment and not intersect(x.segment, y.segment)
 
         while n < num:
             e = generate_edge(vertice, k)

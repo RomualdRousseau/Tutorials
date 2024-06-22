@@ -7,9 +7,7 @@ SCREEN = pr.Rectangle(0, 0, WINDOW_WIDTH - 1, WINDOW_HEIGHT - 1)
 
 def init_gamepad():
     for i in range(5):
-        pr.trace_log(
-            pr.TraceLogLevel.LOG_INFO, f"GAMEPAD: id: {i} - {pr.get_gamepad_name(i)}"
-        )
+        pr.trace_log(pr.TraceLogLevel.LOG_INFO, f"GAMEPAD: id: {i} - {pr.get_gamepad_name(i)}")
 
 
 def draw_text_shadow(text: str, pos: pr.Vector2, font_size: int, color: pr.Color):

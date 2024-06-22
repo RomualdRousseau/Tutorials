@@ -15,24 +15,26 @@ from tutorial1.scenes import trainer
 class Tutorial1Env(gym.Env):
     metadata = {"render_modes": ["human"], "render_fps": FRAME_RATE}  # type: ignore # noqa: RUF012
 
-    def __init__(self, render_mode=None, size=5):
-        self.observation_space = gym.spaces.Dict(
-            {
-                "agent_pos": gym.spaces.Box(
-                    -VIRTUAL_WIDTH, VIRTUAL_WIDTH, shape=(2,), dtype=np.float64
-                ),
-                "agent_vel": gym.spaces.Box(
-                    -VIRTUAL_WIDTH, VIRTUAL_WIDTH, shape=(2,), dtype=np.float64
-                ),
-            }
-        )
-
-        self.action_space = gym.spaces.Box(-1, 1, shape=(2,), dtype=np.float64)
-
+    def __init__(self, render_mode=None, agent_count=10):
         assert render_mode is None or render_mode in self.metadata["render_modes"]
         self.render_mode = render_mode
+        self.agent_count = agent_count
 
         self._gfx_initialized = False
+
+        self.observation_space = gym.spaces.Sequence(
+            gym.spaces.Dict(
+                {
+                    "agent_pos": gym.spaces.Box(-VIRTUAL_WIDTH, VIRTUAL_WIDTH, shape=(2,), dtype=np.float64),
+                    "agent_vel": gym.spaces.Box(-VIRTUAL_WIDTH, VIRTUAL_WIDTH, shape=(2,), dtype=np.float64),
+                }
+            )
+        )
+
+        self.action_space = gym.spaces.Box(-1, 1, shape=(agent_count, 2), dtype=np.float64)
+
+        for _ in range(agent_count):
+            trainer.add_agent()
 
     def reset(self, seed=None, options=None):
         super().reset(seed=seed)
@@ -40,7 +42,14 @@ class Tutorial1Env(gym.Env):
         return self._get_obs(), {}
 
     def step(self, action):
+        for i, agent in enumerate(trainer.get_agents()):
+            throttle, wheel = action[i]
+            agent.push_throttle(throttle)
+            agent.turn_wheel(wheel)
+
         trainer.update(pr.get_frame_time())
+
+        terminated = trainer._context.best_car is None
 
         if self.render_mode == "human":
             if not self._gfx_initialized:
@@ -48,17 +57,20 @@ class Tutorial1Env(gym.Env):
                 self._gfx_initialized = True
             self._gfx_render()
 
-        return self._get_obs(), 0, False, False, {}
+        return self._get_obs(), 0, terminated, False, {}
 
     def close(self):
         if self.render_mode == "human" and self._gfx_initialized:
             self._gfx_close()
 
     def _get_obs(self):
-        return {
-            "agent_pos": trainer._context.player.pos,
-            "agent_vel": trainer._context.player.vel,
-        }
+        return [
+            {
+                "agent_pos": x.pos,
+                "agent_vel": x.vel,
+            }
+            for x in trainer.get_agents()
+        ]
 
     def _gfx_init(self):
         pr.set_config_flags(pr.ConfigFlags.FLAG_MSAA_4X_HINT)

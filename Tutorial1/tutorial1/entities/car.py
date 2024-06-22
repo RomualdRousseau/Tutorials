@@ -24,31 +24,25 @@ class Car:
         self.input_mode = input_mode
 
     def get_travel_distance_in_km(self) -> float:
-        return (
-            self.total_distance + distance(self.current_start, self.current_pos)
-        ) * 0.001
+        return (self.total_distance + distance(self.current_start, self.current_pos)) * 0.001
 
     def get_speed_in_kmh(self) -> float:
         return float(np.linalg.norm(self.vel) * 3.6)
 
     def turn_wheel(self, torque: float) -> None:
-        self.wheel = float(
-            np.interp(torque, [-1, 1], [-WHEEL_ANGLE_RATE, WHEEL_ANGLE_RATE])
-        )
+        self.wheel = float(np.interp(torque, [-1, 1], [-WHEEL_ANGLE_RATE, WHEEL_ANGLE_RATE]))
 
     def push_throttle(self, power: float) -> None:
         self.throttle = MAX_ENGINE_POWER * 1000 * power
 
     def is_alive(self) -> bool:
-        return True
+        return not self.damaged and not self.out_of_track
 
     def reset(self) -> None:
         pr.trace_log(pr.TraceLogLevel.LOG_DEBUG, "CAR: reset")
 
         start_seg = world._world.corridor.skeleton[0]
-        start_pos, end_pos = (
-            start_seg.start.xy + start_seg.end.xy
-        ) * 0.5, start_seg.end.xy
+        start_pos, end_pos = (start_seg.start.xy + start_seg.end.xy) * 0.5, start_seg.end.xy
         start_dir = (end_pos - start_pos) / np.linalg.norm(end_pos - start_pos)
         start_off = np.array([-start_dir[1], start_dir[0]]) * START_OFFSET
 
@@ -59,13 +53,13 @@ class Car:
         self.wheel = 0
         self.throttle = 0
         self.damaged = False
+        self.out_of_track = False
 
         self.total_distance = 0
         self.current_seg = start_seg
         self.current_start = (
             self.current_seg.start
-            if distance(Point(self.pos), self.current_seg.start)
-            < distance(Point(self.pos), self.current_seg.end)
+            if distance(Point(self.pos), self.current_seg.start) < distance(Point(self.pos), self.current_seg.end)
             else self.current_seg.end
         )
         self.current_pos = self.current_start
@@ -81,11 +75,7 @@ class Car:
         self._update_sensors()
         self._update_localisation()
 
-        if (
-            self.damaged
-            and not prev_damaged
-            and not pr.is_sound_playing(res.load_sound("crash"))
-        ):
+        if self.damaged and not prev_damaged and not pr.is_sound_playing(res.load_sound("crash")):
             pr.play_sound(res.load_sound("crash"))
 
         if self.out_of_track and not pr.is_sound_playing(res.load_sound("klaxon")):
@@ -95,12 +85,13 @@ class Car:
         if layer != 0:
             return
 
-        color = pr.YELLOW if not self.out_of_track else pr.RED
-        for ray in self.camera:
-            pr.draw_line_v(ray.start.to_vec(), ray.end.to_vec(), color)  # type: ignore
-        pr.draw_line_v(self.proximity.start.to_vec(), self.proximity.end.to_vec(), color)  # type: ignore
-        pr.draw_line_v(self.current_start.to_vec(), self.current_pos.to_vec(), color)  # type: ignore
-        pr.draw_circle_v(self.current_pos.to_vec(), 1, color)  # type: ignore
+        if self.input_mode == "human":
+            color = pr.YELLOW if not self.out_of_track else pr.RED
+            for ray in self.camera:
+                pr.draw_line_v(ray.start.to_vec(), ray.end.to_vec(), color)  # type: ignore
+            pr.draw_line_v(self.proximity.start.to_vec(), self.proximity.end.to_vec(), color)  # type: ignore
+            pr.draw_line_v(self.current_start.to_vec(), self.current_pos.to_vec(), color)  # type: ignore
+            pr.draw_circle_v(self.current_pos.to_vec(), 1, color)  # type: ignore
 
         tex = res.load_texture("car")
         pr.draw_texture_pro(
@@ -114,9 +105,7 @@ class Car:
 
     def _input_human(self) -> None:
         self.turn_wheel(pr.get_gamepad_axis_movement(GAMEPAD_ID, GAMEPAD_AXIS_X) ** 3)
-        self.push_throttle(
-            -1.0 * pr.get_gamepad_axis_movement(GAMEPAD_ID, GAMEPAD_AXIS_Y) ** 3
-        )
+        self.push_throttle(-1.0 * pr.get_gamepad_axis_movement(GAMEPAD_ID, GAMEPAD_AXIS_Y) ** 3)
 
         if pr.is_key_down(pr.KeyboardKey.KEY_RIGHT):
             self.turn_wheel(0.5)
