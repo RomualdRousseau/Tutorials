@@ -37,6 +37,8 @@ TREE_DENSITY = 0.5
 TREE_DISTANCE = 25
 TREE_RANDOM = 5  # m
 
+RAY_MAX_LEN = 50
+
 
 @dataclass
 class House:
@@ -179,7 +181,7 @@ def get_nearest_segments(position: Point, length: float = 50) -> list[Segment]:
 def cast_ray(
     position: Point,
     direction: np.ndarray,
-    length: float = 50,
+    length: float = RAY_MAX_LEN,
 ) -> Segment:
     nearest_segments = get_nearest_segments(position, length)
     return cast_ray_segments(position, direction, length, nearest_segments)
@@ -188,9 +190,9 @@ def cast_ray(
 def cast_rays(
     position: Point,
     direction: np.ndarray,
-    length: float = 50,
+    length: float = RAY_MAX_LEN,
     sampling: int = 10,
-):
+) -> list[Segment]:
     rays = []
     alpha = np.arctan2(direction[1], direction[0])
     nearest_segments = get_nearest_segments(position, length)

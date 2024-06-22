@@ -8,6 +8,7 @@ from tutorial1.constants import WINDOW_HEIGHT, WINDOW_WIDTH
 from tutorial1.entities import car, world
 from tutorial1.util.types import Entity
 
+BEST_CAR_COLOR = pr.Color(255, 255, 255, 255)
 CAR_COLOR = pr.Color(255, 255, 255, 64)
 ZOOM_DEFAULT = 20
 ZOOM_ACCELERATION_COEF = 0.1
@@ -32,12 +33,12 @@ def _init() -> Context:
     return Context([], [world], camera, None, _update_camera_game_mode)
 
 
+def add_agents(agent_count: int) -> None:
+    _context.cars = [car.Car(CAR_COLOR, input_mode="ai") for _ in range(agent_count)]
+
+
 def get_agents() -> list[car.Car]:
     return _context.cars
-
-
-def add_agent() -> None:
-    _context.cars += [car.Car(CAR_COLOR, input_mode="ai")]
 
 
 def reset() -> None:
@@ -51,7 +52,9 @@ def update(dt: float) -> str:
         x.update(dt)
 
     _context.entities = [x for x in _context.entities if x.is_alive()]
+    _context.cars = sorted(_context.cars, key=lambda x: x.get_travel_distance_in_km(), reverse=True)
     _context.best_car = next((x for x in _context.cars if x.is_alive()), None)
+
     _context.update_camera()
 
     return "trainer"
@@ -62,7 +65,7 @@ def draw() -> None:
     for layer in range(2):
         for x in _context.entities:
             if isinstance(x, car.Car):
-                x.color.a = 255 if x is _context.best_car else CAR_COLOR.a
+                x.color = BEST_CAR_COLOR if x is _context.best_car else CAR_COLOR
             x.draw(layer)
     pr.end_mode_2d()
 

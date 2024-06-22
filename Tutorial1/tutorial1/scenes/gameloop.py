@@ -6,7 +6,6 @@ import pyray as pr
 import tutorial1.util.pyray_ex as prx
 from tutorial1.constants import WINDOW_HEIGHT, WINDOW_WIDTH
 from tutorial1.entities import car, world
-from tutorial1.util.funcs import apply, compose, constant
 from tutorial1.util.types import Entity
 
 CAR_COLOR = pr.Color(255, 255, 255, 255)
@@ -71,10 +70,14 @@ def _update_free_mode(dt: float) -> str:
         if pr.is_mouse_button_down(pr.MouseButton.MOUSE_BUTTON_LEFT):
             _context.camera.target = pr.vector2_subtract(_context.camera.target, pr.get_mouse_delta())
         _context.camera.zoom = max(1, _context.camera.zoom + pr.get_mouse_wheel_move() * 0.5)
+
     return "gameloop"
 
 
 def _update_game_mode(dt: float) -> str:
+    for x in _context.entities:
+        x.update(dt)
+
     if pr.is_mouse_button_pressed(pr.MouseButton.MOUSE_BUTTON_RIGHT):
         pr.set_mouse_cursor(pr.MouseCursor.MOUSE_CURSOR_RESIZE_ALL)
         pr.show_cursor()
@@ -88,7 +91,7 @@ def _update_game_mode(dt: float) -> str:
                 ZOOM_DEFAULT - _context.player.get_speed_in_kmh() * ZOOM_ACCELERATION_COEF,
             )
         )
-        _context.entities = [compose(constant(x))(apply(dt))(x.update) for x in _context.entities if x.is_alive()]
+
     return "gameloop"
 
 

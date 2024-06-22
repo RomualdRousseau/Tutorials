@@ -9,6 +9,8 @@ from tutorial1.constants import (
     WINDOW_HEIGHT,
     WINDOW_WIDTH,
 )
+from tutorial1.entities import car
+from tutorial1.entities.world import RAY_MAX_LEN
 from tutorial1.scenes import trainer
 
 
@@ -26,15 +28,15 @@ class Tutorial1Env(gym.Env):
             gym.spaces.Dict(
                 {
                     "agent_pos": gym.spaces.Box(-VIRTUAL_WIDTH, VIRTUAL_WIDTH, shape=(2,), dtype=np.float64),
-                    "agent_vel": gym.spaces.Box(-VIRTUAL_WIDTH, VIRTUAL_WIDTH, shape=(2,), dtype=np.float64),
+                    "agent_vel": gym.spaces.Box(-1, 1, shape=(1,), dtype=np.float64),
+                    "agent_cam": gym.spaces.Box(0, 1, shape=(10,), dtype=np.float64),
                 }
             )
         )
 
         self.action_space = gym.spaces.Box(-1, 1, shape=(agent_count, 2), dtype=np.float64)
 
-        for _ in range(agent_count):
-            trainer.add_agent()
+        trainer.add_agents(agent_count)
 
     def reset(self, seed=None, options=None):
         super().reset(seed=seed)
@@ -59,18 +61,19 @@ class Tutorial1Env(gym.Env):
 
         return self._get_obs(), 0, terminated, False, {}
 
+    def _get_obs(self):
+        def get_agent_obs(agent: car.Car):
+            return {
+                "agent_pos": agent.pos,
+                "agent_vel": agent.get_speed_in_kmh() / car.MAX_SPEED,
+                "agent_cam": [1 - x.length / RAY_MAX_LEN for x in agent.camera],
+            }
+
+        return [get_agent_obs(x) for x in trainer.get_agents()]
+
     def close(self):
         if self.render_mode == "human" and self._gfx_initialized:
             self._gfx_close()
-
-    def _get_obs(self):
-        return [
-            {
-                "agent_pos": x.pos,
-                "agent_vel": x.vel,
-            }
-            for x in trainer.get_agents()
-        ]
 
     def _gfx_init(self):
         pr.set_config_flags(pr.ConfigFlags.FLAG_MSAA_4X_HINT)

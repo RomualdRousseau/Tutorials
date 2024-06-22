@@ -11,6 +11,7 @@ LENGTH = 5  # m
 WIDTH = 2  # m
 WHEEL_ANGLE_RATE = np.pi / 100  # rad
 MAX_ENGINE_POWER = 200  # kN
+MAX_SPEED = 125  # km.h-1
 DRAG_ROAD = 0.9  # Concrete/Rubber
 DRAG_ROLLING = 0.01  # Concrete/Rubber
 C_G = 9.81  # m.s-2
