@@ -48,13 +48,14 @@ def reset() -> None:
 
 
 def update(dt: float) -> str:
+    best_score = lambda x: x.get_travel_distance_in_km() if x else 0
+    keep_alives = lambda x: filter(lambda y: y and y.is_alive(), x)
+
     for x in _context.entities:
         x.update(dt)
 
-    _context.entities = [x for x in _context.entities if x.is_alive()]
-    _context.cars = sorted(_context.cars, key=lambda x: x.get_travel_distance_in_km(), reverse=True)
-    _context.best_car = next((x for x in _context.cars if x.is_alive()), None)
-
+    _context.entities = list(keep_alives(_context.entities))
+    _context.best_car = max(keep_alives(_context.cars), key=best_score, default=None)
     _context.update_camera()
 
     return "trainer"
