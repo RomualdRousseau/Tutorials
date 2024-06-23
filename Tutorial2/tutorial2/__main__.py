@@ -1,8 +1,19 @@
 import gymnasium as gym
 
+import tutorial2.pyflow as pf
+
+
+def get_agent_model():
+    return pf.GeneticModel(
+        [
+            pf.GeneticDense(11, 64, activation="tanh", kernel_initializer="gorot"),
+            pf.GeneticDense(64, 2, activation="tanh", kernel_initializer="gorot"),
+        ]
+    )
+
 
 def main():
-    env = gym.make("tutorial1/Tutorial1-v1", render_mode="human")
+    env = gym.make("tutorial1/Tutorial1-v1", render_mode="human", agent_count=5)
 
     observation, info = env.reset()
 

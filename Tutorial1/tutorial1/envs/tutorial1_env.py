@@ -24,15 +24,14 @@ class Tutorial1Env(gym.Env):
 
         self._gfx_initialized = False
 
-        self.observation_space = gym.spaces.Sequence(
-            gym.spaces.Dict(
-                {
-                    "agent_pos": gym.spaces.Box(-VIRTUAL_WIDTH, VIRTUAL_WIDTH, shape=(2,), dtype=np.float64),
-                    "agent_vel": gym.spaces.Box(-1, 1, shape=(1,), dtype=np.float64),
-                    "agent_cam": gym.spaces.Box(0, 1, shape=(10,), dtype=np.float64),
-                }
-            )
+        agent_space = gym.spaces.Dict(
+            {
+                "agent_pos": gym.spaces.Box(-VIRTUAL_WIDTH, VIRTUAL_WIDTH, shape=(2,), dtype=np.float64),
+                "agent_vel": gym.spaces.Box(-1, 1, shape=(1,), dtype=np.float64),
+                "agent_cam": gym.spaces.Box(0, 1, shape=(10,), dtype=np.float64),
+            }
         )
+        self.observation_space = gym.spaces.Sequence(agent_space)
 
         self.action_space = gym.spaces.Box(-1, 1, shape=(agent_count, 2), dtype=np.float64)
 
@@ -65,8 +64,8 @@ class Tutorial1Env(gym.Env):
         def get_agent_obs(agent: car.Car):
             return {
                 "agent_pos": agent.pos,
-                "agent_vel": agent.get_speed_in_kmh() / car.MAX_SPEED,
-                "agent_cam": [1 - x.length / RAY_MAX_LEN for x in agent.camera],
+                "agent_vel": np.array([agent.get_speed_in_kmh() / car.MAX_SPEED]),
+                "agent_cam": np.array([1 - x.length / RAY_MAX_LEN for x in agent.camera]),
             }
 
         return [get_agent_obs(x) for x in trainer.get_agents()]

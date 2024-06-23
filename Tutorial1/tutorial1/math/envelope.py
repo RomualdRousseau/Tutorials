@@ -14,6 +14,7 @@ from tutorial1.math.geom import (
     point_in_polygon,
     points_to_segments,
 )
+from tutorial1.math.linalg import normalize
 from tutorial1.util.funcs import curry
 
 
@@ -47,7 +48,7 @@ def generare_from_spatial_graph(agraph: graph.SpatialGraph, width: int) -> tuple
 def _generate_envelope(edge: graph.SpatialEdge, width: int, slices: int = 10) -> Envelope:
     x1, y1 = edge.start.point.xy
     x2, y2 = edge.end.point.xy
-    vx, vy = np.array([x2 - x1, y2 - y1]) / np.linalg.norm([x2 - x1, y2 - y1])
+    vx, vy = normalize(np.array([x2 - x1, y2 - y1]))
 
     points = []
     points.append(Point(np.array([x1 - vy * width * 0.5, y1 + vx * width * 0.5])))
@@ -79,8 +80,8 @@ def _generate_anchors(envelopes: list[Envelope], step: int = 20):
             for j in range(-VIRTUAL_WIDTH, VIRTUAL_WIDTH + 1, step):
                 yield Point(np.array([j, i]))
 
-    anchor_in_polygon = lambda x: lambda y: point_in_polygon(x, y.points)
-    anchor_in_polygons = lambda x: not any(map(anchor_in_polygon(x), envelopes))
+    anchor_in_polygon = lambda x, y: point_in_polygon(x, y.points)
+    anchor_in_polygons = lambda x: not any(map(curry(anchor_in_polygon)(x), envelopes))
     return list(filter(anchor_in_polygons, anchors()))
 
 
@@ -99,11 +100,11 @@ def _break_envelopes(envelopes: list[Envelope]) -> list[Envelope]:
     n = len(envelopes)
 
     for i in range(n):
-        head, tail = result[i], []
+        head, acc = result[i], []
         for j in range(i + 1, n):
-            head, other = break_two_envelopes(head, result[j])
-            tail.append(other)
-        result = result[:i] + [head] + tail
+            head, tail = break_two_envelopes(head, result[j])
+            acc.append(tail)
+        result = [*result[:i], head, *acc]
     return result
 
 

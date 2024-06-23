@@ -10,6 +10,7 @@ from tutorial1.math.geom import (
     point_in_polygon,
     point_on_segment,
 )
+from tutorial1.math.linalg import almost
 
 
 def test_point_to_vector2():
@@ -118,7 +119,7 @@ def test_point_distance_with_segment():
     b = Point(np.array([2, 2]))
     c = Point(np.array([1, 2]))
     e = Segment(a, b)
-    assert distance_point_segment(c, e) == np.sqrt(2) / 2
+    assert almost(distance_point_segment(c, e), np.sqrt(2) / 2)
 
 
 def test_point_distance_out_of_segment():
@@ -134,7 +135,9 @@ def test_point_nearest_with_segment():
     b = Point(np.array([2, 2]))
     c = Point(np.array([1, 2]))
     e = Segment(a, b)
-    assert nearest_point_segment(c, e) == Point(np.array([1.5, 1.5]))
+    x = nearest_point_segment(c, e)
+    assert x is not None
+    assert x.almost(Point(np.array([1.5, 1.5])))
 
 
 def test_point_nearest_out_of_segment():

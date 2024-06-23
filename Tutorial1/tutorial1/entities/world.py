@@ -175,7 +175,7 @@ def get_nearest_segments(position: Point, length: float = 50) -> list[Segment]:
         or distance(position, x.start) < length
         or distance(position, x.end) < length
     )
-    return list(filter(nearest, _world.corridor.segments))
+    return [x for x in _world.corridor.segments if nearest(x)]
 
 
 def cast_ray(

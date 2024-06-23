@@ -5,6 +5,7 @@ import tutorial1.resources as res
 from tutorial1.constants import GAMEPAD_AXIS_X, GAMEPAD_AXIS_Y, GAMEPAD_ID
 from tutorial1.entities import world
 from tutorial1.math.geom import Point, distance
+from tutorial1.math.linalg import normalize
 
 MASS = 650  # kg
 LENGTH = 5  # m
@@ -44,7 +45,7 @@ class Car:
 
         start_seg = world._world.corridor.skeleton[0]
         start_pos, end_pos = (start_seg.start.xy + start_seg.end.xy) * 0.5, start_seg.end.xy
-        start_dir = (end_pos - start_pos) / np.linalg.norm(end_pos - start_pos)
+        start_dir = normalize(end_pos - start_pos)
         start_off = np.array([-start_dir[1], start_dir[0]]) * START_OFFSET
 
         self.pos = start_pos + start_off
@@ -58,11 +59,7 @@ class Car:
 
         self.total_distance = 0
         self.current_seg = start_seg
-        self.current_start = (
-            self.current_seg.start
-            if distance(Point(self.pos), self.current_seg.start) < distance(Point(self.pos), self.current_seg.end)
-            else self.current_seg.end
-        )
+        self.current_start = self.current_seg.closest_ep(Point(self.pos))
         self.current_pos = self.current_start
 
         self._update_sensors()
@@ -147,7 +144,7 @@ class Car:
             case v if v is not None:
                 self.vel = self.vel * 0.5 + v
                 self.pos += v
-                self.head = self.vel / np.linalg.norm(self.vel)
+                self.head = normalize(self.vel)
                 self.damaged = True
             case _:
                 self.damaged = False
@@ -161,14 +158,10 @@ class Car:
 
     def _update_localisation(self) -> None:
         match world.get_location(Point(self.pos)):
-            case r if r is not None:
-                if self.current_seg != r[1]:
-                    self.total_distance += r[1].length
-                    self.current_seg = r[1]
-                    self.current_start = (
-                        self.current_seg.start
-                        if distance(Point(self.pos), self.current_seg.start)
-                        < distance(Point(self.pos), self.current_seg.end)
-                        else self.current_seg.end
-                    )
-                self.current_pos = r[0]
+            case loc if loc is not None:
+                pos, seg = loc
+                if self.current_seg != seg:
+                    self.current_seg = seg
+                    self.total_distance += self.current_seg.length
+                    self.current_start = self.current_seg.closest_ep(pos)
+                self.current_pos = pos

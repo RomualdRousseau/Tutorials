@@ -8,6 +8,7 @@ import numpy as np
 import pyray as pr
 
 import tutorial1.util.pyray_ex as prx
+from tutorial1.math.linalg import EPS, almost
 from tutorial1.util.funcs import curry
 
 
@@ -22,7 +23,7 @@ class Point:
         return pr.Vector2(*self.xy)
 
     def almost(self, other: Point, eps=0.0001):
-        return np.allclose(self.xy, other.xy, 0, eps)
+        return almost(self.xy, other.xy, eps)
 
     def __eq__(self, other):
         return isinstance(other, Point) and np.all(self.xy == other.xy)
@@ -61,6 +62,9 @@ class Segment:
             prx.draw_dashed_line(self.start.to_vec(), self.end.to_vec(), thick, color, dashed, rounded)
         else:
             prx.draw_line(self.start.to_vec(), self.end.to_vec(), thick, color, rounded)
+
+    def closest_ep(self, p: Point):
+        return self.start if distance(p, self.start) < distance(p, self.end) else self.end
 
     def almost(self, other: Segment, eps=0.0001):
         return (
@@ -117,7 +121,7 @@ def distance_point_segment(p: Point, seg: Segment) -> float:
     u = p.xy - seg.start.xy
     v = seg.end.xy - seg.start.xy
     v_l = np.linalg.norm(v)
-    v = v / v_l
+    v = v / (v_l + EPS)
     match np.dot(u, v):
         case x if 0 <= x <= v_l:
             x = seg.start.xy + v * x
@@ -129,7 +133,7 @@ def nearest_point_segment(p: Point, seg: Segment) -> Optional[Point]:
     u = p.xy - seg.start.xy
     v = seg.end.xy - seg.start.xy
     v_l = np.linalg.norm(v)
-    v = v / v_l
+    v = v / (v_l + EPS)
     match np.dot(u, v):
         case x if 0 <= x <= v_l:
             return Point(seg.start.xy + v * x)
@@ -167,14 +171,14 @@ def collision_circle_segment(center: Point, radius: float, seg: Segment) -> Opti
     u = center.xy - seg.start.xy
     v = seg.end.xy - seg.start.xy
     v_l = np.linalg.norm(v)
-    v = v / v_l
+    v = v / (v_l + EPS)
     match np.dot(u, v):
         case x if 0 <= x <= v_l:
             x = seg.start.xy + v * x
             w = center.xy - x
             match float(np.linalg.norm(w)):
-                case w_d if w_d <= radius:
-                    return w * (radius - w_d) / w_d
+                case w_l if w_l <= radius:
+                    return w * (radius - w_l) / (w_l + EPS)
     return None
 
 
