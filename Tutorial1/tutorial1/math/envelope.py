@@ -3,7 +3,7 @@ from functools import reduce
 from typing import Iterable
 
 import numpy as np
-import pyray as pr
+from tqdm import tqdm, trange
 
 from tutorial1.constants import VIRTUAL_WIDTH
 from tutorial1.math import graph
@@ -30,17 +30,18 @@ class Envelope:
 
 
 def generare_from_spatial_graph(agraph: graph.SpatialGraph, width: int) -> tuple[Envelope, list[Point]]:
-    pr.trace_log(pr.TraceLogLevel.LOG_INFO, "ENVELOPE: Generate Envelopes")
-    envelopes = [_generate_envelope(e, width) for e in agraph.edges]
+    with tqdm(total=4, desc="Generating envelope", ncols=80) as pbar:
+        envelopes = [_generate_envelope(e, width) for e in agraph.edges]
+        pbar.update(1)
 
-    pr.trace_log(pr.TraceLogLevel.LOG_INFO, "ENVELOPE: Generate Anchors")
-    anchors = _generate_anchors(envelopes)
+        anchors = _generate_anchors(envelopes)
+        pbar.update(1)
 
-    pr.trace_log(pr.TraceLogLevel.LOG_INFO, "ENVELOPE: Break Envelopes")
-    envelopes = _break_envelopes(envelopes)
+        envelopes = _break_envelopes(envelopes)
+        pbar.update(1)
 
-    pr.trace_log(pr.TraceLogLevel.LOG_INFO, "ENVELOPE: Union Envelopes")
-    envelope = _union_envelopes(envelopes)
+        envelope = _union_envelopes(envelopes)
+        pbar.update(1)
 
     return envelope, anchors
 
@@ -82,7 +83,7 @@ def _generate_anchors(envelopes: list[Envelope], step: int = 20):
 
     anchor_in_polygon = lambda x, y: point_in_polygon(x, y.points)
     anchor_in_polygons = lambda x: not any(map(curry(anchor_in_polygon)(x), envelopes))
-    return list(filter(anchor_in_polygons, anchors()))
+    return [x for x in anchors() if anchor_in_polygons(x)]
 
 
 def _break_envelopes(envelopes: list[Envelope]) -> list[Envelope]:
@@ -99,7 +100,7 @@ def _break_envelopes(envelopes: list[Envelope]) -> list[Envelope]:
     result = envelopes
     n = len(envelopes)
 
-    for i in range(n):
+    for i in trange(n, desc="Break", ncols=80):
         head, acc = result[i], []
         for j in range(i + 1, n):
             head, tail = break_two_envelopes(head, result[j])
@@ -115,7 +116,7 @@ def _union_envelopes(envelopes: list[Envelope]) -> Envelope:
 
     segment_in_polygon = lambda y: lambda x: point_in_polygon(y.middle, x.points)
 
-    for e in envelopes:
+    for e in tqdm(envelopes, desc="Union", ncols=80):
         for s in e.segments:
             inside = any(
                 map(

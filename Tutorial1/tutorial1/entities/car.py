@@ -37,13 +37,10 @@ class Car:
     def push_throttle(self, power: float) -> None:
         self.throttle = MAX_ENGINE_POWER * 1000 * power
 
-    def is_alive(self) -> bool:
-        return not self.damaged and not self.out_of_track
-
     def reset(self) -> None:
         pr.trace_log(pr.TraceLogLevel.LOG_DEBUG, "CAR: reset")
 
-        start_seg = world._world.corridor.skeleton[0]
+        start_seg = world.get_corridor().skeleton[0]
         start_pos, end_pos = (start_seg.start.xy + start_seg.end.xy) * 0.5, start_seg.end.xy
         start_dir = normalize(end_pos - start_pos)
         start_off = np.array([-start_dir[1], start_dir[0]]) * START_OFFSET
@@ -52,14 +49,17 @@ class Car:
         self.vel = np.array([0.0, 0.0])
         self.head = start_dir
 
-        self.wheel = 0
-        self.throttle = 0
+        self.wheel = 0.0
+        self.throttle = 0.0
         self.damaged = False
         self.out_of_track = False
 
-        self.total_distance = 0
+        self.total_distance = 0.0
+        self.total_velocity = 0.0
+        self.total_time = 0.0
+
         self.current_seg = start_seg
-        self.current_start = self.current_seg.closest_ep(Point(self.pos))
+        self.current_start = start_seg.start
         self.current_pos = self.current_start
 
         self._update_sensors()
@@ -68,16 +68,14 @@ class Car:
         if self.input_mode == "human":
             self._input_human()
 
-        prev_damaged = self.damaged
         self._update_physic(dt)
         self._update_sensors()
-        self._update_localisation()
 
-        if self.damaged and not prev_damaged and not pr.is_sound_playing(res.load_sound("crash")):
-            pr.play_sound(res.load_sound("crash"))
+        # if self.damaged and not prev_damaged and not pr.is_sound_playing(res.load_sound("crash")):
+        #     pr.play_sound(res.load_sound("crash"))
 
-        if self.out_of_track and not pr.is_sound_playing(res.load_sound("klaxon")):
-            pr.play_sound(res.load_sound("klaxon"))
+        # if self.out_of_track and not pr.is_sound_playing(res.load_sound("klaxon")):
+        #     pr.play_sound(res.load_sound("klaxon"))
 
     def draw(self, layer: int) -> None:
         if layer != 0:
@@ -149,14 +147,8 @@ class Car:
             case _:
                 self.damaged = False
 
-    def _update_sensors(self) -> None:
-        pos = Point(self.pos)
-        right = np.array([-self.head[1], self.head[0]])
-        self.camera = world.cast_rays(pos, self.head)
-        self.proximity = world.cast_ray(pos, right, world.ROAD_WIDTH)
-        self.out_of_track = self.proximity.length > (world.ROAD_WIDTH / 2 - 1)
+        # Localisation
 
-    def _update_localisation(self) -> None:
         match world.get_location(Point(self.pos)):
             case loc if loc is not None:
                 pos, seg = loc
@@ -165,3 +157,13 @@ class Car:
                     self.total_distance += self.current_seg.length
                     self.current_start = self.current_seg.closest_ep(pos)
                 self.current_pos = pos
+
+        self.total_time += dt
+        self.total_velocity += float(np.linalg.norm(self.vel))
+
+    def _update_sensors(self) -> None:
+        pos = Point(self.pos)
+        right = np.array([-self.head[1], self.head[0]])
+        self.camera = world.cast_rays(pos, self.head)
+        self.proximity = world.cast_ray(pos, right, world.ROAD_WIDTH)
+        self.out_of_track = self.proximity.length > (world.ROAD_WIDTH / 2 - 1)

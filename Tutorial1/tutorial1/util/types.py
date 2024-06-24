@@ -13,9 +13,6 @@ class Scene(Protocol):
 
 
 class Entity(Protocol):
-    def is_alive(self) -> bool:
-        ...
-
     def reset(self) -> None:
         ...
 

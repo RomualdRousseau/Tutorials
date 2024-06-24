@@ -158,3 +158,6 @@ cython_debug/
 
 # VSCode
 .vscode/
+
+# Models
+agent_model.json

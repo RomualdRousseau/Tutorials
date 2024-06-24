@@ -2,7 +2,8 @@ from __future__ import annotations
 
 import copy
 import json
-from typing import Optional, Protocol, Union
+from typing import Optional, Protocol
+
 import numpy as np
 
 from tutorial2.pyflow.functions import __functions__
@@ -17,7 +18,7 @@ class Params:
         self,
         shape: tuple[int, int],
         initializer: str = "zeros",
-        data=Optional[np.ndarray],
+        data: Optional[np.ndarray] = None,
     ) -> None:
         if data is None:
             init_func = __functions__[initializer]["func"]
@@ -29,7 +30,6 @@ class Params:
                 ]
             )
         self.data = data
-        self.shape = data.shape
 
     def __getitem__(self, idx: int) -> np.ndarray:
         return self.data[idx]
@@ -53,9 +53,11 @@ class Params:
 
 
 class Trainable(Protocol):
-    def call(self, x: np.ndarray, **kargs) -> np.ndarray: ...
+    def call(self, x: np.ndarray, **kargs) -> np.ndarray:
+        ...
 
-    def gradient(self, **kargs) -> tuple[np.ndarray, np.ndarray]: ...
+    def gradient(self, **kargs) -> tuple[np.ndarray, np.ndarray]:
+        ...
 
 
 class Layer:
@@ -68,10 +70,10 @@ class Layer:
         self.B = B
 
     def call(self, x: np.ndarray, **kargs) -> np.ndarray:
-        raise NotImplemented
+        raise NotImplementedError
 
     def gradient(self, **kargs) -> tuple[np.ndarray, np.ndarray]:
-        raise NotImplemented
+        raise NotImplementedError
 
     def update_weights(self, dW: np.ndarray) -> None:
         self.W[0] = self.W[0] + dW[0]
@@ -128,16 +130,16 @@ class Model:
         self.write_mask = [True] * len(layers) if write_mask is None else write_mask
 
     def compile(self, **kargs) -> None:
-        raise NotImplemented
+        raise NotImplementedError
 
     def fit(self, x: np.ndarray, y: np.ndarray, **kargs) -> dict[str, np.ndarray]:
-        raise NotImplemented
+        raise NotImplementedError
 
     def evaluate(self, x: np.ndarray) -> tuple[dict[str, np.ndarray], np.ndarray]:
-        raise NotImplemented
+        raise NotImplementedError
 
     def predict(self, x: np.ndarray) -> np.ndarray:
-        raise NotImplemented
+        raise NotImplementedError
 
     def clone(self) -> Model:
         cloned = copy.copy(self)

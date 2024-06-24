@@ -7,7 +7,6 @@ import numpy as np
 import pyray as pr
 
 import tutorial1.resources as res
-from tutorial1.constants import GAME_SEED
 from tutorial1.math import envelope, graph
 from tutorial1.math.geom import (
     Point,
@@ -68,8 +67,11 @@ class World:
     corridor: envelope.Envelope
 
 
-def _init():
-    roads = graph.generate_random(GAME_SEED)
+@lru_cache
+def get_singleton(name: str = "default"):
+    pr.trace_log(pr.TraceLogLevel.LOG_INFO, "WORLD: Initialize singleton")
+
+    roads = graph.generate_random()
 
     borders, anchors = envelope.generare_from_spatial_graph(roads, ROAD_WIDTH)
     houses = [
@@ -105,12 +107,13 @@ def _init():
     return World(roads, borders, houses, trees, corridor)
 
 
-def is_alive() -> bool:
-    return True
+def get_corridor() -> envelope.Envelope:
+    _world = get_singleton()
+    return _world.corridor
 
 
 def reset() -> None:
-    pass
+    get_singleton()
 
 
 def update(dt: float) -> None:
@@ -118,6 +121,8 @@ def update(dt: float) -> None:
 
 
 def draw(layer: int) -> None:
+    _world = get_singleton()
+
     def draw_bg():
         pr.clear_background(GRASS_COLOR)
         for s in _world.borders.skeleton:
@@ -162,6 +167,7 @@ def draw(layer: int) -> None:
 
 
 def get_location(position: Point) -> Optional[tuple[Point, Segment]]:
+    _world = get_singleton()
     nearest = lambda x: (nearest_point_segment(position, x), x)
     closest = lambda x: distance(position, x[0]) if x[0] is not None else np.inf
     location = min(map(nearest, _world.corridor.skeleton), key=closest)
@@ -170,6 +176,7 @@ def get_location(position: Point) -> Optional[tuple[Point, Segment]]:
 
 @lru_cache
 def get_nearest_segments(position: Point, length: float = 50) -> list[Segment]:
+    _world = get_singleton()
     nearest = (
         lambda x: distance_point_segment(position, x) < length
         or distance(position, x.start) < length
@@ -208,6 +215,3 @@ def collision(position: Point, radius: float) -> Optional[np.ndarray]:
     collide = curry(collision_circle_segment)(position, radius)
     cols = np.array([x for x in map(collide, nearest_segments) if x is not None])
     return np.average(cols, axis=0) if len(cols) > 0 else None
-
-
-_world = _init()

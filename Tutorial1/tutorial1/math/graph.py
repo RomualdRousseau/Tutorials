@@ -96,7 +96,7 @@ class SpatialGraph:
             vertex.draw()
 
 
-def generate_random(seed: int):
+def generate_random():
     def generate_vertice(num: int, min: int) -> list[SpatialVertex]:
         rand = lambda: random.randrange(-VIRTUAL_WIDTH, VIRTUAL_WIDTH)
         vertice: list[SpatialVertex] = []
@@ -131,10 +131,6 @@ def generate_random(seed: int):
         end = choice(choices[:k])
         return SpatialEdge(start, end)
 
-    pr.trace_log(pr.TraceLogLevel.LOG_INFO, f"GRAPH: Generate graph from seed {seed}")
-    random.seed(seed)
-    pr.trace_log(pr.TraceLogLevel.LOG_INFO, "GRAPH: Generate vertices")
     vertice = generate_vertice(20, 100)
-    pr.trace_log(pr.TraceLogLevel.LOG_INFO, "GRAPH: Generate edges")
     edges = generate_edges(vertice, 25, 3)
     return SpatialGraph(vertice, edges)

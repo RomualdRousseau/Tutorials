@@ -1,8 +1,8 @@
 import numpy as np
 
 
-def conv1d(input, kernel: np.ndarray) -> np.ndarray:
-    N = len(input)
+def conv1d(input: np.ndarray, kernel: np.ndarray) -> np.ndarray:
+    N = input.shape[0]
     result = []
     for n in range(N):
         conv = np.array(

@@ -38,5 +38,7 @@ ignore = [
     "E501",    # line too long, handled by black
     "E731",    # accept lambda
     "RUF005",  # collection literal concatenation
-    "PLR0913"  # Too many arguments to function call
+    "PLR0913", # Too many arguments to function call
+    "N803",    # Argument name should be lowercase
+    "N806",    # Variable name should be lowercase
 ]

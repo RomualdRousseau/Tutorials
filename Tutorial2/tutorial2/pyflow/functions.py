@@ -1,5 +1,8 @@
 from typing import Callable
+
 import numpy as np
+
+ZERO = 0.0
 
 
 def ac_lin(x):
@@ -27,19 +30,19 @@ def ac_sigmoid_prime(y):
 
 
 def ac_relu(x):
-    return np.where(x <= 0.0, 0.0, x)
+    return np.where(x <= ZERO, 0.0, x)
 
 
 def ac_relu_prime(y):
-    return np.where(y == 0.0, 0.0, 1.0)
+    return np.where(y == ZERO, 0.0, 1.0)
 
 
 def ac_leaky_relu(x, a=0.1):
-    return np.where(x <= 0.0, a * x, x)
+    return np.where(x <= ZERO, a * x, x)
 
 
 def ac_leaky_relu_prime(y, a=0.1):
-    return np.where(y == 0.0, a, 1.0)
+    return np.where(y == ZERO, a, 1.0)
 
 
 def ac_softmax(x):

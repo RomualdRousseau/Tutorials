@@ -1,6 +1,5 @@
 import numpy as np
 
-
 from tutorial1.math.linalg import almost, normalize
 
 

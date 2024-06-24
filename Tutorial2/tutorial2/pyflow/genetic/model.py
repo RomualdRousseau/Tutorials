@@ -1,4 +1,4 @@
-from typing import Optional, Protocol, Union
+from typing import Optional, Protocol
 
 import numpy as np
 
@@ -7,30 +7,31 @@ from tutorial2.pyflow.functions import __functions__
 
 
 class Individual(Protocol):
-    def get_fitness(self) -> float: ...
+    def get_fitness(self) -> float:
+        ...
 
-    def set_fitness(self, v: float) -> None: ...
+    def set_fitness(self, v: float) -> None:
+        ...
 
 
 class GeneticPool:
-
-    def __init__(self, pool: list[Individual] = []):
+    def __init__(self, pool: list[Individual]):
         self.pool = pool
 
     def sample(self, sample_count: Optional[int] = None):
         if sample_count is None:
             sample_count = int(np.floor(np.random.rand() * len(self.pool)))
         sample_count = max(1, sample_count)
+
         self.pool = sorted(self.pool, key=lambda x: x.get_fitness(), reverse=True)
+
         if len(self.pool) > sample_count:
             self.pool = self.pool[:sample_count]
 
     def normalize(self):
-        sum = 0
+        s = sum((x.get_fitness() for x in self.pool))
         for individual in self.pool:
-            sum += individual.get_fitness()
-        for individual in self.pool:
-            individual.set_fitness(individual.get_fitness() / sum)
+            individual.set_fitness(individual.get_fitness() / s)
 
     def select_parent(self):
         r = np.random.rand()
@@ -42,7 +43,6 @@ class GeneticPool:
 
 
 class GeneticModel(Model):
-
     def __init__(self, layers: list[Layer], write_mask: Optional[list[bool]] = None):
         super().__init__(layers, write_mask)
 
@@ -61,7 +61,7 @@ class GeneticModel(Model):
                     return call(tail, [*result, head.call(result[-1])])
 
         def gradient(
-            layers: list[Layer], result: list[tuple[np.ndarray, np.ndarray]] = []
+            layers: list[Layer], result: list[tuple[np.ndarray, np.ndarray]]
         ) -> list[tuple[np.ndarray, np.ndarray]]:
             match layers:
                 case []:
@@ -87,10 +87,10 @@ class GeneticModel(Model):
         self._train = lambda: update(
             self.layers,
             self.write_mask,
-            gradient(self.layers),
+            gradient(self.layers, []),
         )
 
-    def fit(self, x: np.ndarray = [], y: np.ndarray = [], **kargs) -> dict[str, np.ndarray]:
+    def fit(self, x: np.ndarray, y: np.ndarray, **kargs) -> dict[str, np.ndarray]:
         self._train()
         return {"loss": [], "accuracy": []}
 

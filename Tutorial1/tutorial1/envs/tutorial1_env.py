@@ -1,3 +1,5 @@
+import random
+
 import gymnasium as gym
 import numpy as np
 import pyray as pr
@@ -39,8 +41,14 @@ class Tutorial1Env(gym.Env):
 
     def reset(self, seed=None, options=None):
         super().reset(seed=seed)
+
+        if seed is not None:
+            random.seed(seed)
+            np.random.seed(seed)
+
         trainer.reset()
-        return self._get_obs(), {}
+
+        return self._get_obs(), self._get_info()
 
     def step(self, action):
         for i, agent in enumerate(trainer.get_agents()):
@@ -48,7 +56,7 @@ class Tutorial1Env(gym.Env):
             agent.push_throttle(throttle)
             agent.turn_wheel(wheel)
 
-        trainer.update(pr.get_frame_time())
+        trainer.update(1 / FRAME_RATE)
 
         terminated = trainer._context.best_car is None
 
@@ -58,17 +66,20 @@ class Tutorial1Env(gym.Env):
                 self._gfx_initialized = True
             self._gfx_render()
 
-        return self._get_obs(), 0, terminated, False, {}
+        return self._get_obs(), 0, terminated, False, self._get_info()
 
     def _get_obs(self):
         def get_agent_obs(agent: car.Car):
             return {
                 "agent_pos": agent.pos,
                 "agent_vel": np.array([agent.get_speed_in_kmh() / car.MAX_SPEED]),
-                "agent_cam": np.array([1 - x.length / RAY_MAX_LEN for x in agent.camera]),
+                "agent_cam": np.array([1.0 - x.length / RAY_MAX_LEN for x in agent.camera]),
             }
 
         return [get_agent_obs(x) for x in trainer.get_agents()]
+
+    def _get_info(self):
+        return {"scores": trainer.get_agent_scores()}
 
     def close(self):
         if self.render_mode == "human" and self._gfx_initialized:

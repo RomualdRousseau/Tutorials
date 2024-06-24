@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 from typing import Callable, Optional
 
+import numpy as np
 import pyray as pr
 
 import tutorial1.util.pyray_ex as prx
@@ -12,6 +13,7 @@ BEST_CAR_COLOR = pr.Color(255, 255, 255, 255)
 CAR_COLOR = pr.Color(255, 255, 255, 64)
 ZOOM_DEFAULT = 20
 ZOOM_ACCELERATION_COEF = 0.1
+MIN_SPEED = 5  # km.h-1
 
 
 @dataclass
@@ -41,6 +43,10 @@ def get_agents() -> list[car.Car]:
     return _context.cars
 
 
+def get_agent_scores() -> list[float]:
+    return [_get_agent_score(x) for x in _context.cars]
+
+
 def reset() -> None:
     _context.entities = [world, *_context.cars]
     for x in _context.entities:
@@ -48,14 +54,12 @@ def reset() -> None:
 
 
 def update(dt: float) -> str:
-    best_score = lambda x: x.get_travel_distance_in_km() if x else 0
-    keep_alives = lambda x: filter(lambda y: y and y.is_alive(), x)
-
     for x in _context.entities:
         x.update(dt)
 
-    _context.entities = list(keep_alives(_context.entities))
-    _context.best_car = max(keep_alives(_context.cars), key=best_score, default=None)
+    alive_agents = [x for x in _context.cars if _is_agent_alive(x)]
+    _context.entities = [world, *alive_agents]
+    _context.best_car = max(alive_agents, key=_get_agent_score, default=None)
     _context.update_camera()
 
     return "trainer"
@@ -79,6 +83,19 @@ def draw() -> None:
             prx.draw_text_shadow(f"Speed: {best_car.get_speed_in_kmh():.1f}km/h", pr.Vector2(2, 23), 22, pr.WHITE)  # type: ignore
 
     prx.draw_text_shadow(f"{pr.get_fps()}fps", pr.Vector2(2, 44), 22, pr.WHITE)  # type: ignore
+
+
+def _get_agent_score(agent: Optional[car.Car]) -> float:
+    return agent.get_travel_distance_in_km() if agent else 0.0
+
+
+def _is_agent_alive(agent: car.Car) -> bool:
+    return agent is not None and (
+        not agent.damaged
+        and not agent.out_of_track
+        and agent.get_speed_in_kmh() >= MIN_SPEED
+        and np.dot(agent.vel, agent.head) >= 0
+    )
 
 
 def _update_camera_free_mode() -> None:

@@ -1,11 +1,10 @@
 import numpy as np
 
-from tutorial2.pyflow.core import Params, Layer
+from tutorial2.pyflow.core import Layer, Params
 from tutorial2.pyflow.functions import __functions__
 
 
 class GeneticDense(Layer):
-
     def __init__(
         self,
         inputs,
@@ -15,8 +14,8 @@ class GeneticDense(Layer):
         bias_initializer="zeros",
     ):
         super().__init__(
-            Params((inputs, outputs), initializer_func=kernel_initializer),
-            Params((1, outputs), initializer_func=bias_initializer),
+            Params((inputs, outputs), initializer=kernel_initializer),
+            Params((1, outputs), initializer=bias_initializer),
         )
         self.activation = __functions__[activation]["func"]
 
