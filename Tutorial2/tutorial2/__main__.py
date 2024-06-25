@@ -28,7 +28,7 @@ class Agent:
         self.model = get_agent_model() if parent_model is None else parent_model.clone()
         self.model.compile(optimizer="rmsprop")
         if mutate:
-            self.model.fit()
+            self.model.fit(epochs=1, shuffle=False)
 
     def get_action(self, observation: dict[str, np.ndarray]) -> np.ndarray:
         vel = observation["agent_vel"]

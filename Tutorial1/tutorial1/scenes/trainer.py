@@ -94,7 +94,7 @@ def get_agent_score(agent: Optional[car.Car]) -> float:
 
 
 def is_agent_alive(agent: car.Car) -> bool:
-    return agent is not None and (
+    return (
         not agent.damaged
         and not agent.out_of_track
         and agent.get_speed_in_kmh() >= MIN_SPEED

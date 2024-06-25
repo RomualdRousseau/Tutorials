@@ -173,4 +173,4 @@ class Car:
         right = np.array([-self.head[1], self.head[0]])
         self.camera = world.cast_rays(pos, self.head)
         self.proximity = world.cast_ray(pos, right, world.ROAD_WIDTH)
-        self.out_of_track = self.proximity.length > (world.ROAD_WIDTH / 2 - 1)
+        self.out_of_track = (world.ROAD_WIDTH / 2 - 1) < self.proximity.length < (world.ROAD_WIDTH - 0.1)

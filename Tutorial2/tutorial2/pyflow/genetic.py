@@ -68,18 +68,3 @@ class Genetic(Model):
 
         self.update_step(mutate(self.layers, []))
         return 0, 0
-
-    # def fit(
-    #     self,
-    #     x: Optional[np.ndarray] = None,
-    #     y: Optional[np.ndarray] = None,
-    #     epochs: int = 10,
-    #     batch_size: int = 128,
-    #     shuffle: bool = True,
-    #     verbose: bool = True,
-    # ) -> dict[str, list[float]]:
-    #     history = {"loss": [], "accuracy": []}
-    #     _, _, loss, accuracy = self.train_step(x, y)
-    #     history["loss"].append(loss)
-    #     history["accuracy"].append(accuracy)
-    #     return history
