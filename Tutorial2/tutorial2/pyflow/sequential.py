@@ -1,8 +1,8 @@
 from typing import Optional
+
 import numpy as np
 
-from tutorial2.pyflow.core import Model, Layer
-from tutorial2.pyflow.functions import __functions__
+from tutorial2.pyflow.core import Layer, Model
 
 
 class Sequential(Model):

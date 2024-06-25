@@ -5,7 +5,6 @@ from tutorial2.pyflow.functions import __functions__
 
 
 class Dense(Layer):
-
     def __init__(
         self,
         inputs: int,
