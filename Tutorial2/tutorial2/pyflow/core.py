@@ -42,6 +42,11 @@ class Params:
             return NotImplemented
         return np.array_equal(self.data, other.data)
 
+    def update(self, data: np.ndarray) -> None:
+        self[0] += data[0]
+        self[1] = data[1]
+        self[2] = data[2]
+
     def copy(self) -> Params:
         return Params(self.data[0].shape, data=self.data.copy())
 
@@ -57,9 +62,9 @@ class Layer:
     and outlines the necessary methods that every layer should implement or support.
     """
 
-    def __init__(self, W: Params, B: Params) -> None:
-        self.W = W
-        self.B = B
+    def __init__(self, kernel: Params, bias: Params) -> None:
+        self.kernel = kernel
+        self.bias = bias
 
     def call(self, x: np.ndarray, training: bool = False, **kwargs) -> np.ndarray:
         """Performs the logic of applying the layer to the input arguments."""
@@ -69,42 +74,26 @@ class Layer:
         """Performs the logic of optimizing the layer to the input arguments."""
         raise NotImplementedError
 
-    def update_step(self, write: bool, weights: tuple[np.ndarray, np.ndarray], optimizer_func: Callable) -> Layer:
+    def update_step(self, trainable: bool, weights: tuple[np.ndarray, np.ndarray], optimizer_func: Callable) -> Layer:
         """This method updates either the weights or both weights and biases of the layer using a given
         optimization function."""
-        if write:
-            self.update_weights(optimizer_func(weights[0], self.W[1], self.W[2]))
-            if self.B is not None:
-                self.update_biases(optimizer_func(weights[1], self.B[1], self.B[2]))
+        if trainable:
+            self.kernel.update(optimizer_func(weights[0], self.kernel[1], self.kernel[2]))
+            self.bias.update(optimizer_func(weights[1], self.bias[1], self.bias[2]))
         return self
-
-    def update_weights(self, dW: np.ndarray) -> None:
-        self.W[0] = self.W[0] + dW[0]
-        self.W[1] = dW[1]
-        self.W[2] = dW[2]
-
-    def update_biases(self, dB: np.ndarray) -> None:
-        self.B[0] = self.B[0] + dB[0]
-        self.B[1] = dB[1]
-        self.B[2] = dB[2]
 
     def clone(self) -> Layer:
         cloned = copy.copy(self)
-        cloned.W = self.W.copy()
-        if self.B is not None:
-            cloned.B = self.B.copy()
+        cloned.kernel = self.kernel.copy()
+        cloned.bias = self.bias.copy()
         return cloned
 
     def to_dict(self) -> dict[str, list]:
-        if self.B is not None:
-            return {"W": self.W.to_list(), "B": self.B.to_list()}
-        else:
-            return {"W": self.W.to_list()}
+        return {"W": self.kernel.to_list(), "B": self.bias.to_list()}
 
     def from_dict(self, adict: dict[str, list]) -> None:
-        self.W.from_list(adict["W"])
-        if self.B is not None:
-            self.B.from_list(adict["B"])
+        self.kernel.from_list(adict["W"])
+        self.bias.from_list(adict["B"])
 
 
 class Model:

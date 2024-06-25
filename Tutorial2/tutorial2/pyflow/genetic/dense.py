@@ -20,14 +20,14 @@ class GeneticDense(Layer):
         self.activation = __functions__[activation]["func"]
 
     def call(self, x: np.ndarray, *args, training: bool = False, **kwargs) -> np.ndarray:
-        return self.activation(x @ self.W[0] + self.B[0])
+        return self.activation(x @ self.kernel[0] + self.bias[0])
 
     def optimize(self, *args, **kwargs) -> list[np.ndarray]:
         rate, variance = args
         if np.random.rand() < rate:
-            dW = np.random.standard_normal(self.W[0].shape) * variance
-            dB = np.random.standard_normal(self.B[0].shape) * variance
+            dW = np.random.standard_normal(self.kernel[0].shape) * variance
+            dB = np.random.standard_normal(self.bias[0].shape) * variance
         else:
-            dW = np.zeros(self.W[0].shape)
-            dB = np.zeros(self.B[0].shape)
+            dW = np.zeros(self.kernel[0].shape)
+            dB = np.zeros(self.bias[0].shape)
         return [dW, dB]
