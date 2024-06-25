@@ -8,7 +8,7 @@ from tutorial2.pyflow.core import Layer, Model
 
 
 class GeneticIndividual(Protocol):
-    def get_model(self) -> GeneticModel:
+    def get_model(self) -> Genetic:
         ...
 
     def get_fitness(self) -> float:
@@ -46,7 +46,7 @@ class GeneticPool:
         return self.pool[best_index - 1]
 
 
-class GeneticModel(Model):
+class Genetic(Model):
     def __init__(
         self, layers: list[Layer], write_mask: Optional[list[bool]] = None, rate: float = 0.1, variance: float = 0.1
     ):
