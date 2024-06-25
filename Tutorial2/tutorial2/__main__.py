@@ -28,7 +28,7 @@ class Agent:
         self.model = get_agent_model() if parent_model is None else parent_model.clone()
         self.model.compile(optimizer="rmsprop")
         if mutate:
-            self.model.fit([], [])
+            self.model.fit()
 
     def get_action(self, observation: dict[str, np.ndarray]) -> np.ndarray:
         vel = observation["agent_vel"]
@@ -36,6 +36,9 @@ class Agent:
         x = np.concat([vel, pf.conv1d(cam, Agent.CK)])
         y = self.model.predict(x)
         return y[0]
+
+    def get_model(self) -> pf.GeneticModel:
+        return self.model
 
     def get_fitness(self) -> float:
         return self.fitness
@@ -50,9 +53,9 @@ def main():
     if os.path.exists("agent_model.json"):
         base_model = get_agent_model()
         base_model.load("agent_model.json")
-        agents = [Agent(base_model) for _ in range(AGENT_COUNT)]
     else:
-        agents = [Agent() for _ in range(AGENT_COUNT)]
+        base_model = None
+    agents = [Agent(base_model) for _ in range(AGENT_COUNT)]
 
     observation, info = env.reset(seed=GAME_SEED)
 
@@ -63,14 +66,14 @@ def main():
 
         if terminated or truncated:
             for i, a in enumerate(agents):
-                a.set_fitness(info["scores"][i])
+                a.set_fitness(info["scores"][i] + reward)
 
             pool = pf.GeneticPool(agents)
             pool.sample()
             pool.normalize()
             pool.pool[0].model.save("agent_model.json")
 
-            agents = [Agent(pool.select_parent().model, True) for _ in range(AGENT_COUNT)]
+            agents = [Agent(pool.select_parent().get_model(), True) for _ in range(AGENT_COUNT)]
 
             observation, info = env.reset()
 

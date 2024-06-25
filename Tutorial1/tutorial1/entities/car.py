@@ -37,9 +37,10 @@ class Car:
     def push_throttle(self, power: float) -> None:
         self.throttle = MAX_ENGINE_POWER * 1000 * power
 
-    def reset(self) -> None:
-        pr.trace_log(pr.TraceLogLevel.LOG_DEBUG, "CAR: reset")
+    def is_alive(self) -> bool:
+        return True
 
+    def reset(self) -> None:
         start_seg = world.get_corridor().skeleton[0]
         start_pos, end_pos = (start_seg.start.xy + start_seg.end.xy) * 0.5, start_seg.end.xy
         start_dir = normalize(end_pos - start_pos)
@@ -100,8 +101,12 @@ class Car:
         )
 
     def _input_human(self) -> None:
+        # Gamepad
+
         self.turn_wheel(pr.get_gamepad_axis_movement(GAMEPAD_ID, GAMEPAD_AXIS_X) ** 3)
         self.push_throttle(-1.0 * pr.get_gamepad_axis_movement(GAMEPAD_ID, GAMEPAD_AXIS_Y) ** 3)
+
+        # Keyboard
 
         if pr.is_key_down(pr.KeyboardKey.KEY_RIGHT):
             self.turn_wheel(0.5)
@@ -111,7 +116,7 @@ class Car:
             self.push_throttle(0.5)
 
     def _update_physic(self, dt: float) -> None:
-        # Second Newton law
+        # Simple car modelisation (traction, drag road, drag rolling)
 
         forces = np.zeros(2)
 
@@ -129,12 +134,14 @@ class Car:
         drag_rr = self.vel * -DRAG_ROLLING * MASS * C_G
         forces += drag_rr
 
+        # Second Newton law
+
         acc = forces / MASS
 
         # Simple Euler integration
 
-        self.vel = self.vel + acc * dt
-        self.pos = self.pos + self.vel * dt
+        self.vel += acc * dt
+        self.pos += self.vel * dt
 
         # Collisions
 

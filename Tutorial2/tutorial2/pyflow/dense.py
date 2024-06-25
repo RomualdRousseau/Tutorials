@@ -4,7 +4,8 @@ from tutorial2.pyflow.core import Layer, Params
 from tutorial2.pyflow.functions import __functions__
 
 
-class GeneticDense(Layer):
+class Dense(Layer):
+
     def __init__(
         self,
         inputs: int,
@@ -18,16 +19,15 @@ class GeneticDense(Layer):
             Params((1, outputs), initializer=bias_initializer),
         )
         self.activation = __functions__[activation]["func"]
+        self.activation_prime = __functions__[activation]["prime"]
 
     def call(self, x: np.ndarray, *args, training: bool = False, **kwargs) -> np.ndarray:
         return self.activation(x @ self.W[0] + self.B[0])
 
     def optimize(self, *args, **kwargs) -> list[np.ndarray]:
-        rate, variance = args
-        if np.random.rand() < rate:
-            dW = np.random.standard_normal(self.W[0].shape) * variance
-            dB = np.random.standard_normal(self.B[0].shape) * variance
-        else:
-            dW = np.zeros(self.W[0].shape)
-            dB = np.zeros(self.B[0].shape)
-        return [dW, dB]
+        x1, x0, error = args
+        error = error * self.activation_prime(x1)
+        dW = x0.T @ error
+        dB = error.sum(axis=0, keepdims=True)
+        error = error @ self.W[0].T
+        return [dW, dB, error]

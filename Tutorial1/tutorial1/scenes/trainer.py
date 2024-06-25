@@ -43,10 +43,6 @@ def get_agents() -> list[car.Car]:
     return _context.cars
 
 
-def get_agent_scores() -> list[float]:
-    return [_get_agent_score(x) for x in _context.cars]
-
-
 def reset() -> None:
     _context.entities = [world, *_context.cars]
     for x in _context.entities:
@@ -57,9 +53,9 @@ def update(dt: float) -> str:
     for x in _context.entities:
         x.update(dt)
 
-    alive_agents = [x for x in _context.cars if _is_agent_alive(x)]
+    alive_agents = [x for x in _context.cars if is_agent_alive(x)]
     _context.entities = [world, *alive_agents]
-    _context.best_car = max(alive_agents, key=_get_agent_score, default=None)
+    _context.best_car = max(alive_agents, key=get_agent_score, default=None)
     _context.update_camera()
 
     return "trainer"
@@ -85,11 +81,19 @@ def draw() -> None:
     prx.draw_text_shadow(f"{pr.get_fps()}fps", pr.Vector2(2, 44), 22, pr.WHITE)  # type: ignore
 
 
-def _get_agent_score(agent: Optional[car.Car]) -> float:
+def get_agent_obs(agent: car.Car) -> dict[str, np.ndarray]:
+    return {
+        "agent_pos": agent.pos,
+        "agent_vel": np.array([agent.get_speed_in_kmh() / car.MAX_SPEED]),
+        "agent_cam": np.array([1.0 - x.length / world.RAY_MAX_LEN for x in agent.camera]),
+    }
+
+
+def get_agent_score(agent: Optional[car.Car]) -> float:
     return agent.get_travel_distance_in_km() if agent else 0.0
 
 
-def _is_agent_alive(agent: car.Car) -> bool:
+def is_agent_alive(agent: car.Car) -> bool:
     return agent is not None and (
         not agent.damaged
         and not agent.out_of_track

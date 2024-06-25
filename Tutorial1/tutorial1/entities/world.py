@@ -29,14 +29,14 @@ ROAD_WIDTH = 10  # m
 START_OFFSET = 2  # m
 
 HOUSE_DENSITY = 0.9
-HOUSE_DISTANCE = 10
+HOUSE_DISTANCE = 10  # m
 HOUSE_SIZES = {"house1": (10, 10), "house2": (16, 16), "house3": (16, 16)}
 
 TREE_DENSITY = 0.5
-TREE_DISTANCE = 25
-TREE_RANDOM = 5  # m
+TREE_DISTANCE = 25  # m
+TREE_OFFSET = 5  # m
 
-RAY_MAX_LEN = 50
+RAY_MAX_LEN = 50  # m
 
 
 @dataclass
@@ -74,6 +74,7 @@ def get_singleton(name: str = "default"):
     roads = graph.generate_random()
 
     borders, anchors = envelope.generare_from_spatial_graph(roads, ROAD_WIDTH)
+
     houses = [
         House(
             a,
@@ -84,16 +85,17 @@ def get_singleton(name: str = "default"):
         if HOUSE_DISTANCE <= min(map(curry(distance_point_segment)(a), borders.segments)) <= TREE_DISTANCE
         and random.random() < HOUSE_DENSITY
     ]
+
     trees = [
         Tree(
             Point(
                 a.xy
                 + [
-                    random.randint(-TREE_RANDOM, TREE_RANDOM),
-                    random.randint(-TREE_RANDOM, TREE_RANDOM),
+                    random.randint(-TREE_OFFSET, TREE_OFFSET),
+                    random.randint(-TREE_OFFSET, TREE_OFFSET),
                 ]
             ),
-            random.random() * np.pi,
+            random.random() * np.pi / 2,
         )
         for a in anchors
         if min(map(curry(distance_point_segment)(a), borders.segments)) > TREE_DISTANCE
@@ -110,6 +112,10 @@ def get_singleton(name: str = "default"):
 def get_corridor() -> envelope.Envelope:
     _world = get_singleton()
     return _world.corridor
+
+
+def is_alive() -> bool:
+    return True
 
 
 def reset() -> None:
@@ -175,12 +181,12 @@ def get_location(position: Point) -> Optional[tuple[Point, Segment]]:
 
 
 @lru_cache
-def get_nearest_segments(position: Point, length: float = 50) -> list[Segment]:
+def get_nearest_segments(position: Point, radius: float) -> list[Segment]:
     _world = get_singleton()
     nearest = (
-        lambda x: distance_point_segment(position, x) < length
-        or distance(position, x.start) < length
-        or distance(position, x.end) < length
+        lambda x: distance_point_segment(position, x) < radius
+        or distance(position, x.start) < radius
+        or distance(position, x.end) < radius
     )
     return [x for x in _world.corridor.segments if nearest(x)]
 
