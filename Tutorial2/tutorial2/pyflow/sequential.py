@@ -13,14 +13,14 @@ class Sequential(Model):
         assert x is not None and y is not None
 
         def gradient(
-            layers: list[Layer], x: list[np.ndarray], error: np.ndarray, result: list[tuple[np.ndarray, np.ndarray]]
+            layers: list[Layer], xhat: list[np.ndarray], dloss: np.ndarray, result: list[tuple[np.ndarray, np.ndarray]]
         ) -> list[tuple[np.ndarray, np.ndarray]]:
             match layers:
                 case []:
                     new_result = result
                 case *head, tail:
-                    dW, dB, err = tail.optimize(x[-1], x[-2], error)
-                    new_result = gradient(head, x[:-1], err, [(dW, dB), *result])
+                    dw, db, dloss_ = tail.optimize(xhat[-1], xhat[-2], dloss)
+                    new_result = gradient(head, xhat[:-1], dloss_, [(dw, db), *result])
             return new_result
 
         *xhat, yhat = self.call(x, training=True)
