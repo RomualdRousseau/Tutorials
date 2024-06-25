@@ -54,7 +54,9 @@ class Genetic(Model):
         self.rate = rate
         self.variance = variance
 
-    def train_step(self, x: Optional[np.ndarray], y: Optional[np.ndarray]) -> tuple[float, float]:
+    def optimize(
+        self, x: Optional[np.ndarray], y: Optional[np.ndarray]
+    ) -> tuple[Optional[np.ndarray], list[tuple[np.ndarray, np.ndarray]]]:
         def mutate(
             layers: list[Layer], result: list[tuple[np.ndarray, np.ndarray]]
         ) -> list[tuple[np.ndarray, np.ndarray]]:
@@ -66,5 +68,5 @@ class Genetic(Model):
                     new_result = mutate(head, [(dW, dB), *result])
             return new_result
 
-        self.update_step(mutate(self.layers, []))
-        return 0, 0
+        weights = mutate(self.layers, [])
+        return None, weights

@@ -105,6 +105,14 @@ class Model:
         self.layers = layers
         self.write_mask = [True] * len(layers) if write_mask is None else write_mask
 
+    def call(self, x: np.ndarray, training: bool = False) -> list[np.ndarray]:
+        return self.compiled_call(x, training)
+
+    def optimize(
+        self, x: Optional[np.ndarray], y: Optional[np.ndarray]
+    ) -> tuple[Optional[np.ndarray], list[tuple[np.ndarray, np.ndarray]]]:
+        raise NotImplementedError
+
     def compile(self, optimizer: str = "rmsprop", loss: str = "mse") -> None:
         """Prepares the training process by setting up the necessary configurations such as
         the optimizer, loss function, and metrics.
@@ -138,26 +146,6 @@ class Model:
 
         self.compiled_call = lambda x, t: call_(self.layers, [x], t)
         self.compiled_update = lambda x: update_(self.layers, self.write_mask, x)
-
-    def call(self, x: np.ndarray, training: bool = False) -> list[np.ndarray]:
-        return self.compiled_call(x, training)
-
-    def train_step(self, x: Optional[np.ndarray], y: Optional[np.ndarray]) -> tuple[float, float]:
-        raise NotImplementedError
-
-    def train_batch(self, x: Optional[np.ndarray], y: Optional[np.ndarray], sample: np.ndarray) -> tuple[float, float]:
-        return self.train_step(x[sample] if x is not None else x, y[sample] if y is not None else y)
-
-    def update_step(self, weights: list[tuple[np.ndarray, np.ndarray]]) -> None:
-        self.layers = self.compiled_update(weights)
-
-    def test_step(self, x: np.ndarray, y: np.ndarray) -> tuple[float, float, np.ndarray]:
-        *_, yhat = self.call(x)
-        loss, accuracy = (
-            self.loss_func(y, yhat).mean(),
-            self.loss_acc(y, yhat).mean(),
-        )
-        return loss, accuracy, yhat
 
     def fit(
         self,
@@ -227,6 +215,23 @@ class Model:
         """Uses the trained model to make predictions on new data."""
         *_, yhat = self.call(x)
         return yhat
+
+    def train_step(self, x: Optional[np.ndarray], y: Optional[np.ndarray]) -> tuple[float, float]:
+        yhat, weights = self.optimize(x, y)
+        self.layers = self.compiled_update(weights)
+        loss, accuracy = (self.loss_func(y, yhat).mean(), self.loss_acc(y, yhat).mean()) if yhat is not None else (0, 0)
+        return loss, accuracy
+
+    def train_batch(self, x: Optional[np.ndarray], y: Optional[np.ndarray], sample: np.ndarray) -> tuple[float, float]:
+        return self.train_step(x[sample] if x is not None else x, y[sample] if y is not None else y)
+
+    def test_step(self, x: np.ndarray, y: np.ndarray) -> tuple[float, float, np.ndarray]:
+        *_, yhat = self.call(x)
+        loss, accuracy = (
+            self.loss_func(y, yhat).mean(),
+            self.loss_acc(y, yhat).mean(),
+        )
+        return loss, accuracy, yhat
 
     def clone(self) -> Model:
         cloned = copy.copy(self)
