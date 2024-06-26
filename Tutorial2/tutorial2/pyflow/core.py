@@ -1,12 +1,16 @@
 from __future__ import annotations
 
 import copy
-import json
-from typing import Callable, Optional
+from typing import Callable, Optional, Protocol
 
 import numpy as np
 
 from tutorial2.pyflow.functions import __functions__
+
+
+class Trainer(Protocol):
+    def train(self, model: Model, x: Optional[np.ndarray], y: Optional[np.ndarray]) -> Optional[np.ndarray]:
+        ...
 
 
 class Params:
@@ -62,24 +66,25 @@ class Layer:
     and outlines the necessary methods that every layer should implement or support.
     """
 
-    def __init__(self, kernel: Params, bias: Params) -> None:
+    def __init__(self, kernel: Params, bias: Params, trainable: bool = True) -> None:
         self.kernel = kernel
         self.bias = bias
+        self.trainable = trainable
 
     def call(self, x: np.ndarray, training: bool = False, **kwargs) -> np.ndarray:
         """Performs the logic of applying the layer to the input arguments."""
         raise NotImplementedError
 
-    def optimize(self, *args, **kwargs) -> list[np.ndarray]:
+    def backward(self, *args, **kwargs) -> list[np.ndarray]:
         """Performs the logic of optimizing the layer to the input arguments."""
         raise NotImplementedError
 
-    def update_step(self, trainable: bool, weights: tuple[np.ndarray, np.ndarray], optimizer_func: Callable) -> Layer:
+    def update_gradients(self, gradients: tuple[np.ndarray, np.ndarray], optimizer_func: Callable) -> Layer:
         """This method updates either the weights or both weights and biases of the layer using a given
         optimization function."""
-        if trainable:
-            self.kernel.update(optimizer_func(weights[0], self.kernel[1], self.kernel[2]))
-            self.bias.update(optimizer_func(weights[1], self.bias[1], self.bias[2]))
+        if self.trainable:
+            self.kernel.update(optimizer_func(gradients[0], self.kernel[1], self.kernel[2]))
+            self.bias.update(optimizer_func(gradients[1], self.bias[1], self.bias[2]))
         return self
 
     def clone(self) -> Layer:
@@ -101,51 +106,29 @@ class Model:
     model parameters from a file, and save the model to a file.
     """
 
-    def __init__(self, layers: list[Layer], write_mask: Optional[list[bool]] = None):
-        self.layers = layers
-        self.write_mask = [True] * len(layers) if write_mask is None else write_mask
+    def __init__(self, trainer: Trainer):
+        self.trainer = trainer
 
     def call(self, x: np.ndarray, training: bool = False) -> list[np.ndarray]:
-        return self.compiled_call(x, training)
+        raise NotImplementedError
 
-    def optimize(
-        self, x: Optional[np.ndarray], y: Optional[np.ndarray]
-    ) -> tuple[Optional[np.ndarray], list[tuple[np.ndarray, np.ndarray]]]:
+    def clone(self) -> Model:
+        raise NotImplementedError
+
+    def load(self, file_path: str) -> None:
+        raise NotImplementedError
+
+    def save(self, file_path: str) -> None:
         raise NotImplementedError
 
     def compile(self, optimizer: str = "rmsprop", loss: str = "mse") -> None:
         """Prepares the training process by setting up the necessary configurations such as
         the optimizer, loss function, and metrics.
         """
-
         self.optimizer_func: Callable = __functions__[optimizer]["func"]
         self.loss_func: Callable = __functions__[loss]["func"]
         self.loss_prime: Callable = __functions__[loss]["prime"]
         self.loss_acc: Callable = __functions__[loss]["acc"]
-
-        def call_(layers: list[Layer], result: list[np.ndarray], training: bool) -> list[np.ndarray]:
-            match layers:
-                case []:
-                    new_result = result
-                case head, *tail:
-                    new_result = call_(tail, [*result, head.call(result[-1], training=training)], training)
-            return new_result
-
-        def update_(
-            layers: list[Layer], write_mask: list[bool], weights: list[tuple[np.ndarray, np.ndarray]]
-        ) -> list[Layer]:
-            match layers:
-                case []:
-                    new_result = []
-                case head, *tail:
-                    new_result = [
-                        head.update_step(write_mask[0], weights[0], self.optimizer_func),
-                        *update_(tail, write_mask[1:], weights[1:]),
-                    ]
-            return new_result
-
-        self.compiled_call = lambda x, t: call_(self.layers, [x], t)
-        self.compiled_update = lambda x: update_(self.layers, self.write_mask, x)
 
     def fit(
         self,
@@ -203,7 +186,7 @@ class Model:
 
         return history
 
-    def evaluate(self, x: np.ndarray, y: np.ndarray, verbose=True) -> tuple[float, float, np.ndarray]:
+    def evaluate(self, x: np.ndarray, y: np.ndarray, verbose: bool = True) -> tuple[float, float, np.ndarray]:
         """Evaluates the performance of the trained model on a test set."""
         loss, accuracy, yhat = self.test_step(x, y)
         if verbose:
@@ -216,39 +199,22 @@ class Model:
         *_, yhat = self.call(x)
         return yhat
 
-    def train_step(self, x: Optional[np.ndarray], y: Optional[np.ndarray]) -> tuple[float, float]:
-        yhat, weights = self.optimize(x, y)
-        self.layers = self.compiled_update(weights)
-        loss, accuracy = (self.loss_func(y, yhat).mean(), self.loss_acc(y, yhat).mean()) if yhat is not None else (0, 0)
-        return loss, accuracy
-
     def train_batch(self, x: Optional[np.ndarray], y: Optional[np.ndarray], sample: np.ndarray) -> tuple[float, float]:
-        return self.train_step(x[sample] if x is not None else x, y[sample] if y is not None else y)
+        x_sample = x[sample] if x is not None else x
+        y_sample = y[sample] if y is not None else y
+        return self.train_step(x_sample, y_sample)
+
+    def train_step(self, x: Optional[np.ndarray], y: Optional[np.ndarray]) -> tuple[float, float]:
+        yhat = self.trainer.train(self, x, y)
+        loss, accuracy = self.compute_stats(y, yhat)
+        return loss, accuracy
 
     def test_step(self, x: np.ndarray, y: np.ndarray) -> tuple[float, float, np.ndarray]:
         *_, yhat = self.call(x)
-        loss, accuracy = (
-            self.loss_func(y, yhat).mean(),
-            self.loss_acc(y, yhat).mean(),
-        )
+        loss, accuracy = self.compute_stats(y, yhat)
         return loss, accuracy, yhat
 
-    def clone(self) -> Model:
-        cloned = copy.copy(self)
-        cloned.layers = [x.clone() for x in self.layers]
-        return cloned
-
-    def load(self, file_path: str) -> None:
-        with open(file_path, "r") as f:
-            model_data = json.load(f)
-        for i, dt in enumerate(model_data["layers"]):
-            self.layers[i].from_dict(dt)
-        self.write_mask = model_data["write_mask"]
-
-    def save(self, file_path: str) -> None:
-        model_data = {
-            "layers": [lr.to_dict() for lr in self.layers],
-            "write_mask": self.write_mask,
-        }
-        with open(file_path, "w") as f:
-            json.dump(model_data, f, indent=4)
+    def compute_stats(self, y: Optional[np.ndarray], yhat: Optional[np.ndarray]) -> tuple[float, float]:
+        if y is None or yhat is None:
+            return 0, 0
+        return self.loss_func(y, yhat).mean(), self.loss_acc(y, yhat).mean()

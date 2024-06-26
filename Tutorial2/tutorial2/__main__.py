@@ -11,18 +11,19 @@ GAME_SEED = 5
 
 
 def get_agent_model():
-    return pf.Genetic(
+    return pf.Sequential(
         [
             pf.GeneticDense(11, 32, activation="linear", kernel_initializer="gorot"),
             pf.GeneticDense(32, 2, activation="tanh", kernel_initializer="gorot"),
-        ]
+        ],
+        trainer=pf.GeneticTrainer(),
     )
 
 
 class Agent:
     CK = np.array([0.25, 0.5, 0.25])
 
-    def __init__(self, parent_model: Optional[pf.Genetic] = None, mutate: bool = False):
+    def __init__(self, parent_model: Optional[pf.Sequential] = None, mutate: bool = False):
         self.fitness = -1.0
 
         self.model = get_agent_model() if parent_model is None else parent_model.clone()
@@ -37,7 +38,7 @@ class Agent:
         y = self.model.predict(x)
         return y[0]
 
-    def get_model(self) -> pf.Genetic:
+    def get_model(self) -> pf.Sequential:
         return self.model
 
     def get_fitness(self) -> float:

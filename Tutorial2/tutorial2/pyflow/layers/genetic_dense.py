@@ -22,7 +22,7 @@ class GeneticDense(Layer):
     def call(self, x: np.ndarray, *args, training: bool = False, **kwargs) -> np.ndarray:
         return self.activation(x @ self.kernel[0] + self.bias[0])
 
-    def optimize(self, *args, **kwargs) -> list[np.ndarray]:
+    def backward(self, *args, **kwargs) -> list[np.ndarray]:
         rate, variance = args
         if np.random.rand() < rate:
             dW = np.random.standard_normal(self.kernel[0].shape) * variance

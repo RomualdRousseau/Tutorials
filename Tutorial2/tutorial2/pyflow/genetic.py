@@ -1,21 +1,20 @@
 from __future__ import annotations
 
+from functools import reduce
 from typing import Optional, Protocol
 
 import numpy as np
 
 from tutorial2.pyflow.core import Layer, Model
+from tutorial2.pyflow.sequential import Sequential
 
 
 class GeneticIndividual(Protocol):
-    def get_model(self) -> Genetic:
-        ...
+    def get_model(self) -> Sequential: ...
 
-    def get_fitness(self) -> float:
-        ...
+    def get_fitness(self) -> float: ...
 
-    def set_fitness(self, v: float) -> None:
-        ...
+    def set_fitness(self, v: float) -> None: ...
 
 
 class GeneticPool:
@@ -46,27 +45,22 @@ class GeneticPool:
         return self.pool[best_index - 1]
 
 
-class Genetic(Model):
-    def __init__(
-        self, layers: list[Layer], write_mask: Optional[list[bool]] = None, rate: float = 0.1, variance: float = 0.1
-    ):
-        super().__init__(layers, write_mask)
+class GeneticTrainer:
+    def __init__(self, rate: float = 0.1, variance: float = 0.1):
         self.rate = rate
         self.variance = variance
 
-    def optimize(
-        self, x: Optional[np.ndarray], y: Optional[np.ndarray]
-    ) -> tuple[Optional[np.ndarray], list[tuple[np.ndarray, np.ndarray]]]:
-        def mutate(
-            layers: list[Layer], result: list[tuple[np.ndarray, np.ndarray]]
-        ) -> list[tuple[np.ndarray, np.ndarray]]:
-            match layers:
-                case []:
-                    new_result = result
-                case *head, tail:
-                    dW, dB = tail.optimize(self.rate, self.variance)
-                    new_result = mutate(head, [(dW, dB), *result])
-            return new_result
+    def train(self, model: Model, x: Optional[np.ndarray], y: Optional[np.ndarray]) -> Optional[np.ndarray]:
+        assert isinstance(model, Sequential)
+        assert x is None
+        assert y is None
 
-        weights = mutate(self.layers, [])
-        return None, weights
+        gradients: list[tuple[np.ndarray, np.ndarray]] = []
+        for lr in reversed(model.layers):
+            dw, db = lr.backward(self.rate, self.variance)
+            gradients = [(dw, db), *gradients]
+
+        for i, lr in enumerate(model.layers):
+            lr.update_gradients(gradients[i], model.optimizer_func)
+
+        return None
