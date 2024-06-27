@@ -48,7 +48,7 @@ class GeneticPool:
 
 
 class GeneticTrainer:
-    def __init__(self, rate: float = 0.1, variance: float = 0.1):
+    def __init__(self, rate: float = 0.1, variance: float = 1):
         self.rate = rate
         self.variance = variance
 
@@ -63,6 +63,6 @@ class GeneticTrainer:
             gradients = [(dw, db), *gradients]
 
         for i, lr in enumerate(model.layers):
-            lr.update_gradients(gradients[i], model.optimizer_func)
+            lr.update_gradient(gradients[i], model.optimizer_func)
 
         return None

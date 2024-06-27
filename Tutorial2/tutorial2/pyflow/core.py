@@ -4,6 +4,7 @@ import copy
 from typing import Callable, Optional, Protocol
 
 import numpy as np
+from tqdm import trange
 
 from tutorial2.pyflow.functions import __functions__
 
@@ -79,12 +80,12 @@ class Layer:
         """Performs the logic of optimizing the layer to the input arguments."""
         raise NotImplementedError
 
-    def update_gradients(self, gradients: tuple[np.ndarray, np.ndarray], optimizer_func: Callable) -> Layer:
+    def update_gradient(self, gradient: tuple[np.ndarray, np.ndarray], optimizer_func: Callable) -> Layer:
         """This method updates either the weights or both weights and biases of the layer using a given
         optimization function."""
         if self.trainable:
-            self.kernel.update(optimizer_func(gradients[0], self.kernel[1], self.kernel[2]))
-            self.bias.update(optimizer_func(gradients[1], self.bias[1], self.bias[2]))
+            self.kernel.update(optimizer_func(gradient[0], self.kernel[1], self.kernel[2]))
+            self.bias.update(optimizer_func(gradient[1], self.bias[1], self.bias[2]))
         return self
 
     def clone(self) -> Layer:
@@ -160,7 +161,13 @@ class Model:
             train_loss = 0
             train_accuracy = 0
 
-            for i in range(batch_count):
+            bar = trange(
+                batch_count,
+                ncols=120,
+                bar_format="{l_bar}{bar}| {n_fmt}/{total_fmt} [{elapsed}<{remaining}{postfix}]",
+                disable=not verbose,
+            )
+            for i in bar:
                 sample = batch_sample[i * batch_size : (i + 1) * batch_size]
                 loss, accuracy = self.train_batch(x, y, sample)
 
@@ -169,20 +176,12 @@ class Model:
                     history["loss"].append(loss)
                     history["accuracy"].append(accuracy)
 
-                if verbose:
-                    beta = (i + 1) / batch_count
-                    bar = "=" * int(30 * beta) + ">" + "." * int(30 * (1 - beta))
-                    print(f"{i:3d}/{batch_count} [{bar}]\r", end="")
-
                 train_loss += loss / batch_count
                 train_accuracy += accuracy / batch_count
+                bar.set_postfix({"loss": train_loss, "accuracy": train_accuracy})
 
             history["loss"].append(train_loss)
             history["accuracy"].append(train_accuracy)
-
-            if verbose:
-                bar = "=" * 30
-                print(f"{batch_count}/{batch_count} [{bar}] - loss: {train_loss:.4f} - accuracy: {train_accuracy:.4f}")
 
         return history
 

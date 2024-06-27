@@ -3,11 +3,14 @@ from typing import Optional
 
 import gymnasium as gym
 import numpy as np
+from tqdm import trange
 
 import tutorial2.pyflow as pf
 
 AGENT_COUNT = 100
 GAME_SEED = 5
+
+BAR_FORMAT = "{l_bar}{bar}| {n_fmt}/{total_fmt}"
 
 
 def get_agent_model():
@@ -29,7 +32,7 @@ class Agent:
         self.model = get_agent_model() if parent_model is None else parent_model.clone()
         self.model.compile(optimizer="rmsprop")
         if mutate:
-            self.model.fit(epochs=1, shuffle=False)
+            self.model.fit(epochs=1, shuffle=False, verbose=False)
 
     def get_action(self, observation: dict[str, np.ndarray]) -> np.ndarray:
         vel = observation["agent_vel"]
@@ -56,7 +59,9 @@ def main():
         base_model.load("agent_model.json")
     else:
         base_model = None
-    agents = [Agent(base_model) for _ in range(AGENT_COUNT)]
+    agents = [
+        Agent(base_model, True) for _ in trange(AGENT_COUNT, desc="Spawning agents", ncols=120, bar_format=BAR_FORMAT)
+    ]
 
     observation, info = env.reset(seed=GAME_SEED)
 
@@ -74,7 +79,10 @@ def main():
             pool.normalize()
             pool.pool[0].model.save("agent_model.json")
 
-            agents = [Agent(pool.select_parent().get_model(), True) for _ in range(AGENT_COUNT)]
+            agents = [
+                Agent(pool.select_parent().get_model(), True)
+                for _ in trange(AGENT_COUNT, desc="Training agents", ncols=120, bar_format=BAR_FORMAT)
+            ]
 
             observation, info = env.reset()
 
