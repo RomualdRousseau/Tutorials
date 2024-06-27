@@ -44,9 +44,7 @@ class Car:
         self.debug_mode = debug_mode
 
     def get_spawn_location(self) -> SpawnLocation:
-        spawn_seg = self.current_seg
-        spawn_pos = self.current_start
-        return spawn_seg, spawn_pos
+        return self.current_seg, self.current_start
 
     def set_spawn_location(self, spawn_location: Optional[SpawnLocation]) -> None:
         self.spawn_mode = spawn_location is not None
