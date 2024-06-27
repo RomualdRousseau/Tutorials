@@ -16,10 +16,10 @@ BAR_FORMAT = "{l_bar}{bar}| {n_fmt}/{total_fmt}"
 def get_agent_model():
     return pf.Sequential(
         [
-            pf.GeneticDense(11, 32, activation="linear", kernel_initializer="gorot"),
+            pf.GeneticDense(17, 32, activation="linear", kernel_initializer="gorot"),
             pf.GeneticDense(32, 2, activation="tanh", kernel_initializer="gorot"),
         ],
-        trainer=pf.GeneticTrainer(),
+        trainer=pf.GeneticTrainer(rate=0.1, variance=0.1),
     )
 
 
@@ -30,7 +30,7 @@ class Agent:
         self.fitness = -1.0
 
         self.model = get_agent_model() if parent_model is None else parent_model.clone()
-        self.model.compile(optimizer="rmsprop")
+        self.model.compile(optimizer=pf.rmsprop(rho=0.9, lr=0.1))
         if mutate:
             self.model.fit(epochs=1, shuffle=False, verbose=False)
 
@@ -59,9 +59,7 @@ def main():
         base_model.load("agent_model.json")
     else:
         base_model = None
-    agents = [
-        Agent(base_model, True) for _ in trange(AGENT_COUNT, desc="Spawning agents", ncols=120, bar_format=BAR_FORMAT)
-    ]
+    agents = [Agent(base_model) for _ in trange(AGENT_COUNT, desc="Spawning agents", ncols=120, bar_format=BAR_FORMAT)]
 
     observation, info = env.reset(seed=GAME_SEED)
 

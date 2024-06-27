@@ -32,6 +32,16 @@ def test_segment_angle():
     assert e.angle == np.pi / 4
 
 
+def test_segment_farest_ep():
+    a = Point(np.array([1, 1]))
+    b = Point(np.array([2, 2]))
+    c = Point(np.array([1.1, 1.1]))
+    d = Point(np.array([1.9, 1.9]))
+    e = Segment(a, b)
+    assert e.farest_ep(c) == b
+    assert e.farest_ep(d) == a
+
+
 def test_segment_closest_ep():
     a = Point(np.array([1, 1]))
     b = Point(np.array([2, 2]))

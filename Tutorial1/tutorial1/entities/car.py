@@ -7,7 +7,7 @@ import tutorial1.resources as res
 from tutorial1.constants import GAMEPAD_AXIS_X, GAMEPAD_AXIS_Y, GAMEPAD_ID
 from tutorial1.entities import world
 from tutorial1.math.geom import Point, Segment, distance
-from tutorial1.math.linalg import normalize
+from tutorial1.math.linalg import almost, normalize
 
 MASS = 650  # kg
 LENGTH = 5  # m
@@ -28,7 +28,7 @@ class Car:
         self.color = color
         assert input_mode in ("human", "ai")
         self.input_mode = input_mode
-        self.debug_mode = False
+        self.debug_mode = input_mode == "human"
         self.spawn_mode = False
 
     def get_travel_distance_in_km(self) -> float:
@@ -62,11 +62,15 @@ class Car:
     def reset(self) -> None:
         if self.spawn_mode:
             start_seg = self.spawn_seg
-            start_pos, end_pos = self.spawn_pos.xy, self.spawn_seg.farest_ep(self.spawn_pos).xy
-            assert start_pos != end_pos
+            start_pos, end_pos = (
+                self.spawn_seg.closest_ep(self.spawn_pos).xy,
+                self.spawn_seg.farest_ep(self.spawn_pos).xy,
+            )
         else:
             start_seg = world.get_corridor().skeleton[0]
             start_pos, end_pos = start_seg.start.xy, start_seg.end.xy
+        assert not almost(start_pos, end_pos)
+        start_pos = start_pos * 0.99 + end_pos * 0.01
         start_dir = normalize(end_pos - start_pos)
         start_off = np.array([-start_dir[1], start_dir[0]]) * START_OFFSET
 
@@ -90,17 +94,20 @@ class Car:
         self._update_sensors()
 
     def update(self, dt: float) -> None:
+        prev_damaged = self.damaged
+
         if self.input_mode == "human":
             self._input_human()
 
         self._update_physic(dt)
         self._update_sensors()
 
-        # if self.damaged and not prev_damaged and not pr.is_sound_playing(res.load_sound("crash")):
-        #     pr.play_sound(res.load_sound("crash"))
+        if self.input_mode == "human":
+            if self.damaged and not prev_damaged and not pr.is_sound_playing(res.load_sound("crash")):
+                pr.play_sound(res.load_sound("crash"))
 
-        # if self.out_of_track and not pr.is_sound_playing(res.load_sound("klaxon")):
-        #     pr.play_sound(res.load_sound("klaxon"))
+            if self.out_of_track and not pr.is_sound_playing(res.load_sound("klaxon")):
+                pr.play_sound(res.load_sound("klaxon"))
 
     def draw(self, layer: int) -> None:
         if layer != 0:

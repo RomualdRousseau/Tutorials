@@ -63,6 +63,6 @@ class GeneticTrainer:
             gradients = [(dw, db), *gradients]
 
         for i, lr in enumerate(model.layers):
-            lr.update_gradient(gradients[i], model.optimizer_func)
+            lr.apply_gradient(gradients[i], model.optimizer_func)
 
         return None

@@ -20,7 +20,7 @@ def test_point_to_vector2():
 
 def test_point_hash():
     a = Point(np.array([1, 1]))
-    b = 2
+    b = 125751
     assert a.__hash__() == b
 
 

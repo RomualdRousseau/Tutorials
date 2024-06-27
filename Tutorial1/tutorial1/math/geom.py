@@ -8,6 +8,7 @@ import numpy as np
 import pyray as pr
 
 import tutorial1.util.pyray_ex as prx
+from tutorial1.constants import VIRTUAL_WIDTH
 from tutorial1.math.linalg import EPS, almost
 from tutorial1.util.funcs import curry
 
@@ -29,7 +30,7 @@ class Point:
         return isinstance(other, Point) and bool(np.all(self.xy == other.xy))
 
     def __hash__(self) -> int:
-        return int(np.sum(self.xy))
+        return int(self.xy[0] + VIRTUAL_WIDTH + (self.xy[1] + VIRTUAL_WIDTH) * VIRTUAL_WIDTH * 2)
 
 
 @dataclass

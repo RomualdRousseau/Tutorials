@@ -141,10 +141,6 @@ def draw(layer: int) -> None:
             s.draw(0.5, BORDER1_COLOR, (3, ROAD_COLOR), False)
         for s in _world.corridor.segments:
             s.draw(1, BORDER3_COLOR, None, True)
-        # for s in _world.corridor.skeleton:
-        #     s.draw(_world.corridor.width, pr.Color(255, 255, 0, 128), None, True)
-        # _world.corridor.skeleton[0].start.draw(1, pr.GREEN)  # type: ignore
-        # _world.corridor.skeleton[-1].end.draw(1, pr.RED)  # type: ignore
 
     def draw_fg():
         for tree in _world.trees:
@@ -184,9 +180,7 @@ def get_location(position: Point) -> Optional[tuple[Point, Segment]]:
 def get_nearest_segments(position: Point, radius: float) -> list[Segment]:
     _world = get_singleton()
     nearest = (
-        lambda x: distance_point_segment(position, x) < radius
-        or distance(position, x.start) < radius
-        or distance(position, x.end) < radius
+        lambda x: distance_point_segment(position, x) < radius or distance(x.closest_ep(position), position) < radius
     )
     return [x for x in _world.corridor.segments if nearest(x)]
 
@@ -204,13 +198,13 @@ def cast_rays(
     position: Point,
     direction: np.ndarray,
     length: float = RAY_MAX_LEN,
-    sampling: int = 10,
+    sampling: int = 16,
 ) -> list[Segment]:
     rays = []
     alpha = np.arctan2(direction[1], direction[0])
     nearest_segments = get_nearest_segments(position, length)
     for i in range(sampling):
-        beta = np.interp(i / sampling, [0, 1], [alpha - np.pi / 4, alpha + np.pi / 4])
+        beta = np.interp(i / sampling, [0, 1], [alpha - np.pi * 0.4, alpha + np.pi * 0.4])
         direction = np.array([np.cos(beta), np.sin(beta)])
         rays.append(cast_ray_segments(position, direction, length, nearest_segments))
     return rays

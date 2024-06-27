@@ -47,7 +47,7 @@ class Params:
             return NotImplemented
         return np.array_equal(self.data, other.data)
 
-    def update(self, data: np.ndarray) -> None:
+    def apply_gradient(self, data: np.ndarray) -> None:
         self[0] += data[0]
         self[1] = data[1]
         self[2] = data[2]
@@ -80,12 +80,12 @@ class Layer:
         """Performs the logic of optimizing the layer to the input arguments."""
         raise NotImplementedError
 
-    def update_gradient(self, gradient: tuple[np.ndarray, np.ndarray], optimizer_func: Callable) -> Layer:
+    def apply_gradient(self, gradient: tuple[np.ndarray, np.ndarray], optimizer_func: Callable) -> Layer:
         """This method updates either the weights or both weights and biases of the layer using a given
         optimization function."""
         if self.trainable:
-            self.kernel.update(optimizer_func(gradient[0], self.kernel[1], self.kernel[2]))
-            self.bias.update(optimizer_func(gradient[1], self.bias[1], self.bias[2]))
+            self.kernel.apply_gradient(optimizer_func(gradient[0], self.kernel[1], self.kernel[2]))
+            self.bias.apply_gradient(optimizer_func(gradient[1], self.bias[1], self.bias[2]))
         return self
 
     def clone(self) -> Layer:
@@ -122,11 +122,15 @@ class Model:
     def save(self, file_path: str) -> None:
         raise NotImplementedError
 
-    def compile(self, optimizer: str = "rmsprop", loss: str = "mse") -> None:
+    def compile(self, optimizer: str | Callable = "rmsprop", loss: str = "mse") -> None:
         """Prepares the training process by setting up the necessary configurations such as
         the optimizer, loss function, and metrics.
         """
-        self.optimizer_func: Callable = __functions__[optimizer]["func"]
+        if isinstance(optimizer, str):
+            self.optimizer_func: Callable = __functions__[optimizer]["func"]
+        else:
+            self.optimizer_func = optimizer
+
         self.loss_func: Callable = __functions__[loss]["func"]
         self.loss_prime: Callable = __functions__[loss]["prime"]
         self.loss_acc: Callable = __functions__[loss]["acc"]
