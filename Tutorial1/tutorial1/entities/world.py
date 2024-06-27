@@ -170,7 +170,7 @@ def draw(layer: int) -> None:
 
 def get_location(position: Point) -> Optional[tuple[Point, Segment]]:
     _world = get_singleton()
-    nearest = lambda x: (nearest_point_segment(position, x, False), x)
+    nearest = lambda x: (nearest_point_segment(position, x, True), x)
     closest = lambda x: distance(position, x[0]) if x[0] is not None else np.inf
     location = min(map(nearest, _world.corridor.skeleton), key=closest)
     return location if location[0] is not None else None  # type: ignore
@@ -179,7 +179,7 @@ def get_location(position: Point) -> Optional[tuple[Point, Segment]]:
 @lru_cache
 def get_nearest_segments(position: Point, radius: float) -> list[Segment]:
     _world = get_singleton()
-    nearest = lambda x: distance_point_segment(position, x, False) < radius
+    nearest = lambda x: distance_point_segment(position, x, True) < radius
     return [x for x in _world.corridor.segments if nearest(x)]
 
 

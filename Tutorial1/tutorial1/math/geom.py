@@ -121,32 +121,34 @@ def point_in_polygon(point: Point, polygon: list[Point], strict: bool = True) ->
     return inside
 
 
-def distance_point_segment(p: Point, seg: Segment, strict: bool = True) -> float:
+def distance_point_segment(p: Point, seg: Segment, closest: bool = False) -> float:
     u = p.xy - seg.start.xy
     v = seg.end.xy - seg.start.xy
     v_l = np.linalg.norm(v)
     v = v / (v_l + EPS)
     match np.dot(u, v):
         case x if x < 0:
-            return float(np.linalg.norm(seg.start.xy - p.xy)) if not strict else np.inf
+            return float(np.linalg.norm(seg.start.xy - p.xy)) if closest else np.inf
         case x if x > v_l:
-            return float(np.linalg.norm(seg.end.xy - p.xy)) if not strict else np.inf
+            return float(np.linalg.norm(seg.end.xy - p.xy)) if closest else np.inf
         case x:
             return float(np.linalg.norm(seg.start.xy + v * x - p.xy))
+    return np.inf
 
 
-def nearest_point_segment(p: Point, seg: Segment, strict: bool = True) -> Optional[Point]:
+def nearest_point_segment(p: Point, seg: Segment, closest: bool = False) -> Optional[Point]:
     u = p.xy - seg.start.xy
     v = seg.end.xy - seg.start.xy
     v_l = np.linalg.norm(v)
     v = v / (v_l + EPS)
     match np.dot(u, v):
         case x if x < 0:
-            return seg.start if not strict else None
+            return seg.start if closest else None
         case x if x > v_l:
-            return seg.end if not strict else None
+            return seg.end if closest else None
         case x:
             return Point(seg.start.xy + v * x)
+    return None
 
 
 def intersect(seg1: Segment, seg2: Segment, strict: bool = True) -> Optional[Point]:

@@ -130,6 +130,16 @@ def test_point_distance_out_of_segment():
     assert distance_point_segment(c, e) == np.inf
 
 
+def test_point_distance_out_of_segment_but_non_strict():
+    a = Point(np.array([1, 1]))
+    b = Point(np.array([2, 2]))
+    c = Point(np.array([0, 0]))
+    d = Point(np.array([3, 3]))
+    e = Segment(a, b)
+    assert distance_point_segment(c, e, True) == np.sqrt(2)
+    assert distance_point_segment(d, e, True) == np.sqrt(2)
+
+
 def test_point_nearest_with_segment():
     a = Point(np.array([1, 1]))
     b = Point(np.array([2, 2]))
@@ -146,3 +156,17 @@ def test_point_nearest_out_of_segment():
     c = Point(np.array([0, 0]))
     e = Segment(a, b)
     assert nearest_point_segment(c, e) is None
+
+
+def test_point_nearest_out_of_segment_but_non_strict():
+    a = Point(np.array([1, 1]))
+    b = Point(np.array([2, 2]))
+    c = Point(np.array([0, 0]))
+    d = Point(np.array([3, 3]))
+    e = Segment(a, b)
+    x = nearest_point_segment(c, e, True)
+    assert x is not None
+    assert x.almost(Point(np.array([1, 1])))
+    x = nearest_point_segment(d, e, True)
+    assert x is not None
+    assert x.almost(Point(np.array([2, 2])))
