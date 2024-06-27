@@ -35,7 +35,7 @@ class Tutorial1Env(gym.Env):
 
         self.action_space = gym.spaces.Box(-1, 1, shape=(agent_count, 2), dtype=np.float64)
 
-        trainer.add_agents(agent_count)
+        trainer.spawn_agents(agent_count)
 
     def reset(self, seed=None, options=None):
         super().reset(seed=seed)
@@ -44,6 +44,7 @@ class Tutorial1Env(gym.Env):
             random.seed(seed)
             np.random.seed(seed)
 
+        trainer.reset_agents()
         trainer.reset()
 
         return self._get_obs(), self._get_info()
@@ -56,7 +57,7 @@ class Tutorial1Env(gym.Env):
 
         trainer.update(1 / FRAME_RATE)
 
-        terminated = trainer._context.best_car is None
+        terminated = trainer._context.best_agent is None
 
         if self.render_mode == "human":
             if not self._gfx_initialized:

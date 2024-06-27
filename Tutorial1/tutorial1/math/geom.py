@@ -16,19 +16,19 @@ from tutorial1.util.funcs import curry
 class Point:
     xy: np.ndarray
 
-    def draw(self, thick: float, color: pr.Color):  # pragma: no cover
+    def draw(self, thick: float, color: pr.Color) -> None:  # pragma: no cover
         pr.draw_circle_v(self.to_vec(), thick, color)
 
-    def to_vec(self):
+    def to_vec(self) -> pr.Vector2:
         return pr.Vector2(*self.xy)
 
-    def almost(self, other: Point, eps=0.0001):
+    def almost(self, other: Point, eps=0.0001) -> bool:
         return almost(self.xy, other.xy, eps)
 
     def __eq__(self, other):
         return isinstance(other, Point) and np.all(self.xy == other.xy)
 
-    def __hash__(self) -> int:
+    def __hash__(self):
         return int(np.sum(self.xy))
 
 
@@ -38,11 +38,11 @@ class Segment:
     end: Point
 
     @property
-    def length(self):
+    def length(self) -> float:
         return distance(self.start, self.end)
 
     @property
-    def middle(self):
+    def middle(self) -> Point:
         return Point((self.start.xy + self.end.xy) * 0.5)
 
     @property
@@ -57,16 +57,19 @@ class Segment:
         color: pr.Color,
         dashed: tuple[int, pr.Color] | None = None,
         rounded: bool = False,
-    ):  # pragma: no cover
+    ) -> None:  # pragma: no cover
         if dashed:
             prx.draw_dashed_line(self.start.to_vec(), self.end.to_vec(), thick, color, dashed, rounded)
         else:
             prx.draw_line(self.start.to_vec(), self.end.to_vec(), thick, color, rounded)
 
-    def closest_ep(self, p: Point):
+    def farest_ep(self, p: Point) -> Point:
+        return self.end if distance(p, self.start) < distance(p, self.end) else self.start
+
+    def closest_ep(self, p: Point) -> Point:
         return self.start if distance(p, self.start) < distance(p, self.end) else self.end
 
-    def almost(self, other: Segment, eps=0.0001):
+    def almost(self, other: Segment, eps=0.0001) -> bool:
         return (
             self.start.almost(other.start, eps)
             and self.end.almost(other.end, eps)
@@ -163,7 +166,6 @@ def intersect(seg1: Segment, seg2: Segment, strict: bool = True) -> Optional[Poi
                                     ]
                                 )
                             )
-
     return None
 
 

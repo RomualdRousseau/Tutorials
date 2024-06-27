@@ -1,10 +1,12 @@
+from typing import Optional
+
 import numpy as np
 import pyray as pr
 
 import tutorial1.resources as res
 from tutorial1.constants import GAMEPAD_AXIS_X, GAMEPAD_AXIS_Y, GAMEPAD_ID
 from tutorial1.entities import world
-from tutorial1.math.geom import Point, distance
+from tutorial1.math.geom import Point, Segment, distance
 from tutorial1.math.linalg import normalize
 
 MASS = 650  # kg
@@ -16,7 +18,9 @@ MAX_SPEED = 125  # km.h-1
 DRAG_ROAD = 0.9  # Concrete/Rubber
 DRAG_ROLLING = 0.01  # Concrete/Rubber
 C_G = 9.81  # m.s-2
-START_OFFSET = 2  # m
+START_OFFSET = world.ROAD_WIDTH / 4  # m
+
+SpawnLocation = tuple[Segment, Point]
 
 
 class Car:
@@ -24,6 +28,8 @@ class Car:
         self.color = color
         assert input_mode in ("human", "ai")
         self.input_mode = input_mode
+        self.debug_mode = False
+        self.spawn_mode = False
 
     def get_travel_distance_in_km(self) -> float:
         return (self.total_distance + distance(self.current_start, self.current_pos)) * 0.001
@@ -37,12 +43,29 @@ class Car:
     def push_throttle(self, power: float) -> None:
         self.throttle = MAX_ENGINE_POWER * 1000 * power
 
+    def set_debug_mode(self, debug_mode: bool) -> None:
+        self.debug_mode = debug_mode
+
+    def get_spawn_location(self) -> SpawnLocation:
+        spawn_seg = self.current_seg
+        spawn_pos = self.current_start
+        return spawn_seg, spawn_pos
+
+    def set_spawn_location(self, spawn_location: Optional[SpawnLocation]) -> None:
+        self.spawn_mode = spawn_location is not None
+        if spawn_location is not None:
+            self.spawn_seg, self.spawn_pos = spawn_location
+
     def is_alive(self) -> bool:
         return True
 
     def reset(self) -> None:
-        start_seg = world.get_corridor().skeleton[0]
-        start_pos, end_pos = (start_seg.start.xy + start_seg.end.xy) * 0.5, start_seg.end.xy
+        if self.spawn_mode:
+            start_seg = self.spawn_seg
+            start_pos, end_pos = self.spawn_pos.xy, self.spawn_seg.farest_ep(self.spawn_pos).xy
+        else:
+            start_seg = world.get_corridor().skeleton[0]
+            start_pos, end_pos = start_seg.start.xy, start_seg.end.xy
         start_dir = normalize(end_pos - start_pos)
         start_off = np.array([-start_dir[1], start_dir[0]]) * START_OFFSET
 
@@ -60,7 +83,7 @@ class Car:
         self.total_time = 0.0
 
         self.current_seg = start_seg
-        self.current_start = start_seg.start
+        self.current_start = Point(start_pos)
         self.current_pos = self.current_start
 
         self._update_sensors()
@@ -82,7 +105,7 @@ class Car:
         if layer != 0:
             return
 
-        if self.input_mode == "human":
+        if self.debug_mode:
             color = pr.YELLOW if not self.out_of_track else pr.RED
             for ray in self.camera:
                 pr.draw_line_v(ray.start.to_vec(), ray.end.to_vec(), color)  # type: ignore
@@ -97,7 +120,7 @@ class Car:
             pr.Rectangle(self.pos[0], self.pos[1], LENGTH, LENGTH),
             pr.Vector2(LENGTH * 0.5, LENGTH * 0.5),
             np.rad2deg(np.arctan2(self.head[1], self.head[0]) + np.pi / 2),
-            self.color,
+            pr.color_alpha(self.color, 1.0) if self.debug_mode else self.color,
         )
 
     def _input_human(self) -> None:

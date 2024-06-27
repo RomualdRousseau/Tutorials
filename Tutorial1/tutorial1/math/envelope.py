@@ -30,7 +30,7 @@ class Envelope:
 
 
 def generare_from_spatial_graph(agraph: graph.SpatialGraph, width: int) -> tuple[Envelope, list[Point]]:
-    with tqdm(total=4, desc="Generating envelope", ncols=80) as pbar:
+    with tqdm(total=4, desc="Generating envelope", ncols=120, bar_format="{l_bar}{bar}| {n_fmt}/{total_fmt}") as pbar:
         envelopes = [_generate_envelope(e, width) for e in agraph.edges]
         pbar.update(1)
 
@@ -100,7 +100,7 @@ def _break_envelopes(envelopes: list[Envelope]) -> list[Envelope]:
     result = envelopes
     n = len(envelopes)
 
-    for i in trange(n, desc="Break", ncols=80):
+    for i in trange(n, desc="Break", ncols=120, bar_format="{l_bar}{bar}| {n_fmt}/{total_fmt}"):
         head, acc = result[i], []
         for j in range(i + 1, n):
             head, tail = break_two_envelopes(head, result[j])
@@ -116,7 +116,7 @@ def _union_envelopes(envelopes: list[Envelope]) -> Envelope:
 
     segment_in_polygon = lambda y: lambda x: point_in_polygon(y.middle, x.points)
 
-    for e in tqdm(envelopes, desc="Union", ncols=80):
+    for e in tqdm(envelopes, desc="Union", ncols=120, bar_format="{l_bar}{bar}| {n_fmt}/{total_fmt}"):
         for s in e.segments:
             inside = any(
                 map(
