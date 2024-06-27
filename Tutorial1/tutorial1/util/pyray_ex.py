@@ -22,7 +22,7 @@ def draw_line(
     color: pr.Color,
     rounded: bool,
 ) -> None:
-    aabb = pr.Rectangle(start.x, start.y, end.x, end.y)
+    aabb = pr.Rectangle(min(start.x, end.x), min(start.y, end.y), abs(end.x - start.x), abs(end.y - start.y))
     if pr.get_collision_rec(SCREEN, aabb) is None:
         return
 
@@ -40,7 +40,7 @@ def draw_dashed_line(
     dashed: tuple[int, pr.Color],
     rounded: bool,
 ) -> None:
-    aabb = pr.Rectangle(start.x, start.y, end.x, end.y)
+    aabb = pr.Rectangle(min(start.x, end.x), min(start.y, end.y), abs(end.x - start.x), abs(end.y - start.y))
     if pr.get_collision_rec(SCREEN, aabb) is None:
         return
 

@@ -54,14 +54,15 @@ def reset_agents() -> None:
 
 def get_agent_obs(agent: car.Car) -> dict[str, np.ndarray]:
     return {
-        "agent_pos": agent.pos,
         "agent_vel": np.array([agent.get_speed_in_kmh() / car.MAX_SPEED]),
         "agent_cam": np.array([1.0 - x.length / world.RAY_MAX_LEN for x in agent.camera]),
     }
 
 
-def get_agent_score(agent: Optional[car.Car]) -> float:
-    return agent.get_travel_distance_in_km() if agent else 0.0
+def get_agent_score(agent: car.Car) -> float:
+    score = agent.get_travel_distance_in_km() * agent.get_avg_velocity() * 1000
+    score += -100 if agent.damaged else 0
+    return score
 
 
 def is_agent_alive(agent: car.Car) -> bool:
@@ -91,7 +92,7 @@ def update(dt: float) -> str:
 
     alive_agents = [agent for agent in _context.agents if is_agent_alive(agent)]
     _context.entities = [world, *alive_agents]
-    _context.best_agent = max(alive_agents, key=get_agent_score, default=None)
+    _context.best_agent = max(alive_agents, key=lambda x: get_agent_score(x) if x is not None else 0.0, default=None)
     _context.update_camera()
 
     if _context.best_agent is not None:

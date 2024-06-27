@@ -127,13 +127,13 @@ class Model:
         the optimizer, loss function, and metrics.
         """
         if isinstance(optimizer, str):
-            self.optimizer_func: Callable = __functions__[optimizer]["func"]
+            self.optimizer_func = __functions__[optimizer]["func"]
         else:
             self.optimizer_func = optimizer
 
-        self.loss_func: Callable = __functions__[loss]["func"]
-        self.loss_prime: Callable = __functions__[loss]["prime"]
-        self.loss_acc: Callable = __functions__[loss]["acc"]
+        self.loss_func = __functions__[loss]["func"]
+        self.loss_prime = __functions__[loss]["prime"]
+        self.loss_acc = __functions__[loss]["acc"]
 
     def fit(
         self,

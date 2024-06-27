@@ -1,6 +1,5 @@
 from functools import partial
 
-
 from tutorial2.pyflow.functions import wu_adadelta, wu_adam, wu_rmsprop
 
 

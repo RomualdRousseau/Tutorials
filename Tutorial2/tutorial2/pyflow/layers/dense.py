@@ -24,9 +24,12 @@ class Dense(Layer):
         return self.activation(x @ self.kernel[0] + self.bias[0])
 
     def backward(self, *args, **kwargs) -> list[np.ndarray]:
-        x1, x0, error = args
-        error = error * self.activation_prime(x1)
-        dW = x0.T @ error
-        dB = error.sum(axis=0, keepdims=True)
-        error = error @ self.kernel[0].T
-        return [dW, dB, error]
+        x1, x0, loss = args
+
+        loss = loss * self.activation_prime(x1)
+        dw = x0.T @ loss
+        db = loss.sum(axis=0, keepdims=True)
+
+        loss = loss @ self.kernel[0].T
+
+        return [dw, db, loss]

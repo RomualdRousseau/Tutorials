@@ -7,7 +7,6 @@ import pyray as pr
 from tutorial1.constants import (
     APP_NAME,
     FRAME_RATE,
-    VIRTUAL_WIDTH,
     WINDOW_HEIGHT,
     WINDOW_WIDTH,
 )
@@ -25,7 +24,6 @@ class Tutorial1Env(gym.Env):
 
         agent_space = gym.spaces.Dict(
             {
-                "agent_pos": gym.spaces.Box(-VIRTUAL_WIDTH, VIRTUAL_WIDTH, shape=(2,), dtype=np.float64),
                 "agent_vel": gym.spaces.Box(-1, 1, shape=(1,), dtype=np.float64),
                 "agent_cam": gym.spaces.Box(0, 1, shape=(10,), dtype=np.float64),
             }

@@ -1,5 +1,6 @@
 import os
-from typing import Optional
+import signal
+from typing import Any, Optional
 
 import gymnasium as gym
 import numpy as np
@@ -13,14 +14,32 @@ GAME_SEED = 5
 BAR_FORMAT = "{l_bar}{bar}| {n_fmt}/{total_fmt}"
 
 
+should_quit = False
+
+
+def handler_quit(signum, frame):
+    global should_quit  # noqa PLW0603
+    should_quit = True
+
+
 def get_agent_model():
     return pf.Sequential(
         [
-            pf.GeneticDense(17, 32, activation="linear", kernel_initializer="gorot"),
-            pf.GeneticDense(32, 2, activation="tanh", kernel_initializer="gorot"),
+            pf.layers.GeneticDense(17, 32, activation="relu"),
+            pf.layers.GeneticDense(32, 2, activation="tanh"),
         ],
-        trainer=pf.GeneticTrainer(rate=0.1, variance=0.1),
+        trainer=pf.GeneticTrainer(rate=0.1, variance=1),
     )
+
+
+def get_agent_pool(agents: list[pf.GeneticIndividual], info: dict[str, Any], reward: float) -> pf.GeneticPool:
+    for agent, score in zip(agents, info["scores"], strict=True):
+        agent.set_fitness(score + reward)
+
+    pool = pf.GeneticPool(agents)
+    pool.sample()
+    pool.normalize()
+    return pool
 
 
 class Agent:
@@ -30,7 +49,7 @@ class Agent:
         self.fitness = -1.0
 
         self.model = get_agent_model() if parent_model is None else parent_model.clone()
-        self.model.compile(optimizer=pf.rmsprop(rho=0.9, lr=0.1))
+        self.model.compile(optimizer=pf.optimizers.rmsprop(rho=0.9, lr=0.1))
         if mutate:
             self.model.fit(epochs=1, shuffle=False, verbose=False)
 
@@ -52,30 +71,30 @@ class Agent:
 
 
 def main():
-    env = gym.make("tutorial1/Tutorial1-v1", render_mode="human", agent_count=AGENT_COUNT)
+    signal.signal(signal.SIGINT, handler_quit)
 
     if os.path.exists("agent_model.json"):
         base_model = get_agent_model()
         base_model.load("agent_model.json")
     else:
         base_model = None
-    agents = [Agent(base_model) for _ in trange(AGENT_COUNT, desc="Spawning agents", ncols=120, bar_format=BAR_FORMAT)]
+
+    env = gym.make("tutorial1/Tutorial1-v1", render_mode="human", agent_count=AGENT_COUNT)
+
+    agents = [
+        Agent(base_model, True) for _ in trange(AGENT_COUNT, desc="Spawning agents", ncols=120, bar_format=BAR_FORMAT)
+    ]
 
     observation, info = env.reset(seed=GAME_SEED)
 
-    while True:
+    while not should_quit:
         action = [a.get_action(observation[i]) for i, a in enumerate(agents)]
 
         observation, reward, terminated, truncated, info = env.step(action)
 
         if terminated or truncated:
-            for i, a in enumerate(agents):
-                a.set_fitness(info["scores"][i] + reward)
-
-            pool = pf.GeneticPool(agents)
-            pool.sample()
-            pool.normalize()
-            pool.pool[0].model.save("agent_model.json")
+            pool = get_agent_pool(agents, info, reward)
+            pool.best_parent().get_model().save("agent_model.json")
 
             agents = [
                 Agent(pool.select_parent().get_model(), True)
@@ -83,6 +102,9 @@ def main():
             ]
 
             observation, info = env.reset()
+
+    pool = get_agent_pool(agents, info, reward)
+    pool.best_parent().get_model().save("agent_model.json")
 
     env.close()
 

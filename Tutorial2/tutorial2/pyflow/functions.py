@@ -106,7 +106,7 @@ def wu_adadelta(W, S, V, rho=0.95):
     return (X, S, V)
 
 
-def wu_rmsprop(W, S, V, rho=0.9, lr=0.001):  # FIX: 0.1
+def wu_rmsprop(W, S, V, rho=0.9, lr=0.001):
     S = rho * S + (1.0 - rho) * W**2
     X = -W * lr / np.sqrt(S + EPS)
     return (X, S, V)

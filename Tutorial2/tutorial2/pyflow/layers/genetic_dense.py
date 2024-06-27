@@ -24,10 +24,11 @@ class GeneticDense(Layer):
 
     def backward(self, *args, **kwargs) -> list[np.ndarray]:
         rate, variance = args
-        if np.random.rand() < rate:
-            dW = np.random.standard_normal(self.kernel[0].shape) * variance
-            dB = np.random.standard_normal(self.bias[0].shape) * variance
-        else:
-            dW = np.zeros(self.kernel[0].shape)
-            dB = np.zeros(self.bias[0].shape)
-        return [dW, dB]
+
+        rate_mask = np.where(np.random.random_sample(self.kernel[0].shape) < rate, 1, 0)
+        dw = np.random.standard_normal(self.kernel[0].shape) * rate_mask * variance
+
+        rate_mask = np.where(np.random.random_sample(self.bias[0].shape) < rate, 1, 0)
+        db = np.random.standard_normal(self.bias[0].shape) * rate_mask * variance
+
+        return [dw, db]

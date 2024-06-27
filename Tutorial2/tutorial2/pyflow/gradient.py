@@ -20,7 +20,7 @@ def train(model: Model, x: Optional[np.ndarray], y: Optional[np.ndarray]) -> Opt
         dw, db, loss = lr.backward(output[-i], output[-(i + 1)], loss)
         gradients = [(dw, db), *gradients]
 
-    for i, lr in enumerate(model.layers):
-        lr.apply_gradient(gradients[i], model.optimizer_func)
+    for lr, gr in zip(model.layers, gradients, strict=True):
+        lr.apply_gradient(gr, model.optimizer_func)
 
     return yhat

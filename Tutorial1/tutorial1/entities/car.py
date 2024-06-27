@@ -7,7 +7,7 @@ import tutorial1.resources as res
 from tutorial1.constants import GAMEPAD_AXIS_X, GAMEPAD_AXIS_Y, GAMEPAD_ID
 from tutorial1.entities import world
 from tutorial1.math.geom import Point, Segment, distance
-from tutorial1.math.linalg import almost, normalize
+from tutorial1.math.linalg import EPS, almost, normalize
 
 MASS = 650  # kg
 LENGTH = 5  # m
@@ -35,7 +35,10 @@ class Car:
         return (self.total_distance + distance(self.current_start, self.current_pos)) * 0.001
 
     def get_speed_in_kmh(self) -> float:
-        return float(np.linalg.norm(self.vel) * 3.6)
+        return float(np.linalg.norm(self.vel)) * 3.6
+
+    def get_avg_velocity(self) -> float:
+        return self.total_velocity / (self.total_time + EPS)
 
     def set_debug_mode(self, debug_mode: bool) -> None:
         self.debug_mode = debug_mode
@@ -196,7 +199,7 @@ class Car:
                     self.current_start = self.current_seg.closest_ep(pos)
                 self.current_pos = pos
 
-        self.total_time += dt
+        self.total_time += 1
         self.total_velocity += float(np.linalg.norm(self.vel))
 
     def _update_sensors(self) -> None:

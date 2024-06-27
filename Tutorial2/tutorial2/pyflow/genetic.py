@@ -38,6 +38,9 @@ class GeneticPool:
         for individual in self.pool:
             individual.set_fitness(individual.get_fitness() / s)
 
+    def best_parent(self) -> GeneticIndividual:
+        return self.pool[0]
+
     def select_parent(self) -> GeneticIndividual:
         r = np.random.rand()
         best_index = 0
@@ -62,7 +65,7 @@ class GeneticTrainer:
             dw, db = lr.backward(self.rate, self.variance)
             gradients = [(dw, db), *gradients]
 
-        for i, lr in enumerate(model.layers):
-            lr.apply_gradient(gradients[i], model.optimizer_func)
+        for lr, gr in zip(model.layers, gradients, strict=True):
+            lr.apply_gradient(gr, model.optimizer_func)
 
         return None

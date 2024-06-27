@@ -22,3 +22,7 @@ pre-commit:
 # Run the tutorial
 run: pre-commit
     poetry run python -m tutorial2
+
+# Profile the tutorial
+profile: pre-commit
+    poetry run python -m cProfile -o tutorial2.prof -m tutorial2
