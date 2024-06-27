@@ -1,20 +1,22 @@
 from __future__ import annotations
 
-from functools import reduce
 from typing import Optional, Protocol
 
 import numpy as np
 
-from tutorial2.pyflow.core import Layer, Model
+from tutorial2.pyflow.core import Model
 from tutorial2.pyflow.sequential import Sequential
 
 
 class GeneticIndividual(Protocol):
-    def get_model(self) -> Sequential: ...
+    def get_model(self) -> Sequential:
+        ...
 
-    def get_fitness(self) -> float: ...
+    def get_fitness(self) -> float:
+        ...
 
-    def set_fitness(self, v: float) -> None: ...
+    def set_fitness(self, v: float) -> None:
+        ...
 
 
 class GeneticPool:

@@ -3,6 +3,7 @@ from typing import Callable
 import numpy as np
 
 ZERO = 0.0
+EPS = 1e-7
 
 
 def ac_lin(x):
@@ -100,14 +101,14 @@ def wi_he(n, m):
 
 def wu_adadelta(W, S, V, rho=0.95):
     S = rho * S + (1.0 - rho) * W**2
-    X = -W * np.sqrt(V + 1e-6) / np.sqrt(S + 1e-6)
+    X = -W * np.sqrt(V + 1e-6) / np.sqrt(S + EPS)
     V = rho * V + (1.0 - rho) * X**2
     return (X, S, V)
 
 
-def wu_rmsprop(W, S, V, rho=0.9, lr=0.1):  # FIX: 0.001
+def wu_rmsprop(W, S, V, rho=0.9, lr=0.001):  # FIX: 0.1
     S = rho * S + (1.0 - rho) * W**2
-    X = -W * lr / np.sqrt(S + 1e-6)
+    X = -W * lr / np.sqrt(S + EPS)
     return (X, S, V)
 
 
@@ -116,7 +117,7 @@ def wu_adam(W, S, V, beta1=0.9, beta2=0.999, lr=0.001):
     V = beta2 * V + (1.0 - beta2) * W**2
     Shat = S / (1.0 - beta1)
     Vhat = V / (1.0 - beta2)
-    X = -Shat * lr / np.sqrt(Vhat + 1e-8)
+    X = -Shat * lr / np.sqrt(Vhat + EPS)
     return (X, S, V)
 
 
