@@ -212,4 +212,4 @@ class Car:
         left = lst_2_np([self.head[1], -self.head[0]])
         self.camera = world.cast_rays_on_corridor(pos, self.head)
         self.proximity = world.cast_ray_on_skeleton(pos, left, world.ROAD_WIDTH)
-        self.out_of_track = not (WIDTH < self.proximity.length < (world.ROAD_WIDTH / 2))
+        self.out_of_track = not (WIDTH * 0.75 < self.proximity.length < world.ROAD_WIDTH * 0.75)
