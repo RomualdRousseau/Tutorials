@@ -28,7 +28,7 @@ def get_agent_model():
             pf.layers.GeneticDense(17, 32, activation="relu"),
             pf.layers.GeneticDense(32, 2, activation="tanh"),
         ],
-        trainer=pf.GeneticTrainer(rate=0.1, variance=1),
+        trainer=pf.GeneticTrainer(rate=0.1, variance=0.1),
     )
 
 
@@ -82,11 +82,11 @@ def main():
     env = gym.make("tutorial1/Tutorial1-v1", render_mode="human", agent_count=AGENT_COUNT)
 
     agents = [
-        Agent(base_model, True) for _ in trange(AGENT_COUNT, desc="Spawning agents", ncols=120, bar_format=BAR_FORMAT)
+        Agent(base_model) for _ in trange(AGENT_COUNT, desc="Spawning agents", ncols=120, bar_format=BAR_FORMAT)
     ]
 
     observation, info = env.reset(seed=GAME_SEED)
-
+    
     while not should_quit:
         action = [a.get_action(observation[i]) for i, a in enumerate(agents)]
 
@@ -102,7 +102,7 @@ def main():
             ]
 
             observation, info = env.reset()
-
+            
     pool = get_agent_pool(agents, info, reward)
     pool.best_parent().get_model().save("agent_model.json")
 

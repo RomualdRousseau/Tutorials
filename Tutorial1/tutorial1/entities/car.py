@@ -206,7 +206,7 @@ class Car:
                 self.current_pos = pos
 
         self.total_time += 1
-        self.total_velocity += float(np.linalg.norm(self.vel))
+        self.total_velocity += norm(self.vel)
 
     def _update_sensors(self) -> None:
         pos = Point(self.pos)
