@@ -39,7 +39,7 @@ class Car:
         return norm(self.vel) * 3.6
 
     def get_avg_velocity(self) -> float:
-        return self.total_velocity / (self.total_time + EPS)
+        return self.total_velocity / (self.total_tick + EPS)
 
     def set_debug_mode(self, debug_mode: bool) -> None:
         self.debug_mode = debug_mode
@@ -90,7 +90,7 @@ class Car:
 
         self.total_distance = 0.0
         self.total_velocity = 0.0
-        self.total_time = 0.0
+        self.total_tick = 0
 
         self.current_pos = Point(start_pos)
 
@@ -125,7 +125,6 @@ class Car:
                 pr.draw_line_v(ray.start.to_vec(), ray.end.to_vec(), color)  # type: ignore
             pr.draw_line_v(self.proximity.start.to_vec(), self.proximity.end.to_vec(), color)  # type: ignore
             pr.draw_line_v(last_start.to_vec(), self.current_pos.to_vec(), color)  # type: ignore
-            pr.draw_circle_v(self.current_pos.to_vec(), 1, color)  # type: ignore
 
         tex = res.load_texture("car")
         pr.draw_texture_pro(
@@ -182,7 +181,7 @@ class Car:
 
         # Collisions
 
-        match world.collision(Point(self.pos), WIDTH * 0.5):
+        match world.collision_on_corridor(Point(self.pos), WIDTH * 0.5):
             case None:
                 self.damaged = False
             case v:
@@ -199,18 +198,18 @@ class Car:
             case seg, pos:
                 assert isinstance(seg, Segment) and isinstance(pos, Point)
                 if self.visited_location[-1][0] != seg:
-                    self.total_distance += seg.length
                     self.visited_location.append((seg, seg.closest_ep(pos)))
                     if len(self.visited_location) > MAX_VISITED_LOCATION:
                         self.visited_location.pop(0)
+                    self.total_distance += seg.length
                 self.current_pos = pos
 
-        self.total_time += 1
         self.total_velocity += norm(self.vel)
+        self.total_tick += 1
 
     def _update_sensors(self) -> None:
         pos = Point(self.pos)
-        right = lst_2_np([-self.head[1], self.head[0]])
-        self.camera = world.cast_rays(pos, self.head)
-        self.proximity = world.cast_ray(pos, right, world.ROAD_WIDTH)
-        self.out_of_track = ((world.ROAD_WIDTH - WIDTH) * 0.5) < self.proximity.length < (world.ROAD_WIDTH - EPS)
+        left = lst_2_np([self.head[1], -self.head[0]])
+        self.camera = world.cast_rays_on_corridor(pos, self.head)
+        self.proximity = world.cast_ray_on_skeleton(pos, left, world.ROAD_WIDTH)
+        self.out_of_track = not (WIDTH < self.proximity.length < (world.ROAD_WIDTH / 2))

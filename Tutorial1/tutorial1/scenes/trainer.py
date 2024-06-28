@@ -15,7 +15,6 @@ BEST_CAR_COLOR = pr.Color(255, 255, 255, 255)
 CAR_COLOR = pr.Color(255, 255, 255, 64)
 ZOOM_DEFAULT = 20
 ZOOM_ACCELERATION_COEF = 0.1
-MIN_SPEED = 5  # km.h-1
 
 
 @dataclass
@@ -62,18 +61,12 @@ def get_agent_obs(agent: car.Car) -> dict[str, np.ndarray]:
 
 def get_agent_score(agent: car.Car) -> float:
     score = agent.get_travel_distance_in_km() * 1000 + agent.get_avg_velocity()
-    score += -100 if agent.damaged else 0
+    score += 0 if agent.out_of_track else -1000
     return score
 
 
 def is_agent_alive(agent: car.Car) -> bool:
-    return (
-        agent.is_alive()
-        and not agent.damaged
-        and not agent.out_of_track
-        and agent.get_speed_in_kmh() >= MIN_SPEED
-        and np.dot(agent.vel, agent.head) >= 0
-    )
+    return not agent.damaged and not agent.out_of_track and np.dot(agent.vel, agent.head) >= 0
 
 
 def is_terminated() -> bool:
@@ -93,6 +86,7 @@ def update(dt: float) -> str:
         entity.update(dt)
 
     alive_agents = [agent for agent in _context.agents if is_agent_alive(agent)]
+
     _context.entities = [world, *alive_agents]
     _context.best_agent = max(alive_agents, key=lambda x: get_agent_score(x) if x is not None else 0.0, default=None)
     _context.update_camera()
@@ -125,7 +119,7 @@ def draw() -> None:
 
     prx.draw_text_shadow(f"Time Step: {_context.timestep}", pr.Vector2(2, 44), 22, pr.WHITE)  # type: ignore
     prx.draw_text_shadow(f"Time Elapsed: {datetime.timedelta(seconds=pr.get_time())}", pr.Vector2(2, 65), 22, pr.WHITE)  # type: ignore
-    prx.draw_text_shadow(f"{pr.get_fps()}fps", pr.Vector2(900, 2), 22, pr.WHITE)  # type: ignore
+    prx.draw_text_shadow(f"{pr.get_fps()}fps", pr.Vector2(940, 2), 22, pr.WHITE)  # type: ignore
 
 
 def _update_camera_free_mode() -> None:

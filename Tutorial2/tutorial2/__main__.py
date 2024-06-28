@@ -1,6 +1,6 @@
 import os
 import signal
-from typing import Any, Optional
+from typing import Optional
 
 import gymnasium as gym
 import numpy as np
@@ -12,7 +12,6 @@ AGENT_COUNT = 100
 GAME_SEED = 5
 
 BAR_FORMAT = "{l_bar}{bar}| {n_fmt}/{total_fmt}"
-
 
 should_quit = False
 
@@ -28,18 +27,8 @@ def get_agent_model():
             pf.layers.GeneticDense(17, 32, activation="leaky_relu"),
             pf.layers.GeneticDense(32, 2, activation="tanh"),
         ],
-        trainer=pf.GeneticTrainer(rate=0.1, variance=1),
+        trainer=pf.GeneticTrainer(rate=0.1, variance=0.1),
     )
-
-
-def get_agent_pool(agents: list[pf.GeneticIndividual], info: dict[str, Any], reward: float) -> pf.GeneticPool:
-    for agent, score in zip(agents, info["scores"], strict=True):
-        agent.set_fitness(score + reward)
-
-    pool = pf.GeneticPool(agents)
-    pool.sample()
-    pool.normalize()
-    return pool
 
 
 class Agent:
@@ -71,17 +60,15 @@ class Agent:
 
 
 def main():
-    signal.signal(signal.SIGINT, handler_quit)
-
-    if os.path.exists("agent_model.json"):
-        base_model = get_agent_model()
-        base_model.load("agent_model.json")
-    else:
-        base_model = None
-
     env = gym.make("tutorial1/Tutorial1-v1", render_mode="human", agent_count=AGENT_COUNT)
 
-    agents = [Agent(base_model) for _ in trange(AGENT_COUNT, desc="Spawning agents", ncols=120, bar_format=BAR_FORMAT)]
+    if os.path.exists("agent_model.json"):
+        best_model = get_agent_model()
+        best_model.load("agent_model.json")
+    else:
+        best_model = None
+
+    agents = [Agent(best_model) for _ in trange(AGENT_COUNT, desc="Spawning agents", ncols=120, bar_format=BAR_FORMAT)]
 
     observation, info = env.reset(seed=GAME_SEED)
 
@@ -91,8 +78,13 @@ def main():
         observation, reward, terminated, truncated, info = env.step(action)
 
         if terminated or truncated:
-            pool = get_agent_pool(agents, info, reward)
-            pool.best_parent().get_model().save("agent_model.json")
+            for agent, score in zip(agents, info["scores"], strict=True):
+                agent.set_fitness(score + reward)
+
+            pool = pf.GeneticPool(agents)
+            pool.sample()
+            pool.normalize()
+            best_model = pool.best_parent().get_model()
 
             agents = [
                 Agent(pool.select_parent().get_model(), True)
@@ -101,11 +93,11 @@ def main():
 
             observation, info = env.reset()
 
-    pool = get_agent_pool(agents, info, reward)
-    pool.best_parent().get_model().save("agent_model.json")
+    best_model.save("agent_model.json")
 
     env.close()
 
 
 if __name__ == "__main__":
+    signal.signal(signal.SIGINT, handler_quit)
     main()
