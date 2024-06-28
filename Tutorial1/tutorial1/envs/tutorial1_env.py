@@ -24,8 +24,8 @@ class Tutorial1Env(gym.Env):
 
         agent_space = gym.spaces.Dict(
             {
-                "agent_vel": gym.spaces.Box(-1, 1, shape=(1,), dtype=np.float64),
-                "agent_cam": gym.spaces.Box(0, 1, shape=(10,), dtype=np.float64),
+                "agent_vel": gym.spaces.Box(-1, 1, shape=(1, 1), dtype=np.float64),
+                "agent_cam": gym.spaces.Box(0, 1, shape=(1, 16), dtype=np.float64),
             }
         )
         self.observation_space = gym.spaces.Sequence(agent_space)

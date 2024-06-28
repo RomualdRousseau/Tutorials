@@ -1,3 +1,4 @@
+import datetime
 from dataclasses import dataclass
 from typing import Callable, Optional
 
@@ -25,6 +26,7 @@ class Context:
     best_agent: Optional[car.Car]
     update_camera: Callable[[], None]
     last_spawn: Optional[world.Location] = None
+    timestep: int = 0
 
 
 def _init() -> Context:
@@ -81,6 +83,7 @@ def is_terminated() -> bool:
 def reset() -> None:
     _context.entities = [world, *_context.agents]
     _context.best_agent = None
+    _context.timestep += 1
     for entity in _context.entities:
         entity.reset()
 
@@ -120,7 +123,9 @@ def draw() -> None:
             prx.draw_text_shadow(f"Distance: {best_car.get_travel_distance_in_km():.3f}km", pr.Vector2(2, 2), 22, pr.WHITE)  # type: ignore
             prx.draw_text_shadow(f"Speed: {best_car.get_speed_in_kmh():.1f}km/h", pr.Vector2(2, 23), 22, pr.WHITE)  # type: ignore
 
-    prx.draw_text_shadow(f"{pr.get_fps()}fps", pr.Vector2(2, 44), 22, pr.WHITE)  # type: ignore
+    prx.draw_text_shadow(f"Time Step: {_context.timestep}", pr.Vector2(2, 44), 22, pr.WHITE)  # type: ignore
+    prx.draw_text_shadow(f"Time Elapsed: {datetime.timedelta(seconds=pr.get_time())}", pr.Vector2(2, 65), 22, pr.WHITE)  # type: ignore
+    prx.draw_text_shadow(f"{pr.get_fps()}fps", pr.Vector2(900, 2), 22, pr.WHITE)  # type: ignore
 
 
 def _update_camera_free_mode() -> None:
