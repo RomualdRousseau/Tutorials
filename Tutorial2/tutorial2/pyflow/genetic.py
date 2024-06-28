@@ -5,6 +5,7 @@ from typing import Optional, Protocol
 import numpy as np
 
 from tutorial2.pyflow.core import Model
+from tutorial2.pyflow.functions import ac_softmax
 from tutorial2.pyflow.sequential import Sequential
 
 
@@ -34,9 +35,10 @@ class GeneticPool:
             self.pool = self.pool[:sample_count]
 
     def normalize(self) -> None:
-        s = sum((max(0, individual.get_fitness()) for individual in self.pool))
-        for individual in self.pool:
-            individual.set_fitness(max(0, individual.get_fitness()) / s)
+        fitnesses = [individual.get_fitness() for individual in self.pool]
+        fitnesses = ac_softmax(np.array([fitnesses]))[0]
+        for individual, fitness in zip(self.pool, fitnesses, strict=True):
+            individual.set_fitness(fitness)
 
     def best_parent(self) -> GeneticIndividual:
         return self.pool[0]
