@@ -61,7 +61,7 @@ def get_agent_obs(agent: car.Car) -> dict[str, np.ndarray]:
 def get_agent_score(agent: car.Car) -> float:
     score = agent.get_travel_distance_in_km() * agent.get_avg_velocity() * 1000
     score += -100 if agent.damaged else 0
-    return max(0, score)
+    return score
 
 
 def is_agent_alive(agent: car.Car) -> bool:

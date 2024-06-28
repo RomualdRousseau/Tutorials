@@ -34,9 +34,9 @@ class GeneticPool:
             self.pool = self.pool[:sample_count]
 
     def normalize(self) -> None:
-        s = sum((x.get_fitness() for x in self.pool))
+        s = sum((max(0, individual.get_fitness()) for individual in self.pool))
         for individual in self.pool:
-            individual.set_fitness(individual.get_fitness() / s)
+            individual.set_fitness(max(0, individual.get_fitness()) / s)
 
     def best_parent(self) -> GeneticIndividual:
         return self.pool[0]
