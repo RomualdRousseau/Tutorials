@@ -186,23 +186,16 @@ def get_nearest_segments(position: Point, radius: float) -> list[Segment]:
     return [x for x in _world.corridor.segments if nearest(x)]
 
 
-@lru_cache
-def get_nearest_skeletons(position: Point, radius: float) -> list[Segment]:
-    _world = get_singleton()
-    nearest = lambda x: distance_point_segment(position, x, True) < radius
-    return [x for x in _world.corridor.skeleton if nearest(x)]
-
-
-def cast_ray_on_skeleton(
+def cast_ray(
     position: Point,
     direction: np.ndarray,
     length: float = RAY_MAX_LEN,
 ) -> Segment:
-    nearest_segments = get_nearest_skeletons(position, length)
+    nearest_segments = get_nearest_segments(position, length)
     return cast_ray_segments(position, direction, length, nearest_segments)
 
 
-def cast_rays_on_corridor(
+def cast_rays(
     position: Point,
     direction: np.ndarray,
     length: float = RAY_MAX_LEN,
@@ -218,7 +211,7 @@ def cast_rays_on_corridor(
     return rays
 
 
-def collision_on_corridor(position: Point, radius: float) -> Optional[np.ndarray]:
+def collision(position: Point, radius: float) -> Optional[np.ndarray]:
     nearest_segments = get_nearest_segments(position, radius)
     collide = curry(collision_circle_segment)(position, radius)
     cols = lst_2_np([x for x in map(collide, nearest_segments) if x is not None])

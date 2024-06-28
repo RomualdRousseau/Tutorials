@@ -181,7 +181,7 @@ class Car:
 
         # Collisions
 
-        match world.collision_on_corridor(Point(self.pos), WIDTH * 0.5):
+        match world.collision(Point(self.pos), WIDTH * 0.5):
             case None:
                 self.damaged = False
             case v:
@@ -210,6 +210,6 @@ class Car:
     def _update_sensors(self) -> None:
         pos = Point(self.pos)
         left = lst_2_np([self.head[1], -self.head[0]])
-        self.camera = world.cast_rays_on_corridor(pos, self.head)
-        self.proximity = world.cast_ray_on_skeleton(pos, left, world.ROAD_WIDTH)
-        self.out_of_track = not (WIDTH * 0.75 < self.proximity.length < world.ROAD_WIDTH * 0.75)
+        self.camera = world.cast_rays(pos, self.head)
+        self.proximity = world.cast_ray(pos, left, world.ROAD_WIDTH)
+        self.out_of_track = self.proximity.length < (world.ROAD_WIDTH * 0.5 + WIDTH)
