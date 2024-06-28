@@ -17,6 +17,7 @@ from tutorial1.math.geom import (
     distance_point_segment,
     nearest_point_segment,
 )
+from tutorial1.math.linalg import lst_2_np
 from tutorial1.util.funcs import curry
 
 GRASS_COLOR = pr.Color(86, 180, 57, 255)
@@ -37,6 +38,8 @@ TREE_DISTANCE = 25  # m
 TREE_OFFSET = 5  # m
 
 RAY_MAX_LEN = 50  # m
+
+Location = tuple[Segment, Point]
 
 
 @dataclass
@@ -168,12 +171,12 @@ def draw(layer: int) -> None:
     [draw_bg, draw_fg][layer]()
 
 
-def get_location(position: Point) -> Optional[tuple[Point, Segment]]:
+def get_location(position: Point) -> Optional[Location]:
     _world = get_singleton()
-    nearest = lambda x: (nearest_point_segment(position, x, True), x)
-    closest = lambda x: distance(position, x[0]) if x[0] is not None else np.inf
+    nearest = lambda x: (x, nearest_point_segment(position, x, True))
+    closest = lambda x: distance(position, x[1]) if x[1] is not None else np.inf
     location = min(map(nearest, _world.corridor.skeleton), key=closest)
-    return location if location[0] is not None else None  # type: ignore
+    return location if location[1] is not None else None  # type: ignore
 
 
 @lru_cache
@@ -203,7 +206,7 @@ def cast_rays(
     nearest_segments = get_nearest_segments(position, length)
     for i in range(sampling):
         beta = np.interp(i / sampling, [0, 1], [alpha - np.pi * 0.4, alpha + np.pi * 0.4])
-        direction = np.array([np.cos(beta), np.sin(beta)])
+        direction = lst_2_np([np.cos(beta), np.sin(beta)])
         rays.append(cast_ray_segments(position, direction, length, nearest_segments))
     return rays
 
@@ -211,5 +214,5 @@ def cast_rays(
 def collision(position: Point, radius: float) -> Optional[np.ndarray]:
     nearest_segments = get_nearest_segments(position, radius)
     collide = curry(collision_circle_segment)(position, radius)
-    cols = np.array([x for x in map(collide, nearest_segments) if x is not None])
+    cols = lst_2_np([x for x in map(collide, nearest_segments) if x is not None])
     return np.average(cols, axis=0) if len(cols) > 0 else None

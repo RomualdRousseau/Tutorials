@@ -7,7 +7,7 @@ import tutorial1.resources as res
 from tutorial1.constants import GAMEPAD_AXIS_X, GAMEPAD_AXIS_Y, GAMEPAD_ID
 from tutorial1.entities import world
 from tutorial1.math.geom import Point, Segment, distance
-from tutorial1.math.linalg import EPS, almost, normalize
+from tutorial1.math.linalg import EPS, almost, lst_2_np, norm, normalize
 
 MASS = 650  # kg
 LENGTH = 5  # m
@@ -18,9 +18,9 @@ MAX_SPEED = 125  # km.h-1
 DRAG_ROAD = 0.9  # Concrete/Rubber
 DRAG_ROLLING = 0.01  # Concrete/Rubber
 C_G = 9.81  # m.s-2
-START_OFFSET = world.ROAD_WIDTH / 4  # m
 
-SpawnLocation = tuple[Segment, Point]
+START_OFFSET = world.ROAD_WIDTH / 4  # m
+MAX_VISITED_LOCATION = 10
 
 
 class Car:
@@ -32,10 +32,11 @@ class Car:
         self.spawn_mode = False
 
     def get_travel_distance_in_km(self) -> float:
-        return (self.total_distance + distance(self.current_start, self.current_pos)) * 0.001
+        _, last_start = self.visited_location[-1]
+        return (self.total_distance + distance(last_start, self.current_pos)) * 0.001
 
     def get_speed_in_kmh(self) -> float:
-        return float(np.linalg.norm(self.vel)) * 3.6
+        return norm(self.vel) * 3.6
 
     def get_avg_velocity(self) -> float:
         return self.total_velocity / (self.total_time + EPS)
@@ -43,10 +44,13 @@ class Car:
     def set_debug_mode(self, debug_mode: bool) -> None:
         self.debug_mode = debug_mode
 
-    def get_spawn_location(self) -> SpawnLocation:
-        return self.current_seg, self.current_start
+    def get_spawn_location(self) -> world.Location:
+        if len(self.visited_location) <= 1:
+            return self.visited_location[-1]
+        else:
+            return self.visited_location[-2]
 
-    def set_spawn_location(self, spawn_location: Optional[SpawnLocation]) -> None:
+    def set_spawn_location(self, spawn_location: Optional[world.Location]) -> None:
         self.spawn_mode = spawn_location is not None
         if spawn_location is not None:
             self.spawn_seg, self.spawn_pos = spawn_location
@@ -73,10 +77,10 @@ class Car:
         assert not almost(start_pos, end_pos)
         start_pos = start_pos * 0.99 + end_pos * 0.01
         start_dir = normalize(end_pos - start_pos)
-        start_off = np.array([-start_dir[1], start_dir[0]]) * START_OFFSET
+        start_off = lst_2_np([-start_dir[1], start_dir[0]]) * START_OFFSET
 
         self.pos = start_pos + start_off
-        self.vel = np.array([0.0, 0.0])
+        self.vel = np.zeros(2, dtype=np.float64)
         self.head = start_dir
 
         self.wheel = 0.0
@@ -88,9 +92,9 @@ class Car:
         self.total_velocity = 0.0
         self.total_time = 0.0
 
-        self.current_seg = start_seg
-        self.current_start = Point(start_pos)
-        self.current_pos = self.current_start
+        self.current_pos = Point(start_pos)
+
+        self.visited_location = [(start_seg, self.current_pos)]
 
         self._update_sensors()
 
@@ -116,10 +120,11 @@ class Car:
 
         if self.debug_mode:
             color = pr.YELLOW if not self.out_of_track else pr.RED
+            _, last_start = self.visited_location[-1]
             for ray in self.camera:
                 pr.draw_line_v(ray.start.to_vec(), ray.end.to_vec(), color)  # type: ignore
             pr.draw_line_v(self.proximity.start.to_vec(), self.proximity.end.to_vec(), color)  # type: ignore
-            pr.draw_line_v(self.current_start.to_vec(), self.current_pos.to_vec(), color)  # type: ignore
+            pr.draw_line_v(last_start.to_vec(), self.current_pos.to_vec(), color)  # type: ignore
             pr.draw_circle_v(self.current_pos.to_vec(), 1, color)  # type: ignore
 
         tex = res.load_texture("car")
@@ -178,23 +183,26 @@ class Car:
         # Collisions
 
         match world.collision(Point(self.pos), WIDTH * 0.5):
-            case v if v is not None:
+            case None:
+                self.damaged = False
+            case v:
                 self.vel = self.vel * 0.5 + v
                 self.pos += v
                 self.head = normalize(self.vel)
                 self.damaged = True
-            case _:
-                self.damaged = False
 
         # Localisation
 
         match world.get_location(Point(self.pos)):
-            case loc if loc is not None:
-                pos, seg = loc
-                if self.current_seg != seg:
-                    self.current_seg = seg
-                    self.total_distance += self.current_seg.length
-                    self.current_start = self.current_seg.closest_ep(pos)
+            case None:
+                pass
+            case seg, pos:
+                assert isinstance(seg, Segment) and isinstance(pos, Point)
+                if self.visited_location[-1][0] != seg:
+                    self.total_distance += seg.length
+                    self.visited_location.append((seg, seg.closest_ep(pos)))
+                    if len(self.visited_location) > MAX_VISITED_LOCATION:
+                        self.visited_location.pop(0)
                 self.current_pos = pos
 
         self.total_time += 1
@@ -202,7 +210,7 @@ class Car:
 
     def _update_sensors(self) -> None:
         pos = Point(self.pos)
-        right = np.array([-self.head[1], self.head[0]])
+        right = lst_2_np([-self.head[1], self.head[0]])
         self.camera = world.cast_rays(pos, self.head)
         self.proximity = world.cast_ray(pos, right, world.ROAD_WIDTH)
-        self.out_of_track = (world.ROAD_WIDTH / 2 - 1) < self.proximity.length < (world.ROAD_WIDTH - 0.1)
+        self.out_of_track = ((world.ROAD_WIDTH - WIDTH) * 0.5) < self.proximity.length < (world.ROAD_WIDTH - EPS)

@@ -14,7 +14,7 @@ from tutorial1.math.geom import (
     point_in_polygon,
     points_to_segments,
 )
-from tutorial1.math.linalg import normalize
+from tutorial1.math.linalg import lst_2_np, normalize
 from tutorial1.util.funcs import curry
 
 
@@ -49,26 +49,26 @@ def generare_from_spatial_graph(agraph: graph.SpatialGraph, width: int) -> tuple
 def _generate_envelope(edge: graph.SpatialEdge, width: int, slices: int = 10) -> Envelope:
     x1, y1 = edge.start.point.xy
     x2, y2 = edge.end.point.xy
-    vx, vy = normalize(np.array([x2 - x1, y2 - y1]))
+    vx, vy = normalize(lst_2_np([x2 - x1, y2 - y1]))
 
     points = []
-    points.append(Point(np.array([x1 - vy * width * 0.5, y1 + vx * width * 0.5])))
-    points.append(Point(np.array([x2 - vy * width * 0.5, y2 + vx * width * 0.5])))
+    points.append(Point(lst_2_np([x1 - vy * width * 0.5, y1 + vx * width * 0.5])))
+    points.append(Point(lst_2_np([x2 - vy * width * 0.5, y2 + vx * width * 0.5])))
 
     b = np.arctan2(vx, -vy)
     for i in range(slices):
         a = b - np.pi * i / slices
         c, s = np.cos(a), np.sin(a)
-        points.append(Point(np.array([x2 + c * width * 0.5, y2 + s * width * 0.5])))
+        points.append(Point(lst_2_np([x2 + c * width * 0.5, y2 + s * width * 0.5])))
 
-    points.append(Point(np.array([x2 + vy * width * 0.5, y2 - vx * width * 0.5])))
-    points.append(Point(np.array([x1 + vy * width * 0.5, y1 - vx * width * 0.5])))
+    points.append(Point(lst_2_np([x2 + vy * width * 0.5, y2 - vx * width * 0.5])))
+    points.append(Point(lst_2_np([x1 + vy * width * 0.5, y1 - vx * width * 0.5])))
 
     b = np.arctan2(-vx, vy)
     for i in range(slices):
         a = b - np.pi * i / slices
         c, s = np.cos(a), np.sin(a)
-        points.append(Point(np.array([x1 + c * width * 0.5, y1 + s * width * 0.5])))
+        points.append(Point(lst_2_np([x1 + c * width * 0.5, y1 + s * width * 0.5])))
 
     segments = points_to_segments(points)
 
@@ -79,7 +79,7 @@ def _generate_anchors(envelopes: list[Envelope], step: int = 20):
     def anchors() -> Iterable[Point]:
         for i in range(-VIRTUAL_WIDTH, VIRTUAL_WIDTH + 1, step):
             for j in range(-VIRTUAL_WIDTH, VIRTUAL_WIDTH + 1, step):
-                yield Point(np.array([j, i]))
+                yield Point(lst_2_np([j, i]))
 
     anchor_in_polygon = lambda x, y: point_in_polygon(x, y.points)
     anchor_in_polygons = lambda x: not any(map(curry(anchor_in_polygon)(x), envelopes))

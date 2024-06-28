@@ -1,21 +1,21 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from functools import partial
 from typing import Any, Iterable, Optional
 
 import numpy as np
+import numpy.typing as npt
 import pyray as pr
 
 import tutorial1.util.pyray_ex as prx
 from tutorial1.constants import VIRTUAL_WIDTH
-from tutorial1.math.linalg import EPS, almost
+from tutorial1.math.linalg import EPS, almost, lst_2_np, norm
 from tutorial1.util.funcs import curry
 
 
 @dataclass
 class Point:
-    xy: np.ndarray
+    xy: npt.NDArray[np.float64]
 
     def draw(self, thick: float, color: pr.Color) -> None:  # pragma: no cover
         pr.draw_circle_v(self.to_vec(), thick, color)
@@ -78,14 +78,14 @@ class Segment:
             and self.start.almost(other.end, eps)
         )
 
-    def __eq__(self, other) -> bool:
+    def __eq__(self, other: Any) -> bool:
         return isinstance(other, Segment) and (
             self.start == other.start and self.end == other.end or self.end == other.start and self.start == other.end
         )
 
 
 def distance(p1: Point, p2: Point) -> float:
-    return float(np.linalg.norm(p2.xy - p1.xy))
+    return norm(p2.xy - p1.xy)
 
 
 def point_on_segment(p: Point, seg: Segment) -> bool:
@@ -128,11 +128,11 @@ def distance_point_segment(p: Point, seg: Segment, closest: bool = False) -> flo
     v = v / (v_l + EPS)
     match np.dot(u, v):
         case x if x < 0:
-            return float(np.linalg.norm(seg.start.xy - p.xy)) if closest else np.inf
+            return norm(seg.start.xy - p.xy) if closest else np.inf
         case x if x > v_l:
-            return float(np.linalg.norm(seg.end.xy - p.xy)) if closest else np.inf
+            return norm(seg.end.xy - p.xy) if closest else np.inf
         case x:
-            return float(np.linalg.norm(seg.start.xy + v * x - p.xy))
+            return norm(seg.start.xy + v * x - p.xy)
     return np.inf
 
 
@@ -157,42 +157,44 @@ def intersect(seg1: Segment, seg2: Segment, strict: bool = True) -> Optional[Poi
     x3, y3 = seg2.start.xy
     x4, y4 = seg2.end.xy
 
-    atol = -1e-08 if strict else 0.0
-    within_0_and_1 = partial(np.isclose, b=0.5, rtol=1.0, atol=atol)
+    atol = -EPS if strict else 0
 
     match np.linalg.det([[x1 - x2, y1 - y2], [x3 - x4, y3 - y4]]):
         case d if d != 0:
             match -np.linalg.det([[x1 - x2, y1 - y2], [x1 - x3, y1 - y3]]) / d:
-                case u if within_0_and_1(u):
+                case u if abs(u - 0.5) <= (atol + 0.5):
                     match np.linalg.det([[x1 - x3, y1 - y3], [x3 - x4, y3 - y4]]) / d:
-                        case t if within_0_and_1(t):
+                        case t if abs(t - 0.5) <= (atol + 0.5):
                             return Point(
-                                np.array(
+                                lst_2_np(
                                     [
                                         np.interp(t, [0, 1], [x1, x2]),
                                         np.interp(t, [0, 1], [y1, y2]),
                                     ]
                                 )
                             )
+
     return None
 
 
-def collision_circle_segment(center: Point, radius: float, seg: Segment) -> Optional[np.ndarray]:
+def collision_circle_segment(center: Point, radius: float, seg: Segment) -> Optional[npt.NDArray[np.float64]]:
     u = center.xy - seg.start.xy
     v = seg.end.xy - seg.start.xy
-    v_l = np.linalg.norm(v)
+    v_l = norm(v)
     v = v / (v_l + EPS)
     match np.dot(u, v):
         case x if 0 <= x <= v_l:
             x = seg.start.xy + v * x
             w = center.xy - x
-            match float(np.linalg.norm(w)):
+            match norm(w):
                 case w_l if w_l <= radius:
                     return w * (radius - w_l) / (w_l + EPS)
     return None
 
 
-def cast_ray_segments(position: Point, direction: np.ndarray, length: float, segments: Iterable[Segment]) -> Segment:
+def cast_ray_segments(
+    position: Point, direction: npt.NDArray[np.float64], length: float, segments: Iterable[Segment]
+) -> Segment:
     target = Point(length * direction + position.xy)
     ray = Segment(position, target)
     map_not_none = curry(filter)(lambda x: x is not None)

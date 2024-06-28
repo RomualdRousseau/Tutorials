@@ -7,7 +7,7 @@ import pyray as pr
 import tutorial1.util.pyray_ex as prx
 from tutorial1.constants import WINDOW_HEIGHT, WINDOW_WIDTH
 from tutorial1.entities import car, world
-from tutorial1.math.geom import Point
+from tutorial1.math.linalg import lst_2_np
 from tutorial1.util.types import Entity
 
 BEST_CAR_COLOR = pr.Color(255, 255, 255, 255)
@@ -24,8 +24,7 @@ class Context:
     camera: pr.Camera2D
     best_agent: Optional[car.Car]
     update_camera: Callable[[], None]
-    last_start: Optional[Point] = None
-    last_spawn: Optional[car.SpawnLocation] = None
+    last_spawn: Optional[world.Location] = None
 
 
 def _init() -> Context:
@@ -54,15 +53,15 @@ def reset_agents() -> None:
 
 def get_agent_obs(agent: car.Car) -> dict[str, np.ndarray]:
     return {
-        "agent_vel": np.array([agent.get_speed_in_kmh() / car.MAX_SPEED]),
-        "agent_cam": np.array([1.0 - x.length / world.RAY_MAX_LEN for x in agent.camera]),
+        "agent_vel": lst_2_np([agent.get_speed_in_kmh() / car.MAX_SPEED]),
+        "agent_cam": lst_2_np([1.0 - x.length / world.RAY_MAX_LEN for x in agent.camera]),
     }
 
 
 def get_agent_score(agent: car.Car) -> float:
     score = agent.get_travel_distance_in_km() * agent.get_avg_velocity() * 1000
     score += -100 if agent.damaged else 0
-    return score
+    return max(0, score)
 
 
 def is_agent_alive(agent: car.Car) -> bool:
@@ -96,9 +95,7 @@ def update(dt: float) -> str:
     _context.update_camera()
 
     if _context.best_agent is not None:
-        if _context.last_start is None or _context.last_start != _context.best_agent.current_start:
-            _context.last_start = _context.best_agent.current_start
-            _context.last_spawn = _context.best_agent.get_spawn_location()
+        _context.last_spawn = _context.best_agent.get_spawn_location()
 
     return "trainer"
 
@@ -111,8 +108,8 @@ def draw() -> None:
     for layer in range(2):
         for entity in _context.entities:
             entity.draw(layer)
-    if _context.last_start is not None:
-        _context.last_start.draw(1, pr.BLUE)  # type: ignore
+    if _context.last_spawn is not None:
+        _context.last_spawn[1].draw(1, pr.BLUE)  # type: ignore
     pr.end_mode_2d()
 
     match _context.best_agent:

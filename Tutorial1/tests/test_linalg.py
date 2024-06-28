@@ -1,17 +1,17 @@
 import numpy as np
 
-from tutorial1.math.linalg import almost, normalize
+from tutorial1.math.linalg import almost, lst_2_np, normalize
 
 
 def test_almost():
-    assert almost(1, 0.9, 0.1)
+    assert almost(1.0, 0.9, 0.1)
 
 
 def test_points_not_almost():
-    assert not almost(1, 0.9, 0.01)
+    assert not almost(1.0, 0.9, 0.01)
 
 
 def test_normalize():
-    a = np.array([1, 1])
-    b = np.array([np.cos(np.pi / 4), np.sin(np.pi / 4)])
+    a = lst_2_np([1, 1])
+    b = lst_2_np([np.cos(np.pi / 4), np.sin(np.pi / 4)])
     assert almost(normalize(a), b)

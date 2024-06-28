@@ -56,7 +56,7 @@ class Agent:
     def get_action(self, observation: dict[str, np.ndarray]) -> np.ndarray:
         vel = observation["agent_vel"]
         cam = observation["agent_cam"]
-        x = np.concat([vel, pf.conv1d(cam, Agent.CK)])
+        x = np.concat([vel, np.convolve(cam, Agent.CK, "same")])
         y = self.model.predict(x)
         return y[0]
 
