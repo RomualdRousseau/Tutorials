@@ -2,18 +2,20 @@ import os
 import signal
 from typing import Optional
 
+import fire
 import gymnasium as gym
 import numpy as np
 from tqdm import trange
 
 import tutorial2.pyflow as pf
 
-AGENT_COUNT = 100
-GAME_SEED = 5
-
 BAR_FORMAT = "{l_bar}{bar}| {n_fmt}/{total_fmt}"
 
 should_quit = False
+
+
+def install_quit_handler():
+    signal.signal(signal.SIGINT, handler_quit)
 
 
 def handler_quit(signum, frame):
@@ -27,7 +29,7 @@ def get_agent_model():
             pf.layers.GeneticDense(17, 32, activation="leaky_relu"),
             pf.layers.GeneticDense(32, 2, activation="tanh"),
         ],
-        trainer=pf.GeneticTrainer(rate=0.1, variance=1),
+        trainer=pf.GeneticTrainer(rate=0.1, variance=0.1),
     )
 
 
@@ -59,8 +61,16 @@ class Agent:
         self.fitness = fitness
 
 
-def main():
-    env = gym.make("tutorial1/Tutorial1-v1", render_mode="human", agent_count=AGENT_COUNT)
+def main(agent_count: int = 100, seed: int = 5, model_file: Optional[str] = None) -> None:
+    """
+    Welcome to the taxi driver simulation tutorial!
+
+    In this tutorial, you will learn how to create your own Gymnasium agent. Gymnasium is a toolkit for developing and
+    comparing reinforcement learning algorithms. Here, we will guide you through the steps to create a machine learning
+    model that will train the car in the Taxi Driver Environment to drive safely between 2 locations in the city.
+    """
+
+    env = gym.make("tutorial1/Tutorial1-v1", render_mode="human", agent_count=agent_count)
 
     if os.path.exists("agent_model.json"):
         best_model = get_agent_model()
@@ -68,9 +78,9 @@ def main():
     else:
         best_model = None
 
-    agents = [Agent(best_model) for _ in trange(AGENT_COUNT, desc="Spawning agents", ncols=120, bar_format=BAR_FORMAT)]
+    agents = [Agent(best_model) for _ in trange(agent_count, desc="Spawning agents", ncols=120, bar_format=BAR_FORMAT)]
 
-    observation, info = env.reset(seed=GAME_SEED)
+    observation, info = env.reset(seed=seed)
 
     while not should_quit:
         action = [a.get_action(observation[i]) for i, a in enumerate(agents)]
@@ -81,23 +91,24 @@ def main():
             for agent, score in zip(agents, info["scores"], strict=True):
                 agent.set_fitness(score + reward)
 
-            pool = pf.GeneticPool(agents)
+            pool = pf.GeneticPool(agents)  # type: ignore
             pool.sample()
             pool.normalize()
             best_model = pool.best_parent().get_model()
 
             agents = [
                 Agent(pool.select_parent().get_model(), True)
-                for _ in trange(AGENT_COUNT, desc="Training agents", ncols=120, bar_format=BAR_FORMAT)
+                for _ in trange(agent_count, desc="Training agents", ncols=120, bar_format=BAR_FORMAT)
             ]
 
             observation, info = env.reset()
 
-    best_model.save("agent_model.json")
+    if model_file is not None:
+        best_model.save(model_file)
 
     env.close()
 
 
 if __name__ == "__main__":
-    signal.signal(signal.SIGINT, handler_quit)
-    main()
+    install_quit_handler()
+    fire.Fire(main)

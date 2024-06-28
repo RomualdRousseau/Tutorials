@@ -9,6 +9,7 @@ readme = "README.md"
 python = "^3.11"
 gymnasium = "^0.29.1"
 tutorial1 = { path = "../Tutorial1" }
+fire = "^0.6.0"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.2.2"

@@ -21,7 +21,7 @@ pre-commit:
 
 # Run the tutorial
 run: pre-commit
-    poetry run python -m tutorial2
+    poetry run python -m tutorial2 --model-file=agent_model.json
 
 # Profile the tutorial
 profile: pre-commit

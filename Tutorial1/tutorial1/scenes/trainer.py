@@ -60,8 +60,8 @@ def get_agent_obs(agent: car.Car) -> dict[str, np.ndarray]:
 
 
 def get_agent_score(agent: car.Car) -> float:
-    score = agent.get_travel_distance_in_km() * 1000 + agent.get_avg_velocity()
-    score += 0 if agent.out_of_track else -1000
+    score = agent.get_travel_distance_in_km() * 100 + agent.get_avg_velocity()
+    # score += 0 if agent.out_of_track else -1000
     return score
 
 
