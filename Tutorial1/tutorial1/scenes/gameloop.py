@@ -67,7 +67,9 @@ def _update_free_mode(dt: float) -> str:
         _context.update_state = _update_game_mode
     else:
         if pr.is_mouse_button_down(pr.MouseButton.MOUSE_BUTTON_LEFT):
-            _context.camera.target = pr.vector2_subtract(_context.camera.target, pr.get_mouse_delta())
+            _context.camera.target = pr.vector2_lerp(
+                _context.camera.target, pr.vector2_subtract(_context.camera.target, pr.get_mouse_delta()), 0.8
+            )
         _context.camera.zoom = max(1, _context.camera.zoom + pr.get_mouse_wheel_move() * 0.5)
 
     return "gameloop"
@@ -83,7 +85,7 @@ def _update_game_mode(dt: float) -> str:
         _context.camera.zoom = ZOOM_DEFAULT
         _context.update_state = _update_free_mode
     else:
-        _context.camera.target = pr.Vector2(*_context.player.pos)
+        _context.camera.target = pr.vector2_lerp(_context.camera.target, pr.Vector2(*_context.player.pos), 0.8)
         _context.camera.zoom = 0.8 * _context.camera.zoom + 0.2 * (
             max(
                 1,

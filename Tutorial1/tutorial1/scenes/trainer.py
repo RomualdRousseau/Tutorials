@@ -132,7 +132,9 @@ def _update_camera_free_mode() -> None:
         _context.update_camera = _update_camera_game_mode
     else:
         if pr.is_mouse_button_down(pr.MouseButton.MOUSE_BUTTON_LEFT):
-            _context.camera.target = pr.vector2_subtract(_context.camera.target, pr.get_mouse_delta())
+            _context.camera.target = pr.vector2_lerp(
+                _context.camera.target, pr.vector2_subtract(_context.camera.target, pr.get_mouse_delta()), 0.8
+            )
         _context.camera.zoom = max(1, _context.camera.zoom + pr.get_mouse_wheel_move() * 0.5)
 
 
@@ -143,7 +145,7 @@ def _update_camera_game_mode() -> None:
         _context.camera.zoom = ZOOM_DEFAULT
         _context.update_camera = _update_camera_free_mode
     elif _context.best_agent is not None:
-        _context.camera.target = pr.Vector2(*_context.best_agent.pos)
+        _context.camera.target = pr.vector2_lerp(_context.camera.target, pr.Vector2(*_context.best_agent.pos), 0.8)
         _context.camera.zoom = 0.8 * _context.camera.zoom + 0.2 * (
             max(
                 1,
