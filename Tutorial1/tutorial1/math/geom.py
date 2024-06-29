@@ -135,13 +135,7 @@ def nearest_point_segment(p: Point, seg: Segment, closest: bool = False) -> Opti
 
 
 def collision_circle_segment(center: Point, radius: float, seg: Segment) -> Optional[npt.NDArray[np.float64]]:
-    x = la.nearest_point_segment(center.xy, seg.start.xy, seg.end.xy, True)
-    if x is not None:
-        w = center.xy - x
-        w_l = la.norm(w)
-        if w_l <= radius:
-            return w * (radius - w_l) / (w_l + la.EPS)
-    return None
+    return la.collision_circle_segment(center.xy, radius, seg.start.xy, seg.end.xy)
 
 
 def cast_ray_segments(

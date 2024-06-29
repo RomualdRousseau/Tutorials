@@ -9,7 +9,7 @@ def reset() -> None:
 
 
 def update(_: float) -> str:
-    return "gameloop" if pr.get_key_pressed() != 0 else "title"
+    return "loading" if pr.get_key_pressed() != 0 else "title"
 
 
 def draw() -> None:

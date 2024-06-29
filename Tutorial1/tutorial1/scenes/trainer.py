@@ -1,5 +1,8 @@
+from __future__ import annotations
+
 import datetime
 from dataclasses import dataclass
+from functools import lru_cache
 from typing import Callable, Optional
 
 import numpy as np
@@ -11,8 +14,10 @@ from tutorial1.entities import car, world
 from tutorial1.math.linalg import lst_2_vec
 from tutorial1.util.types import Entity
 
-BEST_CAR_COLOR = pr.Color(255, 255, 255, 255)
+CAR_BEST_COLOR = pr.Color(255, 255, 255, 255)
 CAR_COLOR = pr.Color(255, 255, 255, 64)
+CAR_MIN_SPEED = 5
+
 ZOOM_DEFAULT = 20
 ZOOM_ACCELERATION_COEF = 0.1
 
@@ -23,12 +28,13 @@ class Context:
     entities: list[Entity]
     camera: pr.Camera2D
     best_agent: Optional[car.Car]
-    update_camera: Callable[[], None]
+    update_camera: Callable[[Context], None]
     last_spawn: Optional[world.Location] = None
     timestep: int = 0
 
 
-def _init() -> Context:
+@lru_cache
+def get_singleton(name: str = "default"):
     camera = pr.Camera2D(
         pr.Vector2(WINDOW_WIDTH / 2, WINDOW_HEIGHT / 2),
         pr.Vector2(0, 0),
@@ -39,17 +45,18 @@ def _init() -> Context:
 
 
 def get_agents() -> list[car.Car]:
-    return _context.agents
+    return get_singleton().agents
 
 
 def spawn_agents(agent_count: int) -> None:
-    _context.agents = [car.Car(CAR_COLOR, input_mode="ai") for _ in range(agent_count)]
+    get_singleton().agents = [car.Car(CAR_COLOR, input_mode="ai") for _ in range(agent_count)]
 
 
 def reset_agents() -> None:
-    for agent in _context.agents:
-        if _context.last_spawn is not None:
-            agent.set_spawn_location(_context.last_spawn)
+    context = get_singleton()
+    for agent in context.agents:
+        if context.last_spawn is not None:
+            agent.set_spawn_location(context.last_spawn)
 
 
 def get_agent_obs(agent: car.Car) -> dict[str, np.ndarray]:
@@ -67,50 +74,67 @@ def get_agent_score(agent: car.Car) -> float:
 
 
 def is_agent_alive(agent: car.Car) -> bool:
-    return not agent.damaged and not agent.out_of_track and np.dot(agent.vel, agent.head) >= 0
+    return (
+        not agent.damaged
+        and not agent.out_of_track
+        and np.dot(agent.vel, agent.head) >= 0
+        and agent.get_speed_in_kmh() >= CAR_MIN_SPEED
+    )
 
 
 def is_terminated() -> bool:
-    return _context.best_agent is None
+    return get_singleton().best_agent is None
 
 
 def reset() -> None:
-    _context.entities = [world, *_context.agents]
-    _context.best_agent = None
-    _context.timestep += 1
-    for entity in _context.entities:
+    context = get_singleton()
+    context.entities = [world, *context.agents]
+    context.best_agent = None
+    context.timestep += 1
+    for entity in context.entities:
         entity.reset()
 
 
 def update(dt: float) -> str:
-    for entity in _context.entities:
+    context = get_singleton()
+    for entity in context.entities:
         entity.update(dt)
 
-    alive_agents = [agent for agent in _context.agents if is_agent_alive(agent)]
+    if context.best_agent is not None and not is_agent_alive(context.best_agent):
+        print(
+            not context.best_agent.damaged,
+            not context.best_agent.out_of_track,
+            np.dot(context.best_agent.vel, context.best_agent.head) >= 0,
+            context.best_agent.get_speed_in_kmh() >= CAR_MIN_SPEED,
+        )
 
-    _context.entities = [world, *alive_agents]
-    _context.best_agent = max(alive_agents, key=lambda x: get_agent_score(x) if x is not None else 0.0, default=None)
-    _context.update_camera()
+    alive_agents = [agent for agent in context.agents if is_agent_alive(agent)]
 
-    if _context.best_agent is not None:
-        _context.last_spawn = _context.best_agent.get_spawn_location()
+    context.entities = [world, *alive_agents]
+    context.best_agent = max(alive_agents, key=lambda x: get_agent_score(x) if x is not None else 0.0, default=None)
+    context.update_camera(context)
+
+    if context.best_agent is not None:
+        context.last_spawn = context.best_agent.get_spawn_location()
 
     return "trainer"
 
 
 def draw() -> None:
-    for agent in _context.agents:
-        agent.set_debug_mode(agent is _context.best_agent)
+    context = get_singleton()
 
-    pr.begin_mode_2d(_context.camera)
+    for agent in context.agents:
+        agent.set_debug_mode(agent is context.best_agent)
+
+    pr.begin_mode_2d(context.camera)
     for layer in range(2):
-        for entity in _context.entities:
+        for entity in context.entities:
             entity.draw(layer)
-    if _context.last_spawn is not None:
-        _context.last_spawn[1].draw(1, pr.BLUE)  # type: ignore
+    if context.last_spawn is not None:
+        context.last_spawn[1].draw(1, pr.BLUE)  # type: ignore
     pr.end_mode_2d()
 
-    match _context.best_agent:
+    match context.best_agent:
         case None:
             prx.draw_text("Distance: ---", pr.Vector2(2, 2), 20, pr.WHITE, shadow=True)  # type: ignore
             prx.draw_text("Speed: ---", pr.Vector2(2, 24), 20, pr.WHITE, shadow=True)  # type: ignore
@@ -119,12 +143,12 @@ def draw() -> None:
             prx.draw_text(f"Speed: {best_car.get_speed_in_kmh():.1f}km/h", pr.Vector2(2, 24), 20, pr.WHITE, shadow=True)  # type: ignore
 
     prx.draw_text(f"Time Elapsed: {datetime.timedelta(seconds=pr.get_time())}", pr.Vector2(2, 46), 20, pr.WHITE, shadow=True)  # type: ignore
-    prx.draw_text(f"Time Step: {_context.timestep}", pr.Vector2(2, 68), 20, pr.WHITE, shadow=True)  # type: ignore
+    prx.draw_text(f"Time Step: {context.timestep}", pr.Vector2(2, 68), 20, pr.WHITE, shadow=True)  # type: ignore
 
     prx.draw_text(f"{pr.get_fps()}fps", pr.Vector2(2, 2), 20, pr.WHITE, align="right", shadow=True)  # type: ignore
 
 
-def _update_camera_free_mode() -> None:
+def _update_camera_free_mode(_context: Context) -> None:
     if pr.is_mouse_button_pressed(pr.MouseButton.MOUSE_BUTTON_RIGHT):
         pr.set_mouse_cursor(pr.MouseCursor.MOUSE_CURSOR_ARROW)
         pr.hide_cursor()
@@ -138,7 +162,7 @@ def _update_camera_free_mode() -> None:
         _context.camera.zoom = max(1, _context.camera.zoom + pr.get_mouse_wheel_move() * 0.5)
 
 
-def _update_camera_game_mode() -> None:
+def _update_camera_game_mode(_context: Context) -> None:
     if pr.is_mouse_button_pressed(pr.MouseButton.MOUSE_BUTTON_RIGHT):
         pr.set_mouse_cursor(pr.MouseCursor.MOUSE_CURSOR_RESIZE_ALL)
         pr.show_cursor()
@@ -152,6 +176,3 @@ def _update_camera_game_mode() -> None:
                 ZOOM_DEFAULT - _context.best_agent.get_speed_in_kmh() * ZOOM_ACCELERATION_COEF,
             )
         )
-
-
-_context = _init()

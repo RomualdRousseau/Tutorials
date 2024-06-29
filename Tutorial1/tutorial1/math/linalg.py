@@ -26,7 +26,7 @@ def normalize(v: npt.NDArray[np.float64]) -> npt.NDArray[np.float64]:
     return v / (norm(v) + EPS)
 
 
-@njit
+@njit(cache=True)
 def intersect(
     a: npt.NDArray[np.float64],
     b: npt.NDArray[np.float64],
@@ -86,3 +86,25 @@ def nearest_point_segment(
         return b if closest else None
     else:
         return a + v * x
+
+
+@njit
+def collision_circle_segment(
+    center: npt.NDArray[np.float64], radius: float, a: npt.NDArray[np.float64], b: npt.NDArray[np.float64]
+) -> Optional[npt.NDArray[np.float64]]:
+    x = nearest_point_segment(center, a, b, True)
+    if x is not None:
+        w = center - x
+        w_l = norm(w)
+        if w_l <= radius:
+            return w * (radius - w_l + EPS) / (w_l + EPS)
+    return None
+
+
+def compile_all_jits():
+    normalize(np.zeros(2))
+    intersect(np.zeros(2), np.zeros(2), np.zeros(2), np.zeros(2), False)
+    collision_circle_segment(np.zeros(2), 0.0, np.zeros(2), np.zeros(2))
+
+
+compile_all_jits()
