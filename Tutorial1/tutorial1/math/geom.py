@@ -121,12 +121,8 @@ def point_in_polygon(point: Point, polygon: list[Point], strict: bool = True) ->
 
 
 def intersect(seg1: Segment, seg2: Segment, strict: bool = True) -> Optional[Point]:
-    x1, y1 = seg1.start.xy
-    x2, y2 = seg1.end.xy
-    x3, y3 = seg2.start.xy
-    x4, y4 = seg2.end.xy
     atol = -la.EPS if strict else 0
-    x = la.intersect(x1, y1, x2, y2, x3, y3, x4, y4, atol)
+    x = la.intersect(seg1.start.xy, seg1.end.xy, seg2.start.xy, seg2.end.xy, atol)
     return Point(x) if x is not None else None
 
 

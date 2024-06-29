@@ -93,7 +93,7 @@ class Car:
         self.current_location_pos = Point(start_pos)
         self.visited_location = [(start_seg, self.current_location_pos)]
 
-        self.camera: list[Segment] = []
+        self.camera: list[Segment] = world.cast_rays(Point(self.pos), self.head)
         self.proximity: Optional[Segment] = None
 
         self.total_distance = 0.0
