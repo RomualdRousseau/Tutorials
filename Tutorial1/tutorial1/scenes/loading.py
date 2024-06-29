@@ -1,4 +1,5 @@
 from threading import Thread
+
 import pyray as pr
 
 import tutorial1.util.pyray_ex as prx

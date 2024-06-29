@@ -87,6 +87,7 @@ def is_terminated() -> bool:
 
 
 def reset() -> None:
+    pr.trace_log(pr.TraceLogLevel.LOG_DEBUG, "TRAINER: reset")
     context = get_singleton()
     context.entities = [world, *context.agents]
     context.best_agent = None
@@ -101,11 +102,13 @@ def update(dt: float) -> str:
         entity.update(dt)
 
     if context.best_agent is not None and not is_agent_alive(context.best_agent):
-        print(
-            not context.best_agent.damaged,
-            not context.best_agent.out_of_track,
-            np.dot(context.best_agent.vel, context.best_agent.head) >= 0,
-            context.best_agent.get_speed_in_kmh() >= CAR_MIN_SPEED,
+        pr.trace_log(
+            pr.TraceLogLevel.LOG_INFO,
+            f"{not context.best_agent.damaged} \
+            {not context.best_agent.out_of_track} \
+            {np.dot(context.best_agent.vel, context.best_agent.head) >= 0} \
+            {context.best_agent.get_speed_in_kmh() >= CAR_MIN_SPEED} \
+            {get_agent_score(context.best_agent)}",
         )
 
     alive_agents = [agent for agent in context.agents if is_agent_alive(agent)]

@@ -14,7 +14,7 @@ from tutorial1.scenes import trainer
 
 
 class Tutorial1Env(gym.Env):
-    metadata = {"render_modes": ["human"], "render_fps": 20}  # type: ignore # noqa: RUF012
+    metadata = {"render_modes": ["human"], "render_fps": 10}  # type: ignore # noqa: RUF012
 
     def __init__(self, render_mode=None, agent_count=10):
         assert render_mode is None or render_mode in self.metadata["render_modes"]
