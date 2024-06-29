@@ -99,9 +99,18 @@ def wi_he(n, m):
     return np.random.uniform(-a, a, size=(n, m)).astype(np.float32)
 
 
+def wu_sgd(W, S, V, momentum=0.0, lr=0.01):
+    if momentum == ZERO:
+        X = -lr * W
+    else:
+        V = lr * W - momentum * V
+        X = -V
+    return (X, S, V)
+
+
 def wu_adadelta(W, S, V, rho=0.95):
     S = rho * S + (1.0 - rho) * W**2
-    X = -W * np.sqrt(V + 1e-6) / np.sqrt(S + EPS)
+    X = -W * np.sqrt(V + EPS) / np.sqrt(S + EPS)
     V = rho * V + (1.0 - rho) * X**2
     return (X, S, V)
 

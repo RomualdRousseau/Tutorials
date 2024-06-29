@@ -1,6 +1,10 @@
 from functools import partial
 
-from tutorial2.pyflow.functions import wu_adadelta, wu_adam, wu_rmsprop
+from tutorial2.pyflow.functions import wu_adadelta, wu_adam, wu_rmsprop, wu_sgd
+
+
+def sgd(momentum=0.0, lr=0.01):
+    return partial(wu_sgd, momentum=momentum, lr=lr)
 
 
 def adatdelta(rho=0.95):

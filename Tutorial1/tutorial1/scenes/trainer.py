@@ -68,8 +68,8 @@ def get_agent_obs(agent: car.Car) -> dict[str, np.ndarray]:
 
 def get_agent_score(agent: car.Car) -> float:
     score = int(agent.get_total_distance_in_km() * 1000)  # farest in meter
-    score += int(agent.get_average_speed_in_kmh() / 3.6)  # fatest in meter per second
-    score += -100 if agent.out_of_track else -1000  # penalties
+    # score += int(agent.get_average_speed_in_kmh() / 3.6)  # fatest in meter per second
+    score += -10 if agent.out_of_track else -100  # penalties
     return score
 
 
@@ -100,16 +100,6 @@ def update(dt: float) -> str:
     context = get_singleton()
     for entity in context.entities:
         entity.update(dt)
-
-    if context.best_agent is not None and not is_agent_alive(context.best_agent):
-        pr.trace_log(
-            pr.TraceLogLevel.LOG_INFO,
-            f"{not context.best_agent.damaged} \
-            {not context.best_agent.out_of_track} \
-            {np.dot(context.best_agent.vel, context.best_agent.head) >= 0} \
-            {context.best_agent.get_speed_in_kmh() >= CAR_MIN_SPEED} \
-            {get_agent_score(context.best_agent)}",
-        )
 
     alive_agents = [agent for agent in context.agents if is_agent_alive(agent)]
 

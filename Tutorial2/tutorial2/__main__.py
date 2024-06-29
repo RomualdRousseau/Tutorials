@@ -26,10 +26,10 @@ def handler_quit(signum, frame):
 def get_agent_model():
     return pf.Sequential(
         [
-            pf.layers.GeneticDense(17, 32, activation="leaky_relu"),
+            pf.layers.GeneticDense(17, 32, activation="linear"),
             pf.layers.GeneticDense(32, 2, activation="tanh"),
         ],
-        trainer=pf.GeneticTrainer(rate=0.1, variance=0.1),
+        trainer=pf.GeneticTrainer(rate=0.1, variance=1),
     )
 
 
@@ -40,7 +40,7 @@ class Agent:
         self.fitness = -1.0
 
         self.model = get_agent_model() if parent_model is None else parent_model.clone()
-        self.model.compile(optimizer=pf.optimizers.rmsprop(rho=0.9, lr=0.1))
+        self.model.compile(optimizer=pf.optimizers.rmsprop(lr=0.001))
         if mutate:
             self.model.fit(epochs=1, shuffle=False, verbose=False)
 
@@ -92,7 +92,7 @@ def main(agent_count: int = 100, seed: int = 5, model_file: Optional[str] = None
                 agent.set_fitness(score + reward)
 
             pool = pf.GeneticPool(agents)  # type: ignore
-            pool.sample()
+            pool.sample(sample_count=int(agent_count * 0.1))
             pool.normalize()
             best_model = pool.best_parent().get_model()
 
