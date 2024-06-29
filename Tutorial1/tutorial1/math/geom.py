@@ -7,9 +7,9 @@ import numpy as np
 import numpy.typing as npt
 import pyray as pr
 
+import tutorial1.math.linalg as la
 import tutorial1.util.pyray_ex as prx
 from tutorial1.constants import VIRTUAL_WIDTH
-from tutorial1.math.linalg import EPS, almost, lst_2_arr, norm
 
 
 @dataclass
@@ -23,7 +23,7 @@ class Point:
         return pr.Vector2(*self.xy)
 
     def almost(self, other: Point, eps=0.0001) -> bool:
-        return almost(self.xy, other.xy, eps)
+        return la.almost(self.xy, other.xy, eps)
 
     def __eq__(self, other: Any) -> bool:
         return isinstance(other, Point) and bool(np.all(self.xy == other.xy))
@@ -84,7 +84,7 @@ class Segment:
 
 
 def distance(p1: Point, p2: Point) -> float:
-    return norm(p2.xy - p1.xy)
+    return la.norm(p2.xy - p1.xy)
 
 
 def point_on_segment(p: Point, seg: Segment) -> bool:
@@ -120,18 +120,28 @@ def point_in_polygon(point: Point, polygon: list[Point], strict: bool = True) ->
     return inside
 
 
+def intersect(seg1: Segment, seg2: Segment, strict: bool = True) -> Optional[Point]:
+    x1, y1 = seg1.start.xy
+    x2, y2 = seg1.end.xy
+    x3, y3 = seg2.start.xy
+    x4, y4 = seg2.end.xy
+    atol = -la.EPS if strict else 0
+    x = la.intersect(x1, y1, x2, y2, x3, y3, x4, y4, atol)
+    return Point(x) if x is not None else None
+
+
 def distance_point_segment(p: Point, seg: Segment, closest: bool = False) -> float:
     u = p.xy - seg.start.xy
     v = seg.end.xy - seg.start.xy
     v_l = np.linalg.norm(v)
-    v = v / (v_l + EPS)
+    v = v / (v_l + la.EPS)
     match np.dot(u, v):
         case x if x < 0:
-            return norm(seg.start.xy - p.xy) if closest else np.inf
+            return la.norm(seg.start.xy - p.xy) if closest else np.inf
         case x if x > v_l:
-            return norm(seg.end.xy - p.xy) if closest else np.inf
+            return la.norm(seg.end.xy - p.xy) if closest else np.inf
         case x:
-            return norm(seg.start.xy + v * x - p.xy)
+            return la.norm(seg.start.xy + v * x - p.xy)
     return np.inf
 
 
@@ -139,7 +149,7 @@ def nearest_point_segment(p: Point, seg: Segment, closest: bool = False) -> Opti
     u = p.xy - seg.start.xy
     v = seg.end.xy - seg.start.xy
     v_l = np.linalg.norm(v)
-    v = v / (v_l + EPS)
+    v = v / (v_l + la.EPS)
     match np.dot(u, v):
         case x if x < 0:
             return seg.start if closest else None
@@ -150,44 +160,18 @@ def nearest_point_segment(p: Point, seg: Segment, closest: bool = False) -> Opti
     return None
 
 
-def intersect(seg1: Segment, seg2: Segment, strict: bool = True) -> Optional[Point]:
-    x1, y1 = seg1.start.xy
-    x2, y2 = seg1.end.xy
-    x3, y3 = seg2.start.xy
-    x4, y4 = seg2.end.xy
-
-    atol = -EPS if strict else 0
-
-    match np.linalg.det([[x1 - x2, y1 - y2], [x3 - x4, y3 - y4]]):
-        case d if d != 0:
-            match -np.linalg.det([[x1 - x2, y1 - y2], [x1 - x3, y1 - y3]]) / d:
-                case u if abs(u - 0.5) <= (atol + 0.5):
-                    match np.linalg.det([[x1 - x3, y1 - y3], [x3 - x4, y3 - y4]]) / d:
-                        case t if abs(t - 0.5) <= (atol + 0.5):
-                            return Point(
-                                lst_2_arr(
-                                    [
-                                        np.interp(t, [0, 1], [x1, x2]),
-                                        np.interp(t, [0, 1], [y1, y2]),
-                                    ]
-                                )
-                            )
-
-    return None
-
-
 def collision_circle_segment(center: Point, radius: float, seg: Segment) -> Optional[npt.NDArray[np.float64]]:
     u = center.xy - seg.start.xy
     v = seg.end.xy - seg.start.xy
-    v_l = norm(v)
-    v = v / (v_l + EPS)
+    v_l = la.norm(v)
+    v = v / (v_l + la.EPS)
     match np.dot(u, v):
         case x if 0 <= x <= v_l:
             x = seg.start.xy + v * x
             w = center.xy - x
-            match norm(w):
+            match la.norm(w):
                 case w_l if w_l <= radius:
-                    return w * (radius - w_l) / (w_l + EPS)
+                    return w * (radius - w_l) / (w_l + la.EPS)
     return None
 
 

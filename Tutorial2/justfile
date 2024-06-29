@@ -26,3 +26,4 @@ run: pre-commit
 # Profile the tutorial
 profile: pre-commit
     poetry run python -m cProfile -o tutorial2.prof -m tutorial2
+    poetry run python -m snakeviz tutorial2.prof

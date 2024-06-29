@@ -212,7 +212,7 @@ class Car:
 
         self.camera = world.cast_rays(pos, self.head)
 
-        match nearest_point_segment(pos, self.visited_location[-1][0]):
+        match nearest_point_segment(pos, self.visited_location[-1][0], True):
             case None:
                 self.proximity = None
                 self.out_of_track = False

@@ -34,3 +34,8 @@ run: pre-commit coverage
 # Display the coverage report
 coverage: test
     poetry run coverage report -m --fail-under=80
+
+# Profile the tutorial
+profile: pre-commit coverage
+    poetry run python -m cProfile -o tutorial1.prof -m tutorial1
+    poetry run python -m snakeviz tutorial1.prof

@@ -37,6 +37,7 @@ TREE_DISTANCE = 25  # m
 TREE_OFFSET = 5  # m
 
 RAY_MAX_LEN = 50  # m
+RAY_FOV = np.pi * 0.4
 
 Location = tuple[Segment, Point]
 
@@ -190,13 +191,14 @@ def cast_rays(
     position: Point,
     direction: np.ndarray,
     length: float = RAY_MAX_LEN,
+    fov: float = RAY_FOV,
     sampling: int = 16,
 ) -> list[Segment]:
+    nearest_segments = get_nearest_corridors(position, length)
     rays = []
     alpha = np.arctan2(direction[1], direction[0])
-    nearest_segments = get_nearest_corridors(position, length)
     for i in range(sampling):
-        beta = np.interp(i / sampling, [0, 1], [alpha - np.pi * 0.4, alpha + np.pi * 0.4])
+        beta = np.interp(i / sampling, [0, 1], [alpha - fov, alpha + fov])
         direction = lst_2_arr([np.cos(beta), np.sin(beta)])
         rays.append(cast_ray_segments(position, direction, length, nearest_segments))
     return rays

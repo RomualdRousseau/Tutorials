@@ -159,5 +159,9 @@ cython_debug/
 # VSCode
 .vscode/
 
+# cProfile
+*.prof
+
 # Models
-agent_model.json
+*_model.json
+
