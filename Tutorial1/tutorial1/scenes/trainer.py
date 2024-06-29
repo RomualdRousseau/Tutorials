@@ -62,7 +62,7 @@ def reset_agents() -> None:
 def get_agent_obs(agent: car.Car) -> dict[str, np.ndarray]:
     return {
         "agent_vel": lst_2_vec([agent.get_speed_in_kmh() / car.MAX_SPEED]),
-        "agent_cam": lst_2_vec([1.0 - x.length / world.RAY_MAX_LEN for x in agent.camera]),
+        "agent_cam": lst_2_vec([1.0 - x.length / car.RAY_MAX_LEN for x in agent.camera]),
     }
 
 
