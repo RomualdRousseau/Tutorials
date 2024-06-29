@@ -8,7 +8,7 @@ import pyray as pr
 import tutorial1.util.pyray_ex as prx
 from tutorial1.constants import WINDOW_HEIGHT, WINDOW_WIDTH
 from tutorial1.entities import car, world
-from tutorial1.math.linalg import lst_2_arr
+from tutorial1.math.linalg import lst_2_vec
 from tutorial1.util.types import Entity
 
 BEST_CAR_COLOR = pr.Color(255, 255, 255, 255)
@@ -54,8 +54,8 @@ def reset_agents() -> None:
 
 def get_agent_obs(agent: car.Car) -> dict[str, np.ndarray]:
     return {
-        "agent_vel": lst_2_arr([agent.get_speed_in_kmh() / car.MAX_SPEED]),
-        "agent_cam": lst_2_arr([1.0 - x.length / world.RAY_MAX_LEN for x in agent.camera]),
+        "agent_vel": lst_2_vec([agent.get_speed_in_kmh() / car.MAX_SPEED]),
+        "agent_cam": lst_2_vec([1.0 - x.length / world.RAY_MAX_LEN for x in agent.camera]),
     }
 
 

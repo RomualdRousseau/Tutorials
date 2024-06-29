@@ -23,7 +23,7 @@ class Point:
         return pr.Vector2(*self.xy)
 
     def almost(self, other: Point, eps=0.0001) -> bool:
-        return la.almost(self.xy, other.xy, eps)
+        return np.allclose(self.xy, other.xy, 0.0, eps)
 
     def __eq__(self, other: Any) -> bool:
         return isinstance(other, Point) and bool(np.all(self.xy == other.xy))
@@ -121,53 +121,26 @@ def point_in_polygon(point: Point, polygon: list[Point], strict: bool = True) ->
 
 
 def intersect(seg1: Segment, seg2: Segment, strict: bool = True) -> Optional[Point]:
-    atol = -la.EPS if strict else 0
-    x = la.intersect(seg1.start.xy, seg1.end.xy, seg2.start.xy, seg2.end.xy, atol)
+    x = la.intersect(seg1.start.xy, seg1.end.xy, seg2.start.xy, seg2.end.xy, strict)
     return Point(x) if x is not None else None
 
 
 def distance_point_segment(p: Point, seg: Segment, closest: bool = False) -> float:
-    u = p.xy - seg.start.xy
-    v = seg.end.xy - seg.start.xy
-    v_l = np.linalg.norm(v)
-    v = v / (v_l + la.EPS)
-    match np.dot(u, v):
-        case x if x < 0:
-            return la.norm(seg.start.xy - p.xy) if closest else np.inf
-        case x if x > v_l:
-            return la.norm(seg.end.xy - p.xy) if closest else np.inf
-        case x:
-            return la.norm(seg.start.xy + v * x - p.xy)
-    return np.inf
+    return la.distance_point_segment(p.xy, seg.start.xy, seg.end.xy, closest)
 
 
 def nearest_point_segment(p: Point, seg: Segment, closest: bool = False) -> Optional[Point]:
-    u = p.xy - seg.start.xy
-    v = seg.end.xy - seg.start.xy
-    v_l = np.linalg.norm(v)
-    v = v / (v_l + la.EPS)
-    match np.dot(u, v):
-        case x if x < 0:
-            return seg.start if closest else None
-        case x if x > v_l:
-            return seg.end if closest else None
-        case x:
-            return Point(seg.start.xy + v * x)
-    return None
+    x = la.nearest_point_segment(p.xy, seg.start.xy, seg.end.xy, closest)
+    return Point(x) if x is not None else None
 
 
 def collision_circle_segment(center: Point, radius: float, seg: Segment) -> Optional[npt.NDArray[np.float64]]:
-    u = center.xy - seg.start.xy
-    v = seg.end.xy - seg.start.xy
-    v_l = la.norm(v)
-    v = v / (v_l + la.EPS)
-    match np.dot(u, v):
-        case x if 0 <= x <= v_l:
-            x = seg.start.xy + v * x
-            w = center.xy - x
-            match la.norm(w):
-                case w_l if w_l <= radius:
-                    return w * (radius - w_l) / (w_l + la.EPS)
+    x = la.nearest_point_segment(center.xy, seg.start.xy, seg.end.xy, True)
+    if x is not None:
+        w = center.xy - x
+        w_l = la.norm(w)
+        if w_l <= radius:
+            return w * (radius - w_l) / (w_l + la.EPS)
     return None
 
 

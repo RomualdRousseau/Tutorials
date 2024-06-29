@@ -17,7 +17,7 @@ from tutorial1.math.geom import (
     distance_point_segment,
     nearest_point_segment,
 )
-from tutorial1.math.linalg import lst_2_arr
+from tutorial1.math.linalg import lst_2_vec
 
 GRASS_COLOR = pr.Color(86, 180, 57, 255)
 ROAD_COLOR = pr.Color(192, 192, 192, 255)
@@ -199,7 +199,7 @@ def cast_rays(
     alpha = np.arctan2(direction[1], direction[0])
     for i in range(sampling):
         beta = np.interp(i / sampling, [0, 1], [alpha - fov, alpha + fov])
-        direction = lst_2_arr([np.cos(beta), np.sin(beta)])
+        direction = lst_2_vec([np.cos(beta), np.sin(beta)])
         rays.append(cast_ray_segments(position, direction, length, nearest_segments))
     return rays
 
@@ -208,4 +208,4 @@ def collision(position: Point, radius: float) -> Optional[np.ndarray]:
     nearest_segments = get_nearest_corridors(position, radius)
     collide = lambda x: collision_circle_segment(position, radius, x)
     cols = [x for x in map(collide, nearest_segments) if x is not None]
-    return np.average(lst_2_arr(cols), axis=0) if len(cols) > 0 else None
+    return np.average(lst_2_vec(cols), axis=0) if len(cols) > 0 else None

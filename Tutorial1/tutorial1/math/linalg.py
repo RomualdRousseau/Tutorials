@@ -7,7 +7,7 @@ from numba import njit
 EPS = 1e-7
 
 
-def lst_2_arr(a: npt.ArrayLike) -> npt.NDArray[np.float64]:
+def lst_2_vec(a: npt.ArrayLike) -> npt.NDArray[np.float64]:
     return np.array(a, dtype=np.float64)
 
 
@@ -27,23 +27,18 @@ def normalize(v: npt.NDArray[np.float64]) -> npt.NDArray[np.float64]:
 
 
 @njit
-def almost(v: npt.ArrayLike, w: npt.ArrayLike, eps: float = 0.0001) -> bool:
-    return np.allclose(v, w, 0.0, eps)
-
-
-@njit
 def intersect(
     a: npt.NDArray[np.float64],
     b: npt.NDArray[np.float64],
     c: npt.NDArray[np.float64],
     d: npt.NDArray[np.float64],
-    atol: float,
+    strict: bool = True,
 ) -> Optional[npt.NDArray[np.float64]]:
     x1, y1 = a
     x2, y2 = b
     x3, y3 = c
     x4, y4 = d
-
+    atol = -EPS if strict else 0
     match det([[x1 - x2, y1 - y2], [x3 - x4, y3 - y4]]):
         case dd if dd != 0:
             match -det([[x1 - x2, y1 - y2], [x1 - x3, y1 - y3]]) / dd:
@@ -56,5 +51,38 @@ def intersect(
                                     np.interp(t, [0, 1], [y1, y2]),
                                 ]
                             )
-
     return None
+
+
+@njit
+def distance_point_segment(
+    p: npt.NDArray[np.float64], a: npt.NDArray[np.float64], b: npt.NDArray[np.float64], closest: bool = False
+) -> float:
+    u = p - a
+    v = b - a
+    v_l = norm(v)
+    v = v / (v_l + EPS)
+    x = float(np.dot(u, v))
+    if x < 0:
+        return norm(a - p) if closest else np.inf
+    elif x > v_l:
+        return norm(b - p) if closest else np.inf
+    else:
+        return norm(a + v * x - p)
+
+
+@njit
+def nearest_point_segment(
+    p: npt.NDArray[np.float64], a: npt.NDArray[np.float64], b: npt.NDArray[np.float64], closest: bool = False
+) -> Optional[npt.NDArray[np.float64]]:
+    u = p - a
+    v = b - a
+    v_l = norm(v)
+    v = v / (v_l + EPS)
+    x = float(np.dot(u, v))
+    if x < 0:
+        return a if closest else None
+    elif x > v_l:
+        return b if closest else None
+    else:
+        return a + v * x

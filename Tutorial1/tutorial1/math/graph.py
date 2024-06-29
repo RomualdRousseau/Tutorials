@@ -16,7 +16,7 @@ from tutorial1.math.geom import (
     distance,
     intersect,
 )
-from tutorial1.math.linalg import lst_2_arr
+from tutorial1.math.linalg import lst_2_vec
 
 EDGE_COLOR = pr.Color(0, 0, 0, 128)
 VERTEX_COLOR = pr.Color(0, 0, 255, 128)
@@ -105,7 +105,7 @@ def generate_random():
         is_valid = lambda x, y: distance(x.point, y.point) > min
 
         while n < num:
-            v = SpatialVertex(Point(lst_2_arr([rand(), rand()])))
+            v = SpatialVertex(Point(lst_2_vec([rand(), rand()])))
             if all((is_valid(v, x) for x in vertice)):
                 vertice.append(v)
                 n += 1

@@ -12,7 +12,7 @@ from tutorial1.math.geom import (
     distance,
     nearest_point_segment,
 )
-from tutorial1.math.linalg import EPS, almost, lst_2_arr, norm, normalize
+from tutorial1.math.linalg import EPS, lst_2_vec, norm, normalize
 
 MASS = 650  # kg
 LENGTH = 5  # m
@@ -76,10 +76,9 @@ class Car:
         else:
             start_seg = world.get_corridor().skeleton[0]
             start_pos, end_pos = start_seg.start.xy, start_seg.end.xy
-        assert not almost(start_pos, end_pos)
         start_pos = start_pos * 0.99 + end_pos * 0.01
         start_dir = normalize(end_pos - start_pos)
-        start_off = lst_2_arr([-start_dir[1], start_dir[0]]) * START_OFFSET
+        start_off = lst_2_vec([-start_dir[1], start_dir[0]]) * START_OFFSET
 
         self.pos = start_pos + start_off
         self.vel = np.zeros(2, dtype=np.float64)
