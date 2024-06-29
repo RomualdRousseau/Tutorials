@@ -9,8 +9,7 @@ import pyray as pr
 
 import tutorial1.util.pyray_ex as prx
 from tutorial1.constants import VIRTUAL_WIDTH
-from tutorial1.math.linalg import EPS, almost, lst_2_np, norm
-from tutorial1.util.funcs import curry
+from tutorial1.math.linalg import EPS, almost, lst_2_arr, norm
 
 
 @dataclass
@@ -166,7 +165,7 @@ def intersect(seg1: Segment, seg2: Segment, strict: bool = True) -> Optional[Poi
                     match np.linalg.det([[x1 - x3, y1 - y3], [x3 - x4, y3 - y4]]) / d:
                         case t if abs(t - 0.5) <= (atol + 0.5):
                             return Point(
-                                lst_2_np(
+                                lst_2_arr(
                                     [
                                         np.interp(t, [0, 1], [x1, x2]),
                                         np.interp(t, [0, 1], [y1, y2]),
@@ -197,10 +196,9 @@ def cast_ray_segments(
 ) -> Segment:
     target = Point(length * direction + position.xy)
     ray = Segment(position, target)
-    map_not_none = curry(filter)(lambda x: x is not None)
-    inter_ray = curry(intersect)(ray)
-    closest = curry(distance)(position)
-    point = min(map_not_none(map(inter_ray, segments)), key=closest, default=target)
+    intersect_with_ray = lambda x: intersect(ray, x, False)
+    closest = lambda x: distance(position, x)
+    point = min((x for x in map(intersect_with_ray, segments) if x is not None), key=closest, default=target)
     return Segment(position, point)
 
 

@@ -29,7 +29,7 @@ def get_agent_model():
             pf.layers.GeneticDense(17, 32, activation="leaky_relu"),
             pf.layers.GeneticDense(32, 2, activation="tanh"),
         ],
-        trainer=pf.GeneticTrainer(rate=0.1, variance=0.1),
+        trainer=pf.GeneticTrainer(rate=0.1, variance=1),
     )
 
 

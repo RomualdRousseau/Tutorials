@@ -10,9 +10,19 @@ def init_gamepad():
         pr.trace_log(pr.TraceLogLevel.LOG_INFO, f"GAMEPAD: id: {i} - {pr.get_gamepad_name(i)}")
 
 
-def draw_text_shadow(text: str, pos: pr.Vector2, font_size: int, color: pr.Color):
-    pr.draw_text(text, int(pos.x + 1), int(pos.y + 1), font_size, pr.BLACK)  # type: ignore
-    pr.draw_text(text, int(pos.x), int(pos.y), font_size, color)
+def draw_text(text: str, pos: pr.Vector2, font_size: int, color: pr.Color, align: str = "left", shadow: bool = False):
+    assert align in ["left", "right", "center"]
+    if align == "left":
+        x = int(pos.x)
+    elif align == "right":
+        len = pr.measure_text(text, font_size)
+        x = int(WINDOW_WIDTH - 1 - len - pos.x)
+    else:
+        len = pr.measure_text(text, font_size)
+        x = int(WINDOW_WIDTH / 2 - len / 2 - pos.x)
+    if shadow:
+        pr.draw_text(text, x + 2, int(pos.y) + 2, font_size, pr.BLACK)  # type: ignore
+    pr.draw_text(text, x, int(pos.y), font_size, color)
 
 
 def draw_line(

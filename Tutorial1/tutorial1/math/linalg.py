@@ -5,7 +5,7 @@ from numba import njit
 EPS = 1e-7
 
 
-def lst_2_np(a: npt.ArrayLike) -> npt.NDArray[np.float64]:
+def lst_2_arr(a: npt.ArrayLike) -> npt.NDArray[np.float64]:
     return np.array(a, dtype=np.float64)
 
 

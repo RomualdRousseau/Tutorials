@@ -1,6 +1,7 @@
 import pyray as pr
 
-from tutorial1.constants import WINDOW_HEIGHT, WINDOW_WIDTH
+import tutorial1.util.pyray_ex as prx
+from tutorial1.constants import WINDOW_HEIGHT
 
 
 def reset() -> None:
@@ -13,4 +14,4 @@ def update(_: float) -> str:
 
 def draw() -> None:
     pr.clear_background(pr.BLUE)  # type: ignore
-    pr.draw_text("Press any key ...", WINDOW_WIDTH // 2 - 100, WINDOW_HEIGHT // 2, 20, pr.WHITE)  # type: ignore
+    prx.draw_text("Press any key ...", pr.Vector2(0, WINDOW_HEIGHT * 0.5 - 11), 20, pr.WHITE, align="center")  # type: ignore

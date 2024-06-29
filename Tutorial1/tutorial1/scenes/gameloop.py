@@ -1,3 +1,4 @@
+import datetime
 from dataclasses import dataclass
 from typing import Callable
 
@@ -51,13 +52,11 @@ def draw() -> None:
             x.draw(layer)
     pr.end_mode_2d()
 
-    if _context.update_state == _update_game_mode:
-        prx.draw_text_shadow(f"Distance: {_context.player.get_travel_distance_in_km():.3f}km", pr.Vector2(2, 2), 22, pr.WHITE)  # type: ignore
-        prx.draw_text_shadow(f"Speed: {_context.player.get_speed_in_kmh():.1f}km/h", pr.Vector2(2, 23), 22, pr.WHITE)  # type: ignore
-        prx.draw_text_shadow(f"{pr.get_fps()}fps", pr.Vector2(2, 44), 22, pr.WHITE)  # type: ignore
-    elif _context.update_state == _update_free_mode:
-        prx.draw_text_shadow(f"Zoom: x{_context.camera.zoom}", pr.Vector2(2, 2), 22, pr.WHITE)  # type: ignore
-        prx.draw_text_shadow(f"{pr.get_fps()}fps", pr.Vector2(2, 23), 22, pr.WHITE)  # type: ignore
+    prx.draw_text(f"Distance: {_context.player.get_total_distance_in_km():.3f}km", pr.Vector2(2, 2), 20, pr.WHITE, shadow=True)  # type: ignore
+    prx.draw_text(f"Speed: {_context.player.get_speed_in_kmh():.1f}km/h", pr.Vector2(2, 24), 20, pr.WHITE, shadow=True)  # type: ignore
+    prx.draw_text(f"Time Elapsed: {datetime.timedelta(seconds=pr.get_time())}", pr.Vector2(2, 46), 20, pr.WHITE, shadow=True)  # type: ignore
+
+    prx.draw_text(f"{pr.get_fps()}fps", pr.Vector2(2, 2), 20, pr.WHITE, align="right", shadow=True)  # type: ignore
 
 
 def _update_free_mode(dt: float) -> str:

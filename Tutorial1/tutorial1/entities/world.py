@@ -17,8 +17,7 @@ from tutorial1.math.geom import (
     distance_point_segment,
     nearest_point_segment,
 )
-from tutorial1.math.linalg import lst_2_np
-from tutorial1.util.funcs import curry
+from tutorial1.math.linalg import lst_2_arr
 
 GRASS_COLOR = pr.Color(86, 180, 57, 255)
 ROAD_COLOR = pr.Color(192, 192, 192, 255)
@@ -81,11 +80,11 @@ def get_singleton(name: str = "default"):
     houses = [
         House(
             a,
-            sorted(borders.segments, key=curry(distance_point_segment)(a))[0],
+            min(borders.segments, key=lambda x: distance_point_segment(a, x)),
             random.choice(["house1", "house2", "house3"]),
         )
         for a in anchors
-        if HOUSE_DISTANCE <= min(map(curry(distance_point_segment)(a), borders.segments)) <= TREE_DISTANCE
+        if HOUSE_DISTANCE <= min((distance_point_segment(a, x) for x in borders.segments)) <= TREE_DISTANCE
         and random.random() < HOUSE_DENSITY
     ]
 
@@ -101,7 +100,7 @@ def get_singleton(name: str = "default"):
             random.random() * np.pi / 2,
         )
         for a in anchors
-        if min(map(curry(distance_point_segment)(a), borders.segments)) > TREE_DISTANCE
+        if min((distance_point_segment(a, x) for x in borders.segments)) > TREE_DISTANCE
         and random.random() < TREE_DENSITY
     ]
 
@@ -171,28 +170,20 @@ def draw(layer: int) -> None:
     [draw_bg, draw_fg][layer]()
 
 
-def get_location(position: Point) -> Optional[Location]:
+@lru_cache
+def get_nearest_location(position: Point) -> Location:
     _world = get_singleton()
-    nearest = lambda x: (x, nearest_point_segment(position, x, True))
-    closest = lambda x: distance(position, x[1]) if x[1] is not None else np.inf
-    location = min(map(nearest, _world.corridor.skeleton), key=closest)
-    return location if location[1] is not None else None  # type: ignore
+    nearest_location = lambda x: (x, nearest_point_segment(position, x, True))
+    closest_distance = lambda x: distance(position, x[1])
+    location = min(map(nearest_location, _world.corridor.skeleton), key=closest_distance)
+    return location  # type: ignore
 
 
 @lru_cache
-def get_nearest_segments(position: Point, radius: float) -> list[Segment]:
+def get_nearest_corridors(position: Point, radius: float, closest: bool = True) -> list[Segment]:
     _world = get_singleton()
-    nearest = lambda x: distance_point_segment(position, x, True) < radius
-    return [x for x in _world.corridor.segments if nearest(x)]
-
-
-def cast_ray(
-    position: Point,
-    direction: np.ndarray,
-    length: float = RAY_MAX_LEN,
-) -> Segment:
-    nearest_segments = get_nearest_segments(position, length)
-    return cast_ray_segments(position, direction, length, nearest_segments)
+    nearest_distance = lambda x: distance_point_segment(position, x, closest) < radius
+    return [x for x in _world.corridor.segments if nearest_distance(x)]
 
 
 def cast_rays(
@@ -203,16 +194,16 @@ def cast_rays(
 ) -> list[Segment]:
     rays = []
     alpha = np.arctan2(direction[1], direction[0])
-    nearest_segments = get_nearest_segments(position, length)
+    nearest_segments = get_nearest_corridors(position, length)
     for i in range(sampling):
         beta = np.interp(i / sampling, [0, 1], [alpha - np.pi * 0.4, alpha + np.pi * 0.4])
-        direction = lst_2_np([np.cos(beta), np.sin(beta)])
+        direction = lst_2_arr([np.cos(beta), np.sin(beta)])
         rays.append(cast_ray_segments(position, direction, length, nearest_segments))
     return rays
 
 
 def collision(position: Point, radius: float) -> Optional[np.ndarray]:
-    nearest_segments = get_nearest_segments(position, radius)
-    collide = curry(collision_circle_segment)(position, radius)
-    cols = lst_2_np([x for x in map(collide, nearest_segments) if x is not None])
-    return np.average(cols, axis=0) if len(cols) > 0 else None
+    nearest_segments = get_nearest_corridors(position, radius)
+    collide = lambda x: collision_circle_segment(position, radius, x)
+    cols = [x for x in map(collide, nearest_segments) if x is not None]
+    return np.average(lst_2_arr(cols), axis=0) if len(cols) > 0 else None

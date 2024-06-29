@@ -1,6 +1,6 @@
 import numpy as np
 
-from tutorial1.math.linalg import almost, lst_2_np, normalize
+from tutorial1.math.linalg import almost, lst_2_arr, normalize
 
 
 def test_almost():
@@ -12,6 +12,6 @@ def test_points_not_almost():
 
 
 def test_normalize():
-    a = lst_2_np([1, 1])
-    b = lst_2_np([np.cos(np.pi / 4), np.sin(np.pi / 4)])
+    a = lst_2_arr([1, 1])
+    b = lst_2_arr([np.cos(np.pi / 4), np.sin(np.pi / 4)])
     assert almost(normalize(a), b)

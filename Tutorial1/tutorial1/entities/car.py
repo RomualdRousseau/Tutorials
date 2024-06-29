@@ -6,8 +6,13 @@ import pyray as pr
 import tutorial1.resources as res
 from tutorial1.constants import GAMEPAD_AXIS_X, GAMEPAD_AXIS_Y, GAMEPAD_ID
 from tutorial1.entities import world
-from tutorial1.math.geom import Point, Segment, distance
-from tutorial1.math.linalg import EPS, almost, lst_2_np, norm, normalize
+from tutorial1.math.geom import (
+    Point,
+    Segment,
+    distance,
+    nearest_point_segment,
+)
+from tutorial1.math.linalg import EPS, almost, lst_2_arr, norm, normalize
 
 MASS = 650  # kg
 LENGTH = 5  # m
@@ -31,24 +36,21 @@ class Car:
         self.debug_mode = input_mode == "human"
         self.spawn_mode = False
 
-    def get_travel_distance_in_km(self) -> float:
+    def set_debug_mode(self, debug_mode: bool) -> None:
+        self.debug_mode = debug_mode
+
+    def get_total_distance_in_km(self) -> float:
         _, last_start = self.visited_location[-1]
-        return (self.total_distance + distance(last_start, self.current_pos)) * 0.001
+        return (self.total_distance + distance(last_start, self.current_location_pos)) * 0.001
+
+    def get_average_speed_in_kmh(self) -> float:
+        return (self.total_velocity / (self.total_tick + EPS)) * 3.6
 
     def get_speed_in_kmh(self) -> float:
         return norm(self.vel) * 3.6
 
-    def get_avg_velocity(self) -> float:
-        return self.total_velocity / (self.total_tick + EPS)
-
-    def set_debug_mode(self, debug_mode: bool) -> None:
-        self.debug_mode = debug_mode
-
     def get_spawn_location(self) -> world.Location:
-        if len(self.visited_location) <= 1:
-            return self.visited_location[-1]
-        else:
-            return self.visited_location[-2]
+        return self.visited_location[-1 if len(self.visited_location) <= 1 else -2]
 
     def set_spawn_location(self, spawn_location: Optional[world.Location]) -> None:
         self.spawn_mode = spawn_location is not None
@@ -77,7 +79,7 @@ class Car:
         assert not almost(start_pos, end_pos)
         start_pos = start_pos * 0.99 + end_pos * 0.01
         start_dir = normalize(end_pos - start_pos)
-        start_off = lst_2_np([-start_dir[1], start_dir[0]]) * START_OFFSET
+        start_off = lst_2_arr([-start_dir[1], start_dir[0]]) * START_OFFSET
 
         self.pos = start_pos + start_off
         self.vel = np.zeros(2, dtype=np.float64)
@@ -88,15 +90,15 @@ class Car:
         self.damaged = False
         self.out_of_track = False
 
+        self.current_location_pos = Point(start_pos)
+        self.visited_location = [(start_seg, self.current_location_pos)]
+
+        self.camera: list[Segment] = []
+        self.proximity: Optional[Segment] = None
+
         self.total_distance = 0.0
         self.total_velocity = 0.0
         self.total_tick = 0
-
-        self.current_pos = Point(start_pos)
-
-        self.visited_location = [(start_seg, self.current_pos)]
-
-        self._update_sensors()
 
     def update(self, dt: float) -> None:
         prev_damaged = self.damaged
@@ -105,7 +107,6 @@ class Car:
             self._input_human()
 
         self._update_physic(dt)
-        self._update_sensors()
 
         if self.input_mode == "human":
             if self.damaged and not prev_damaged and not pr.is_sound_playing(res.load_sound("crash")):
@@ -119,12 +120,15 @@ class Car:
             return
 
         if self.debug_mode:
-            color = pr.YELLOW if not self.out_of_track else pr.RED
-            _, last_start = self.visited_location[-1]
+            color: pr.Color = pr.YELLOW if not self.out_of_track and not self.damaged else pr.RED  # type: ignore
+
+            pr.draw_line_v(self.visited_location[-1][1].to_vec(), self.current_location_pos.to_vec(), color)
+
             for ray in self.camera:
-                pr.draw_line_v(ray.start.to_vec(), ray.end.to_vec(), color)  # type: ignore
-            pr.draw_line_v(self.proximity.start.to_vec(), self.proximity.end.to_vec(), color)  # type: ignore
-            pr.draw_line_v(last_start.to_vec(), self.current_pos.to_vec(), color)  # type: ignore
+                pr.draw_line_v(ray.start.to_vec(), ray.end.to_vec(), color)
+
+            if self.proximity is not None:
+                pr.draw_line_v(self.proximity.start.to_vec(), self.proximity.end.to_vec(), color)
 
         tex = res.load_texture("car")
         pr.draw_texture_pro(
@@ -150,6 +154,8 @@ class Car:
             self.turn_wheel(-0.5)
         if pr.is_key_down(pr.KeyboardKey.KEY_UP):
             self.push_throttle(0.5)
+        if pr.is_key_down(pr.KeyboardKey.KEY_DOWN):
+            self.push_throttle(-0.25)
 
     def _update_physic(self, dt: float) -> None:
         # Simple car modelisation (traction, drag road, drag rolling)
@@ -181,35 +187,41 @@ class Car:
 
         # Collisions
 
-        match world.collision(Point(self.pos), WIDTH * 0.5):
+        pos = Point(self.pos)
+
+        match world.collision(pos, WIDTH * 0.5):
             case None:
                 self.damaged = False
-            case v:
-                self.vel = self.vel * 0.5 + v
-                self.pos += v
+            case reaction:
+                self.vel = self.vel * 0.5 + reaction
+                self.pos += reaction
                 self.head = normalize(self.vel)
                 self.damaged = True
 
         # Localisation
 
-        match world.get_location(Point(self.pos)):
-            case None:
-                pass
-            case seg, pos:
-                assert isinstance(seg, Segment) and isinstance(pos, Point)
-                if self.visited_location[-1][0] != seg:
-                    self.visited_location.append((seg, seg.closest_ep(pos)))
-                    if len(self.visited_location) > MAX_VISITED_LOCATION:
-                        self.visited_location.pop(0)
-                    self.total_distance += seg.length
-                self.current_pos = pos
+        is_new_location_added = False
+        seg, self.current_location_pos = world.get_nearest_location(pos)
+        if self.visited_location[-1][0] != seg:
+            self.visited_location.append((seg, seg.closest_ep(self.current_location_pos)))
+            if len(self.visited_location) > MAX_VISITED_LOCATION:
+                self.visited_location.pop(0)
+            is_new_location_added = True
 
+        # Sensors
+
+        self.camera = world.cast_rays(pos, self.head)
+
+        match nearest_point_segment(pos, self.visited_location[-1][0]):
+            case None:
+                self.proximity = None
+                self.out_of_track = False
+            case Point() as nearest:
+                self.proximity = Segment(pos, nearest)
+                self.out_of_track = self.proximity.length < WIDTH * 0.75
+
+        # Statistics
+
+        self.total_distance += self.visited_location[-2][0].length if is_new_location_added else 0
         self.total_velocity += norm(self.vel)
         self.total_tick += 1
-
-    def _update_sensors(self) -> None:
-        pos = Point(self.pos)
-        left = lst_2_np([self.head[1], -self.head[0]])
-        self.camera = world.cast_rays(pos, self.head)
-        self.proximity = world.cast_ray(pos, left, world.ROAD_WIDTH)
-        self.out_of_track = self.proximity.length < (world.ROAD_WIDTH * 0.5 + WIDTH)

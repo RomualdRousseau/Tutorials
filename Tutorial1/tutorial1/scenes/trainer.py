@@ -8,7 +8,7 @@ import pyray as pr
 import tutorial1.util.pyray_ex as prx
 from tutorial1.constants import WINDOW_HEIGHT, WINDOW_WIDTH
 from tutorial1.entities import car, world
-from tutorial1.math.linalg import lst_2_np
+from tutorial1.math.linalg import lst_2_arr
 from tutorial1.util.types import Entity
 
 BEST_CAR_COLOR = pr.Color(255, 255, 255, 255)
@@ -54,14 +54,15 @@ def reset_agents() -> None:
 
 def get_agent_obs(agent: car.Car) -> dict[str, np.ndarray]:
     return {
-        "agent_vel": lst_2_np([agent.get_speed_in_kmh() / car.MAX_SPEED]),
-        "agent_cam": lst_2_np([1.0 - x.length / world.RAY_MAX_LEN for x in agent.camera]),
+        "agent_vel": lst_2_arr([agent.get_speed_in_kmh() / car.MAX_SPEED]),
+        "agent_cam": lst_2_arr([1.0 - x.length / world.RAY_MAX_LEN for x in agent.camera]),
     }
 
 
 def get_agent_score(agent: car.Car) -> float:
-    score = agent.get_travel_distance_in_km() * 100 + agent.get_avg_velocity()
-    # score += 0 if agent.out_of_track else -1000
+    score = int(agent.get_total_distance_in_km() * 1000)  # farest in meter
+    score += int(agent.get_average_speed_in_kmh() / 3.6)  # fatest in meter per second
+    score += -100 if agent.out_of_track else -1000  # penalties
     return score
 
 
@@ -111,15 +112,16 @@ def draw() -> None:
 
     match _context.best_agent:
         case None:
-            prx.draw_text_shadow("Distance: ---", pr.Vector2(2, 2), 22, pr.WHITE)  # type: ignore
-            prx.draw_text_shadow("Speed: ---", pr.Vector2(2, 23), 22, pr.WHITE)  # type: ignore
+            prx.draw_text("Distance: ---", pr.Vector2(2, 2), 20, pr.WHITE, shadow=True)  # type: ignore
+            prx.draw_text("Speed: ---", pr.Vector2(2, 24), 20, pr.WHITE, shadow=True)  # type: ignore
         case best_car:
-            prx.draw_text_shadow(f"Distance: {best_car.get_travel_distance_in_km():.3f}km", pr.Vector2(2, 2), 22, pr.WHITE)  # type: ignore
-            prx.draw_text_shadow(f"Speed: {best_car.get_speed_in_kmh():.1f}km/h", pr.Vector2(2, 23), 22, pr.WHITE)  # type: ignore
+            prx.draw_text(f"Distance: {best_car.get_total_distance_in_km():.3f}km", pr.Vector2(2, 2), 20, pr.WHITE, shadow=True)  # type: ignore
+            prx.draw_text(f"Speed: {best_car.get_speed_in_kmh():.1f}km/h", pr.Vector2(2, 24), 20, pr.WHITE, shadow=True)  # type: ignore
 
-    prx.draw_text_shadow(f"Time Step: {_context.timestep}", pr.Vector2(2, 44), 22, pr.WHITE)  # type: ignore
-    prx.draw_text_shadow(f"Time Elapsed: {datetime.timedelta(seconds=pr.get_time())}", pr.Vector2(2, 65), 22, pr.WHITE)  # type: ignore
-    prx.draw_text_shadow(f"{pr.get_fps()}fps", pr.Vector2(940, 2), 22, pr.WHITE)  # type: ignore
+    prx.draw_text(f"Time Elapsed: {datetime.timedelta(seconds=pr.get_time())}", pr.Vector2(2, 46), 20, pr.WHITE, shadow=True)  # type: ignore
+    prx.draw_text(f"Time Step: {_context.timestep}", pr.Vector2(2, 68), 20, pr.WHITE, shadow=True)  # type: ignore
+
+    prx.draw_text(f"{pr.get_fps()}fps", pr.Vector2(2, 2), 20, pr.WHITE, align="right", shadow=True)  # type: ignore
 
 
 def _update_camera_free_mode() -> None:

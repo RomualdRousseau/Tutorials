@@ -16,8 +16,7 @@ from tutorial1.math.geom import (
     distance,
     intersect,
 )
-from tutorial1.math.linalg import lst_2_np
-from tutorial1.util.funcs import curry
+from tutorial1.math.linalg import lst_2_arr
 
 EDGE_COLOR = pr.Color(0, 0, 0, 128)
 VERTEX_COLOR = pr.Color(0, 0, 255, 128)
@@ -106,8 +105,8 @@ def generate_random():
         is_valid = lambda x, y: distance(x.point, y.point) > min
 
         while n < num:
-            v = SpatialVertex(Point(lst_2_np([rand(), rand()])))
-            if all(map(curry(is_valid)(v), vertice)):
+            v = SpatialVertex(Point(lst_2_arr([rand(), rand()])))
+            if all((is_valid(v, x) for x in vertice)):
                 vertice.append(v)
                 n += 1
         return vertice
@@ -120,7 +119,7 @@ def generate_random():
 
         while n < num:
             e = generate_edge(vertice, k)
-            if all(map(curry(is_valid)(e), edges)):
+            if all((is_valid(e, x) for x in edges)):
                 edges.append(e)
                 n += 1
         return edges
