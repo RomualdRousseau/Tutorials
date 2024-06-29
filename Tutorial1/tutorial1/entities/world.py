@@ -36,9 +36,6 @@ TREE_DENSITY = 0.5
 TREE_DISTANCE = 25  # m
 TREE_OFFSET = 5  # m
 
-RAY_MAX_LEN = 50  # m
-RAY_FOV = np.pi * 0.4
-
 Location = tuple[Segment, Point]
 
 
@@ -190,8 +187,8 @@ def get_nearest_corridors(position: Point, radius: float, closest: bool = True) 
 def cast_rays(
     position: Point,
     direction: np.ndarray,
-    length: float = RAY_MAX_LEN,
-    fov: float = RAY_FOV,
+    length: float,
+    fov: float,
     sampling: int = 16,
 ) -> list[Segment]:
     nearest_segments = get_nearest_corridors(position, length)

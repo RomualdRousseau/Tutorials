@@ -24,6 +24,9 @@ DRAG_ROAD = 0.9  # Concrete/Rubber
 DRAG_ROLLING = 0.01  # Concrete/Rubber
 C_G = 9.81  # m.s-2
 
+RAY_MAX_LEN = 50  # m
+RAY_FOV = np.pi * 0.4
+
 START_OFFSET = world.ROAD_WIDTH / 4  # m
 MAX_VISITED_LOCATION = 10
 
@@ -92,7 +95,7 @@ class Car:
         self.current_location_pos = Point(start_pos)
         self.visited_location = [(start_seg, self.current_location_pos)]
 
-        self.camera: list[Segment] = world.cast_rays(Point(self.pos), self.head)
+        self.camera: list[Segment] = world.cast_rays(Point(self.pos), self.head, length=RAY_MAX_LEN, fov=RAY_FOV)
         self.proximity: Optional[Segment] = None
 
         self.total_distance = 0.0
@@ -209,7 +212,7 @@ class Car:
 
         # Sensors
 
-        self.camera = world.cast_rays(pos, self.head)
+        self.camera = world.cast_rays(pos, self.head, length=RAY_MAX_LEN, fov=RAY_FOV)
 
         match nearest_point_segment(pos, self.visited_location[-1][0], True):
             case None:
