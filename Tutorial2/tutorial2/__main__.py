@@ -106,11 +106,11 @@ def main(
             pool.normalize()
 
             best_model = pool.best_parent().get_model()
-            
+
             agents = spawn_agents(agent_count, pool, True)
             observation, info = env.reset()
 
-    if model_file is not None:
+    if model_file is not None and best_model is not None:
         best_model.save(model_file)
 
     env.close()
