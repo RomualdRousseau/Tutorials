@@ -46,6 +46,7 @@ class Agent:
 
         if mutate:
             if (timestep % BATCH_SIZE) == 0:
+                print(f"Batch: {int(timestep / BATCH_SIZE)}")
                 self.model.zero_grad()
             self.model.fit(epochs=1, shuffle=False, verbose=False)
 
@@ -103,9 +104,9 @@ def main(agent_count: int = 100, seed: int = 5, model_file: Optional[str] = None
             pool.normalize()
 
             best_model = pool.best_parent().get_model()
-            if info["spawn_location_changed"] and model_file is not None:
+            if model_file is not None and info["spawn_location_changed"]:
                 print("Model saved for new spawn location!")
-                best_model.save("spawn_" + model_file)
+                best_model.save(model_file)
 
             agents = [
                 Agent(pool.select_parent().get_model(), True, timestep)
@@ -113,9 +114,6 @@ def main(agent_count: int = 100, seed: int = 5, model_file: Optional[str] = None
             ]
             timestep += 1
             observation, info = env.reset()
-
-    if model_file is not None:
-        best_model.save(model_file)
 
     env.close()
 
