@@ -39,7 +39,6 @@ def get_singleton(name: str = "default"):
 
 
 def reset() -> None:
-    pr.trace_log(pr.TraceLogLevel.LOG_DEBUG, "GAMELOOP: reset")
     context = get_singleton()
     for x in context.entities:
         x.reset()

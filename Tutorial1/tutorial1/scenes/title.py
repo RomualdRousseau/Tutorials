@@ -5,7 +5,7 @@ from tutorial1.constants import WINDOW_HEIGHT
 
 
 def reset() -> None:
-    pr.trace_log(pr.TraceLogLevel.LOG_DEBUG, "TITLE: reset")
+    pass
 
 
 def update(_: float) -> str:

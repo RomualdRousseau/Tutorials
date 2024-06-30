@@ -10,7 +10,6 @@ _thread = Thread(target=world.reset)
 
 
 def reset() -> None:
-    pr.trace_log(pr.TraceLogLevel.LOG_DEBUG, "LOADING: reset")
     _thread.start()
 
 

@@ -92,7 +92,6 @@ def is_terminated() -> bool:
 
 
 def reset() -> None:
-    pr.trace_log(pr.TraceLogLevel.LOG_DEBUG, "TRAINER: reset")
     context = get_singleton()
     context.entities = [world, *context.agents]
     context.best_agent = None

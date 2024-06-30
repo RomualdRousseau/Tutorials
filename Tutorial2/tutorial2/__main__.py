@@ -39,7 +39,7 @@ class Agent:
     CK = np.array([0.25, 0.5, 0.25])
 
     def __init__(self, parent_model: Optional[pf.Sequential] = None, mutate: bool = False, timestep: int = 0):
-        self.fitness = -1.0
+        self.fitness = 0.0
 
         self.model = get_agent_model() if parent_model is None else parent_model.clone()
         self.model.compile(optimizer=pf.optimizers.rmsprop(lr=0.01))
@@ -66,7 +66,7 @@ class Agent:
         self.fitness = fitness
 
 
-def main(agent_count: int = 100, seed: int = 5, model_file: Optional[str] = None) -> None:
+def main(agent_count: int = 100, seed: int = 5, model_file: Optional[str] = None, mutate: bool = False) -> None:
     """
     Welcome to the taxi driver simulation tutorial!
 
@@ -77,17 +77,17 @@ def main(agent_count: int = 100, seed: int = 5, model_file: Optional[str] = None
 
     env = gym.make("tutorial1/Tutorial1-v1", render_mode="human", agent_count=agent_count)
 
-    if os.path.exists("agent_model.json"):
+    if model_file is not None and os.path.exists(model_file):
         best_model = get_agent_model()
-        best_model.load("agent_model.json")
+        best_model.load(model_file)
     else:
         best_model = None
 
-    agents = [Agent(best_model) for _ in trange(agent_count, desc="Spawning agents", ncols=120, bar_format=BAR_FORMAT)]
-
-    observation, info = env.reset(seed=seed)
-
+    agents = [
+        Agent(best_model, mutate) for _ in trange(agent_count, desc="Spawning agents", ncols=120, bar_format=BAR_FORMAT)
+    ]
     timestep = 0
+    observation, info = env.reset(seed=seed)
 
     while not should_quit:
         action = [a.get_action(observation[i]) for i, a in enumerate(agents)]
@@ -101,19 +101,18 @@ def main(agent_count: int = 100, seed: int = 5, model_file: Optional[str] = None
             pool = pf.GeneticPool(agents)  # type: ignore
             pool.sample()
             pool.normalize()
-            best_model = pool.best_parent().get_model()
 
+            best_model = pool.best_parent().get_model()
             if info["spawn_location_changed"] and model_file is not None:
-                best_model.save(model_file)
+                print("Model saved for new spawn location!")
+                best_model.save("spawn_" + model_file)
 
             agents = [
                 Agent(pool.select_parent().get_model(), True, timestep)
                 for _ in trange(agent_count, desc="Training agents", ncols=120, bar_format=BAR_FORMAT)
             ]
-
-            observation, info = env.reset()
-
             timestep += 1
+            observation, info = env.reset()
 
     if model_file is not None:
         best_model.save(model_file)
