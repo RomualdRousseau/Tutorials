@@ -83,6 +83,7 @@ def main(
     Params:
     -------
     agent_count: Number of agents to run in the simulation.
+    render_fps: Set the frame per second.
     seed: Initialize the random generators and make the simulation reproductible.
     model_file: Load the model file to initialize the agents.
     save: Save the model after the simulation ended. The model file is given by the model_file parameters.
