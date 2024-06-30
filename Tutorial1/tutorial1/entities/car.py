@@ -33,10 +33,10 @@ MAX_VISITED_LOCATION = 10
 
 class Car:
     def __init__(self, color: pr.Color, input_mode: str = "human") -> None:
-        self.color = color
         assert input_mode in ("human", "ai")
+        self.color = color
         self.input_mode = input_mode
-        self.debug_mode = input_mode == "human"
+        self.debug_mode = False
         self.spawn_mode = False
 
     def set_debug_mode(self, debug_mode: bool) -> None:

@@ -99,35 +99,38 @@ def wi_he(n, m):
     return np.random.uniform(-a, a, size=(n, m)).astype(np.float32)
 
 
-def wu_sgd(W, S, V, momentum=0.0, lr=0.01):
+def wu_sgd(g, s, v, momentum=0.0, lr=0.01, nesterov=False):
     if momentum == ZERO:
-        X = -lr * W
+        x = -lr * g
     else:
-        V = momentum * V + lr * W
-        X = -V
-    return (X, S, V)
+        v = momentum * v - lr * g
+        if nesterov:
+            x = momentum * v - lr * g
+        else:
+            x = v
+    return x, s, v
 
 
-def wu_adadelta(W, S, V, rho=0.95):
-    S = rho * S + (1.0 - rho) * W**2
-    X = -W * np.sqrt(V + EPS) / np.sqrt(S + EPS)
-    V = rho * V + (1.0 - rho) * X**2
-    return (X, S, V)
+def wu_adadelta(g, s, v, rho=0.95):
+    s = rho * s + (1.0 - rho) * g**2
+    x = -g * np.sqrt(v + EPS) / np.sqrt(s + EPS)
+    v = rho * v + (1.0 - rho) * x**2
+    return x, s, v
 
 
-def wu_rmsprop(W, S, V, rho=0.9, lr=0.001):
-    S = rho * S + (1.0 - rho) * W**2
-    X = -W * lr / np.sqrt(S + EPS)
-    return (X, S, V)
+def wu_rmsprop(g, s, v, rho=0.9, lr=0.001):
+    s = rho * s + (1.0 - rho) * g**2
+    x = -g * lr / np.sqrt(s + EPS)
+    return x, s, v
 
 
-def wu_adam(W, S, V, beta1=0.9, beta2=0.999, lr=0.001):
-    S = beta1 * S + (1.0 - beta1) * W
-    V = beta2 * V + (1.0 - beta2) * W**2
-    Shat = S / (1.0 - beta1)
-    Vhat = V / (1.0 - beta2)
-    X = -Shat * lr / np.sqrt(Vhat + EPS)
-    return (X, S, V)
+def wu_adam(g, s, v, beta1=0.9, beta2=0.999, lr=0.001):
+    s = beta1 * s + (1.0 - beta1) * g
+    v = beta2 * v + (1.0 - beta2) * g**2
+    shat = s / (1.0 - beta1)
+    vhat = v / (1.0 - beta2)
+    x = -shat * lr / np.sqrt(vhat + EPS)
+    return x, s, v
 
 
 __functions__: dict[str, dict[str, Callable]] = {

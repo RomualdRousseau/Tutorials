@@ -16,11 +16,11 @@ BAR_FORMAT = "{l_bar}{bar}| {n_fmt}/{total_fmt}"
 class Agent:
     CK = np.array([0.25, 0.5, 0.25])
 
-    def __init__(self, parent_model: Optional[pf.Sequential] = None, mutate: bool = False) -> None:
+    def __init__(self, model: Optional[pf.Sequential] = None, mutate: bool = False) -> None:
         self.fitness = 0.0
 
-        self.model = get_agent_model() if parent_model is None else parent_model.clone()
-        self.model.compile(optimizer=pf.optimizers.sgd(momentum=0.9, lr=0.01))
+        self.model = get_agent_model() if model is None else model.clone()
+        self.model.compile(optimizer=pf.optimizers.sgd(momentum=0.9, lr=0.1, nesterov=True))
 
         if mutate:
             self.model.fit(epochs=1, shuffle=False, verbose=False)
@@ -67,9 +67,10 @@ def spawn_agents(
 
 def main(
     agent_count: int = 100,
+    render_fps: Optional[int] = None,
     seed: int = 5,
     model_file: Optional[str] = None,
-    mutate_first_timestep: bool = False,
+    save: bool = False,
     duration: float = 15.0,
 ) -> None:
     """
@@ -78,9 +79,22 @@ def main(
     In this tutorial, you will learn how to create your own Gymnasium agent. Gymnasium is a toolkit for developing and
     comparing reinforcement learning algorithms. Here, we will guide you through the steps to create a machine learning
     model that will train the car in the Taxi Driver Environment to drive safely between 2 locations in the city.
+
+    Params:
+    -------
+    agent_count: Number of agents to run in the simulation.
+    seed: Initialize the random generators and make the simulation reproductible.
+    model_file: Load the model file to initialize the agents.
+    save: Save the model after the simulation ended. The model file is given by the model_file parameters.
+    duration: Duration in minutes of the simulation.
     """
 
-    env = gym.make("tutorial1/Tutorial1-v1", render_mode="human", agent_count=agent_count)
+    assert agent_count > 0
+    assert seed >= 0
+    assert not save or save and model_file is not None
+    assert duration > 0
+
+    env = gym.make("tutorial1/Tutorial1-v1", agent_count=agent_count, render_mode="human", render_fps=render_fps)
 
     if model_file is not None and os.path.exists(model_file):
         best_model = get_agent_model()
@@ -88,14 +102,16 @@ def main(
     else:
         best_model = None
 
-    agents = spawn_agents(agent_count, best_model, mutate_first_timestep)
+    agents = spawn_agents(agent_count, best_model, False)
     observation, info = env.reset(seed=seed)
 
     t_end = time.monotonic() + 60 * duration
     while time.monotonic() < t_end:
-        action = [a.get_action(observation[i]) for i, a in enumerate(agents)]
+        action = [agent.get_action(obs) for agent, obs in zip(agents, observation, strict=True)]
 
         observation, reward, terminated, truncated, info = env.step(action)
+
+        best_model = max(zip(agents, info["scores"], strict=True), key=lambda x: x[1])[0].model
 
         if terminated or truncated:
             for agent, score in zip(agents, info["scores"], strict=True):
@@ -105,12 +121,10 @@ def main(
             pool.sample()
             pool.normalize()
 
-            best_model = pool.best_parent().get_model()
-
             agents = spawn_agents(agent_count, pool, True)
             observation, info = env.reset()
 
-    if model_file is not None and best_model is not None:
+    if save and model_file is not None and best_model is not None:
         best_model.save(model_file)
 
     env.close()

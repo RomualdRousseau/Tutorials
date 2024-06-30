@@ -16,10 +16,12 @@ from tutorial1.scenes import trainer
 class Tutorial1Env(gym.Env):
     metadata = {"render_modes": ["human"], "render_fps": 10}  # type: ignore # noqa: RUF012
 
-    def __init__(self, render_mode=None, agent_count=10):
+    def __init__(self, agent_count=10, render_mode=None, render_fps=None):
         assert render_mode is None or render_mode in self.metadata["render_modes"]
-        self.render_mode = render_mode
+
         self.agent_count = agent_count
+        self.render_mode = render_mode or self.metadata["render_modes"][0]
+        self.render_fps = render_fps or self.metadata["render_fps"]
         self._gfx_initialized = False
 
         agent_space = gym.spaces.Dict(
@@ -72,15 +74,12 @@ class Tutorial1Env(gym.Env):
         return [trainer.get_agent_obs(x) for x in trainer.get_agents()]
 
     def _get_info(self):
-        return {
-            "scores": [trainer.get_agent_score(x) for x in trainer.get_agents()],
-            "spawn_location_changed": trainer.has_spawn_location_changed(),
-        }
+        return {"scores": [trainer.get_agent_score(x) for x in trainer.get_agents()]}
 
     def _gfx_init(self):
         pr.set_config_flags(pr.ConfigFlags.FLAG_MSAA_4X_HINT)
         pr.init_window(WINDOW_WIDTH, WINDOW_HEIGHT, APP_NAME)
-        pr.set_target_fps(self.metadata["render_fps"])
+        pr.set_target_fps(self.render_fps)
         pr.hide_cursor()
         pr.init_audio_device()
 
