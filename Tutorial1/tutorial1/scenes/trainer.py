@@ -69,7 +69,7 @@ def get_agent_obs(agent: car.Car) -> dict[str, np.ndarray]:
 
 def get_agent_score(agent: car.Car) -> float:
     score = int(agent.get_total_distance_in_km() * 1000)  # farest in meter
-    score += int(agent.get_average_speed_in_kmh() / 36)  # fatest in meter per second
+    score += int(agent.get_average_speed_in_kmh() * 10 / car.MAX_SPEED)  # fatest in meter per second
     score += -10 if agent.out_of_track else -100  # penalties
     return score
 
@@ -107,11 +107,11 @@ def update(dt: float) -> str:
         entity.update(dt)
 
     alive_agents = sorted(
-        (agent for agent in context.agents if is_agent_alive(agent)), key=lambda x: get_agent_score(x), reverse=True
+        (agent for agent in context.agents if is_agent_alive(agent)), key=lambda x: get_agent_score(x)
     )
 
     context.entities = [world, *alive_agents]
-    context.best_agent = alive_agents[0] if len(alive_agents) > 0 else None
+    context.best_agent = alive_agents[-1] if len(alive_agents) > 0 else None
     context.update_camera(context)
 
     if context.best_agent is not None:
