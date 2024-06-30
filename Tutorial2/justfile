@@ -21,7 +21,7 @@ pre-commit:
 
 # Run the tutorial
 run: pre-commit
-    poetry run python -m tutorial2 --model-file=agent_model.json
+    poetry run python -m tutorial2 --model-file=agent_model.json --mutate_first_timestep
 
 # Profile the tutorial
 profile: pre-commit

@@ -24,21 +24,10 @@ def handler_quit(signum, frame):
     should_quit = True
 
 
-def get_agent_model():
-    return pf.Sequential(
-        [
-            pf.layers.GeneticDense(17, 32, activation="leaky_relu"),
-            pf.layers.GeneticDense(32, 16, activation="leaky_relu"),
-            pf.layers.GeneticDense(16, 2, activation="tanh"),
-        ],
-        trainer=pf.GeneticTrainer(rate=0.1, variance=0.1),
-    )
-
-
 class Agent:
     CK = np.array([0.25, 0.5, 0.25])
 
-    def __init__(self, parent_model: Optional[pf.Sequential] = None, mutate: bool = False, timestep: int = 0):
+    def __init__(self, parent_model: Optional[pf.Sequential] = None, mutate: bool = False, timestep: int = 0) -> None:
         self.fitness = 0.0
 
         self.model = get_agent_model() if parent_model is None else parent_model.clone()
@@ -46,7 +35,6 @@ class Agent:
 
         if mutate:
             if (timestep % BATCH_SIZE) == 0:
-                print(f"Batch: {int(timestep / BATCH_SIZE)}")
                 self.model.zero_grad()
             self.model.fit(epochs=1, shuffle=False, verbose=False)
 
@@ -67,7 +55,32 @@ class Agent:
         self.fitness = fitness
 
 
-def main(agent_count: int = 100, seed: int = 5, model_file: Optional[str] = None, mutate: bool = False) -> None:
+def get_agent_model() -> pf.Sequential:
+    return pf.Sequential(
+        [
+            pf.layers.GeneticDense(17, 32, activation="leaky_relu"),
+            pf.layers.GeneticDense(32, 16, activation="leaky_relu"),
+            pf.layers.GeneticDense(16, 2, activation="tanh"),
+        ],
+        trainer=pf.GeneticTrainer(rate=0.1, variance=1),
+    )
+
+
+def get_batch_agents(
+    agent_count: int, model_or_pool: Optional[pf.Sequential] | pf.GeneticPool, mutate: bool, timestep: int
+) -> list[Agent]:
+    get_model = lambda: (
+        model_or_pool.select_parent().get_model() if isinstance(model_or_pool, pf.GeneticPool) else model_or_pool
+    )
+    return [
+        Agent(get_model(), mutate, timestep)
+        for _ in trange(agent_count, desc=f"Batch: {int(timestep / BATCH_SIZE)}", ncols=120, bar_format=BAR_FORMAT)
+    ]
+
+
+def main(
+    agent_count: int = 100, seed: int = 5, model_file: Optional[str] = None, mutate_first_timestep: bool = False
+) -> None:
     """
     Welcome to the taxi driver simulation tutorial!
 
@@ -84,10 +97,8 @@ def main(agent_count: int = 100, seed: int = 5, model_file: Optional[str] = None
     else:
         best_model = None
 
-    agents = [
-        Agent(best_model, mutate) for _ in trange(agent_count, desc="Spawning agents", ncols=120, bar_format=BAR_FORMAT)
-    ]
     timestep = 0
+    agents = get_batch_agents(agent_count, best_model, mutate_first_timestep, timestep)
     observation, info = env.reset(seed=seed)
 
     while not should_quit:
@@ -96,7 +107,9 @@ def main(agent_count: int = 100, seed: int = 5, model_file: Optional[str] = None
         observation, reward, terminated, truncated, info = env.step(action)
 
         if terminated or truncated:
-            for agent, score in zip(agents, info["scores"], strict=True):
+            scores, spawn_location_changed = info["scores"], info["spawn_location_changed"]
+
+            for agent, score in zip(agents, scores, strict=True):
                 agent.set_fitness(score + reward)
 
             pool = pf.GeneticPool(agents)  # type: ignore
@@ -104,15 +117,12 @@ def main(agent_count: int = 100, seed: int = 5, model_file: Optional[str] = None
             pool.normalize()
 
             best_model = pool.best_parent().get_model()
-            if model_file is not None and info["spawn_location_changed"]:
+            if model_file is not None and spawn_location_changed:
                 print("Model saved for new spawn location!")
                 best_model.save(model_file)
 
-            agents = [
-                Agent(pool.select_parent().get_model(), True, timestep)
-                for _ in trange(agent_count, desc="Training agents", ncols=120, bar_format=BAR_FORMAT)
-            ]
             timestep += 1
+            agents = get_batch_agents(agent_count, pool, True, timestep)
             observation, info = env.reset()
 
     env.close()

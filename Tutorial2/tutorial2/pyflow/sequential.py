@@ -25,7 +25,7 @@ class Sequential(Model):
         forward = lambda res, lr: [*res, lr.call(res[-1], training=training)]
         return reduce(forward, self.layers, [x])
 
-    def clone(self) -> Model:
+    def clone(self) -> Sequential:
         cloned = copy.copy(self)
         cloned.layers = [lr.clone() for lr in self.layers]
         return cloned
