@@ -17,10 +17,6 @@ class Sequential(Model):
         super().__init__(trainer if trainer is not None else gradient)
         self.layers = layers
 
-    def zero_grad(self):
-        for lr in self.layers:
-            lr.zero_grad()
-
     def call(self, x: np.ndarray, training: bool = False) -> list[np.ndarray]:
         forward = lambda res, lr: [*res, lr.call(res[-1], training=training)]
         return reduce(forward, self.layers, [x])

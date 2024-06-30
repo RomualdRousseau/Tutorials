@@ -103,7 +103,7 @@ def wu_sgd(W, S, V, momentum=0.0, lr=0.01):
     if momentum == ZERO:
         X = -lr * W
     else:
-        V = lr * W - momentum * V
+        V = momentum * V + lr * W
         X = -V
     return (X, S, V)
 
