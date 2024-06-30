@@ -72,7 +72,10 @@ class Tutorial1Env(gym.Env):
         return [trainer.get_agent_obs(x) for x in trainer.get_agents()]
 
     def _get_info(self):
-        return {"scores": [trainer.get_agent_score(x) for x in trainer.get_agents()]}
+        return {
+            "scores": [trainer.get_agent_score(x) for x in trainer.get_agents()],
+            "spawn_location_changed": trainer.has_spawn_location_changed(),
+        }
 
     def _gfx_init(self):
         pr.set_config_flags(pr.ConfigFlags.FLAG_MSAA_4X_HINT)

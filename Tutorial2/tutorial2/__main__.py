@@ -9,6 +9,7 @@ from tqdm import trange
 
 import tutorial2.pyflow as pf
 
+BATCH_SIZE = 32
 BAR_FORMAT = "{l_bar}{bar}| {n_fmt}/{total_fmt}"
 
 should_quit = False
@@ -26,8 +27,9 @@ def handler_quit(signum, frame):
 def get_agent_model():
     return pf.Sequential(
         [
-            pf.layers.GeneticDense(17, 32, activation="linear"),
-            pf.layers.GeneticDense(32, 2, activation="tanh"),
+            pf.layers.GeneticDense(17, 32, activation="leaky_relu"),
+            pf.layers.GeneticDense(32, 16, activation="leaky_relu"),
+            pf.layers.GeneticDense(16, 2, activation="tanh"),
         ],
         trainer=pf.GeneticTrainer(rate=0.1, variance=0.1),
     )
@@ -36,12 +38,15 @@ def get_agent_model():
 class Agent:
     CK = np.array([0.25, 0.5, 0.25])
 
-    def __init__(self, parent_model: Optional[pf.Sequential] = None, mutate: bool = False):
+    def __init__(self, parent_model: Optional[pf.Sequential] = None, mutate: bool = False, timestep: int = 0):
         self.fitness = -1.0
 
         self.model = get_agent_model() if parent_model is None else parent_model.clone()
         self.model.compile(optimizer=pf.optimizers.rmsprop(lr=0.01))
+
         if mutate:
+            if (timestep % BATCH_SIZE) == 0:
+                self.model.zero_grad()
             self.model.fit(epochs=1, shuffle=False, verbose=False)
 
     def get_action(self, observation: dict[str, np.ndarray]) -> np.ndarray:
@@ -82,6 +87,8 @@ def main(agent_count: int = 100, seed: int = 5, model_file: Optional[str] = None
 
     observation, info = env.reset(seed=seed)
 
+    timestep = 0
+
     while not should_quit:
         action = [a.get_action(observation[i]) for i, a in enumerate(agents)]
 
@@ -96,12 +103,17 @@ def main(agent_count: int = 100, seed: int = 5, model_file: Optional[str] = None
             pool.normalize()
             best_model = pool.best_parent().get_model()
 
+            if info["spawn_location_changed"] and model_file is not None:
+                best_model.save(model_file)
+
             agents = [
-                Agent(pool.select_parent().get_model(), True)
+                Agent(pool.select_parent().get_model(), True, timestep)
                 for _ in trange(agent_count, desc="Training agents", ncols=120, bar_format=BAR_FORMAT)
             ]
 
             observation, info = env.reset()
+
+            timestep += 1
 
     if model_file is not None:
         best_model.save(model_file)

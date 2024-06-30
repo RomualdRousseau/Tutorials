@@ -26,7 +26,9 @@ class Point:
         return np.allclose(self.xy, other.xy, 0.0, eps)
 
     def __eq__(self, other: Any) -> bool:
-        return isinstance(other, Point) and bool(np.all(self.xy == other.xy))
+        if not isinstance(other, Point):
+            return NotImplemented
+        return np.array_equal(self.xy, other.xy)
 
     def __hash__(self) -> int:
         return int(self.xy[0] + VIRTUAL_WIDTH + (self.xy[1] + VIRTUAL_WIDTH) * VIRTUAL_WIDTH * 2)
@@ -78,7 +80,9 @@ class Segment:
         )
 
     def __eq__(self, other: Any) -> bool:
-        return isinstance(other, Segment) and (
+        if not isinstance(other, Segment):
+            return NotImplemented
+        return (
             self.start == other.start and self.end == other.end or self.end == other.start and self.start == other.end
         )
 

@@ -25,7 +25,7 @@ class Context:
     update_state: Callable[[Context, float], str]
 
 
-@lru_cache
+@lru_cache(1)
 def get_singleton(name: str = "default"):
     player = car.Car(CAR_COLOR)
     entities: list[Entity] = [world, player]

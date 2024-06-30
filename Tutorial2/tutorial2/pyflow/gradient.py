@@ -21,6 +21,6 @@ def train(model: Model, x: Optional[np.ndarray], y: Optional[np.ndarray]) -> Opt
         gradients = [(dw, db), *gradients]
 
     for lr, gr in zip(model.layers, gradients, strict=True):
-        lr.apply_gradient(gr, model.optimizer_func)
+        lr.apply_grad(gr, model.optimizer_func)
 
     return yhat

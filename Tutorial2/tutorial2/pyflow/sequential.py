@@ -17,20 +17,24 @@ class Sequential(Model):
         super().__init__(trainer if trainer is not None else gradient)
         self.layers = layers
 
+    def zero_grad(self):
+        for lr in self.layers:
+            lr.zero_grad()
+
     def call(self, x: np.ndarray, training: bool = False) -> list[np.ndarray]:
         forward = lambda res, lr: [*res, lr.call(res[-1], training=training)]
         return reduce(forward, self.layers, [x])
 
     def clone(self) -> Model:
         cloned = copy.copy(self)
-        cloned.layers = [x.clone() for x in self.layers]
+        cloned.layers = [lr.clone() for lr in self.layers]
         return cloned
 
     def load(self, file_path: str) -> None:
         with open(file_path, "r") as f:
             model_data = json.load(f)
-        for i, dt in enumerate(model_data["layers"]):
-            self.layers[i].from_dict(dt)
+        for lr, dt in zip(self.layers, model_data["layers"], strict=True):
+            lr.from_dict(dt)
 
     def save(self, file_path: str) -> None:
         model_data = {"layers": [lr.to_dict() for lr in self.layers]}

@@ -29,11 +29,12 @@ class Context:
     camera: pr.Camera2D
     best_agent: Optional[car.Car]
     update_camera: Callable[[Context], None]
-    last_spawn: Optional[world.Location] = None
+    last_spawn_location: Optional[world.Location] = None
+    spawn_location_changed: bool = False
     timestep: int = 0
 
 
-@lru_cache
+@lru_cache(1)
 def get_singleton(name: str = "default"):
     camera = pr.Camera2D(
         pr.Vector2(WINDOW_WIDTH / 2, WINDOW_HEIGHT / 2),
@@ -55,8 +56,8 @@ def spawn_agents(agent_count: int) -> None:
 def reset_agents() -> None:
     context = get_singleton()
     for agent in context.agents:
-        if context.last_spawn is not None:
-            agent.set_spawn_location(context.last_spawn)
+        if context.last_spawn_location is not None:
+            agent.set_spawn_location(context.last_spawn_location)
 
 
 def get_agent_obs(agent: car.Car) -> dict[str, np.ndarray]:
@@ -68,7 +69,7 @@ def get_agent_obs(agent: car.Car) -> dict[str, np.ndarray]:
 
 def get_agent_score(agent: car.Car) -> float:
     score = int(agent.get_total_distance_in_km() * 1000)  # farest in meter
-    # score += int(agent.get_average_speed_in_kmh() / 3.6)  # fatest in meter per second
+    score += int(agent.get_average_speed_in_kmh() / 36)  # fatest in meter per second
     score += -10 if agent.out_of_track else -100  # penalties
     return score
 
@@ -80,6 +81,10 @@ def is_agent_alive(agent: car.Car) -> bool:
         and np.dot(agent.vel, agent.head) >= 0
         and agent.get_speed_in_kmh() >= CAR_MIN_SPEED
     )
+
+
+def has_spawn_location_changed() -> bool:
+    return get_singleton().spawn_location_changed
 
 
 def is_terminated() -> bool:
@@ -101,14 +106,18 @@ def update(dt: float) -> str:
     for entity in context.entities:
         entity.update(dt)
 
-    alive_agents = [agent for agent in context.agents if is_agent_alive(agent)]
+    alive_agents = sorted(
+        (agent for agent in context.agents if is_agent_alive(agent)), key=lambda x: get_agent_score(x), reverse=True
+    )
 
     context.entities = [world, *alive_agents]
-    context.best_agent = max(alive_agents, key=lambda x: get_agent_score(x) if x is not None else 0.0, default=None)
+    context.best_agent = alive_agents[0] if len(alive_agents) > 0 else None
     context.update_camera(context)
 
     if context.best_agent is not None:
-        context.last_spawn = context.best_agent.get_spawn_location()
+        last_spawn_location = context.best_agent.get_spawn_location()
+        context.spawn_location_changed = context.last_spawn_location != last_spawn_location
+        context.last_spawn_location = last_spawn_location
 
     return "trainer"
 
@@ -123,8 +132,8 @@ def draw() -> None:
     for layer in range(2):
         for entity in context.entities:
             entity.draw(layer)
-    if context.last_spawn is not None:
-        context.last_spawn[1].draw(1, pr.BLUE)  # type: ignore
+    if context.last_spawn_location is not None:
+        context.last_spawn_location[1].draw(1, pr.BLUE)  # type: ignore
     pr.end_mode_2d()
 
     match context.best_agent:

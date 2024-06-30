@@ -47,13 +47,17 @@ class Params:
             return NotImplemented
         return np.array_equal(self.data, other.data)
 
-    def apply_gradient(self, data: np.ndarray) -> None:
+    def zero_grad(self) -> None:
+        self[1] = np.zeros(self[0].shape)
+        self[2] = np.zeros(self[0].shape)
+
+    def apply_grad(self, data: np.ndarray) -> None:
         self[0] += data[0]
         self[1] = data[1]
         self[2] = data[2]
 
     def copy(self) -> Params:
-        return Params(self.data[0].shape, data=self.data.copy())
+        return Params(self[0].shape, data=self.data.copy())
 
     def to_list(self) -> list:
         return self.data.tolist()
@@ -80,12 +84,16 @@ class Layer:
         """Performs the logic of optimizing the layer to the input arguments."""
         raise NotImplementedError
 
-    def apply_gradient(self, gradient: tuple[np.ndarray, np.ndarray], optimizer_func: Callable) -> Layer:
+    def zero_grad(self) -> None:
+        self.kernel.zero_grad()
+        self.bias.zero_grad()
+
+    def apply_grad(self, gradient: tuple[np.ndarray, np.ndarray], optimizer_func: Callable) -> Layer:
         """This method updates either the weights or both weights and biases of the layer using a given
         optimization function."""
         if self.trainable:
-            self.kernel.apply_gradient(optimizer_func(gradient[0], self.kernel[1], self.kernel[2]))
-            self.bias.apply_gradient(optimizer_func(gradient[1], self.bias[1], self.bias[2]))
+            self.kernel.apply_grad(optimizer_func(gradient[0], self.kernel[1], self.kernel[2]))
+            self.bias.apply_grad(optimizer_func(gradient[1], self.bias[1], self.bias[2]))
         return self
 
     def clone(self) -> Layer:
@@ -109,6 +117,9 @@ class Model:
 
     def __init__(self, trainer: Trainer):
         self.trainer = trainer
+
+    def zero_grad(self) -> None:
+        raise NotImplementedError
 
     def call(self, x: np.ndarray, training: bool = False) -> list[np.ndarray]:
         raise NotImplementedError

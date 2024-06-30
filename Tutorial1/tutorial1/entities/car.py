@@ -24,8 +24,8 @@ DRAG_ROAD = 0.9  # Concrete/Rubber
 DRAG_ROLLING = 0.01  # Concrete/Rubber
 C_G = 9.81  # m.s-2
 
-RAY_MAX_LEN = 50  # m
-RAY_FOV = np.pi * 0.4
+RAY_MAX_LEN = 25  # m
+RAY_FOV = np.pi * 0.3
 
 START_OFFSET = world.ROAD_WIDTH / 4  # m
 MAX_VISITED_LOCATION = 10
@@ -200,16 +200,6 @@ class Car:
                 self.head = normalize(self.vel)
                 self.damaged = True
 
-        # Localisation
-
-        is_new_location_added = False
-        seg, self.current_location_pos = world.get_nearest_location(pos)
-        if self.visited_location[-1][0] != seg:
-            self.visited_location.append((seg, seg.closest_ep(self.current_location_pos)))
-            if len(self.visited_location) > MAX_VISITED_LOCATION:
-                self.visited_location.pop(0)
-            is_new_location_added = True
-
         # Sensors
 
         self.camera = world.cast_rays(pos, self.head, length=RAY_MAX_LEN, fov=RAY_FOV)
@@ -221,6 +211,16 @@ class Car:
             case Point() as nearest:
                 self.proximity = Segment(pos, nearest)
                 self.out_of_track = self.proximity.length < WIDTH * 0.75
+
+        # Localisation
+
+        is_new_location_added = False
+        seg, self.current_location_pos = world.get_nearest_location(pos)
+        if self.visited_location[-1][0] != seg:
+            self.visited_location.append((seg, seg.closest_ep(self.current_location_pos)))
+            if len(self.visited_location) > MAX_VISITED_LOCATION:
+                self.visited_location.pop(0)
+            is_new_location_added = True
 
         # Statistics
 

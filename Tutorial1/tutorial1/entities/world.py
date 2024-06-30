@@ -67,7 +67,7 @@ class World:
     corridor: envelope.Envelope
 
 
-@lru_cache
+@lru_cache(1)
 def get_singleton(name: str = "default"):
     pr.trace_log(pr.TraceLogLevel.LOG_INFO, "WORLD: Initialize singleton")
 
@@ -168,7 +168,7 @@ def draw(layer: int) -> None:
     [draw_bg, draw_fg][layer]()
 
 
-@lru_cache
+@lru_cache(256)
 def get_nearest_location(position: Point) -> Location:
     _world = get_singleton()
     nearest_location = lambda x: (x, nearest_point_segment(position, x, True))
@@ -177,7 +177,7 @@ def get_nearest_location(position: Point) -> Location:
     return location  # type: ignore
 
 
-@lru_cache
+@lru_cache(256)
 def get_nearest_corridors(position: Point, radius: float, closest: bool = True) -> list[Segment]:
     _world = get_singleton()
     nearest_distance = lambda x: distance_point_segment(position, x, closest) < radius
