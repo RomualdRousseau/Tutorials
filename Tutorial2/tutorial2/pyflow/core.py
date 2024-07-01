@@ -148,10 +148,10 @@ class Model:
 
         history: dict[str, list[float]] = {"loss": [], "accuracy": []}
 
-        N = x.shape[0] if x is not None else 0
+        n = x.shape[0] if x is not None else 0
 
-        batch_sample = np.arange(N)
-        batch_count = max(1, np.ceil(N / batch_size))
+        batch_sample = np.arange(n)
+        batch_count = max(1, np.ceil(n / batch_size))
 
         first_pass = True
 

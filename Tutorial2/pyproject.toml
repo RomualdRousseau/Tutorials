@@ -8,10 +8,9 @@ readme = "README.md"
 [tool.poetry.dependencies]
 python = "^3.11"
 gymnasium = "^0.29.1"
+numpy = "^2.0.0"
 fire = "^0.6.0"
 tutorial1 = { path = "../Tutorial1" }
-numpy = "^2.0.0"
-pandas = "^2.2.2"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.2.1"
@@ -49,6 +48,4 @@ ignore = [
     "E731",    # accept lambda
     "RUF005",  # collection literal concatenation
     "PLR0913", # Too many arguments to function call
-    "N803",    # Argument name should be lowercase
-    "N806",    # Variable name should be lowercase
 ]

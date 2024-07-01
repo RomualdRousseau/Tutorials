@@ -15,6 +15,7 @@ BAR_FORMAT = "{l_bar}{bar}| {n_fmt}/{total_fmt}"
 
 class Agent:
     CK = np.array([0.25, 0.5, 0.25])
+
     def __init__(self, model: Optional[pf.Sequential] = None, mutate: bool = False) -> None:
         self.fitness = 0.0
 
