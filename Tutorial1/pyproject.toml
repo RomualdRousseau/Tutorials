@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "tutorial1"
-version = "0.1.0"
+version = "0.1.2"
 description = ""
 authors = ["Romuald Rousseau <romuald.rousseau@servier.com>"]
 readme = "README.md"
