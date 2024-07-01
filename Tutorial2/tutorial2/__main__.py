@@ -15,7 +15,6 @@ BAR_FORMAT = "{l_bar}{bar}| {n_fmt}/{total_fmt}"
 
 class Agent:
     CK = np.array([0.25, 0.5, 0.25])
-
     def __init__(self, model: Optional[pf.Sequential] = None, mutate: bool = False) -> None:
         self.fitness = 0.0
 
@@ -25,21 +24,21 @@ class Agent:
         if mutate:
             self.model.fit(epochs=1, shuffle=False, verbose=False)
 
-    def get_action(self, observation: dict[str, np.ndarray]) -> np.ndarray:
-        vel = observation["agent_vel"]
-        cam = observation["agent_cam"]
-        x = np.concat([vel, np.convolve(cam, Agent.CK, "same")])
-        y = self.model.predict(x)
-        return y[0]
-
     def get_model(self) -> pf.Sequential:
         return self.model
 
     def get_fitness(self) -> float:
         return self.fitness
 
-    def set_fitness(self, fitness: float) -> None:
+    def set_fitness(self, fitness: float) -> pf.GeneticIndividual:
         self.fitness = fitness
+        return self
+
+    def get_action(self, observation: dict[str, np.ndarray]) -> np.ndarray:
+        vel, cam = observation["agent_vel"], observation["agent_cam"]
+        x = np.concat([vel, np.convolve(cam, Agent.CK, "same")])
+        y = self.model.predict(x)
+        return y[0]
 
 
 def get_agent_model() -> pf.Sequential:
@@ -110,15 +109,14 @@ def main(
     while time.monotonic() < t_end:
         action = [agent.get_action(obs) for agent, obs in zip(agents, observation, strict=True)]
 
-        observation, reward, terminated, truncated, info = env.step(action)
+        observation, _, terminated, truncated, info = env.step(action)
 
         best_model = max(zip(agents, info["scores"], strict=True), key=lambda x: x[1])[0].model
 
         if terminated or truncated:
-            for agent, score in zip(agents, info["scores"], strict=True):
-                agent.set_fitness(score + reward)
-
-            pool = pf.GeneticPool(agents)  # type: ignore
+            pool = pf.GeneticPool(
+                [agent.set_fitness(score) for agent, score in zip(agents, info["scores"], strict=True)]
+            )
             pool.sample()
             pool.normalize()
 

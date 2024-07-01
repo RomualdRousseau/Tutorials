@@ -10,6 +10,8 @@ python = "^3.11"
 gymnasium = "^0.29.1"
 fire = "^0.6.0"
 tutorial1 = { path = "../Tutorial1" }
+numpy = "^2.0.0"
+pandas = "^2.2.2"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.2.1"
