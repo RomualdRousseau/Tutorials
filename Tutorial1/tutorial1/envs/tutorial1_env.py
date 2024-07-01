@@ -43,7 +43,6 @@ class Tutorial1Env(gym.Env):
             random.seed(seed)
             np.random.seed(seed)
 
-        trainer.reset_agents()
         trainer.reset()
 
         return self._get_obs(), self._get_info()
@@ -55,7 +54,6 @@ class Tutorial1Env(gym.Env):
             agent.turn_wheel(wheel)
 
         trainer.update(1 / FRAME_RATE)
-
         terminated = trainer.is_terminated()
 
         if self.render_mode == "human":

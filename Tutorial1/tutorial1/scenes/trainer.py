@@ -92,10 +92,13 @@ def is_terminated() -> bool:
 
 
 def reset() -> None:
+    reset_agents()
+    
     context = get_singleton()
     context.entities = [world, *context.agents]
     context.best_agent = None
     context.timestep += 1
+    
     for entity in context.entities:
         entity.reset()
 
