@@ -20,7 +20,7 @@ class Agent:
         self.fitness = 0.0
 
         self.model = get_agent_model() if model is None else model.clone()
-        self.model.compile(optimizer=pf.optimizers.sgd(momentum=0.9, lr=lr, nesterov=True))
+        self.model.compile(optimizer=pf.optimizers.sgd(lr=lr))
 
         if mutate:
             self.model.fit(epochs=1, shuffle=False, verbose=False)
@@ -66,12 +66,12 @@ def spawn_agents(
 
 
 def main(
-    agent_count: int = 100,
-    render_fps: Optional[int] = None,
     seed: int = 5,
-    learning_rate: float = 0.1,
     mode: str = "training",
+    agent_count: int = 100,
+    learning_rate: float = 0.1,
     model_file: Optional[str] = None,
+    render_fps: Optional[int] = None,
     duration: float = 15.0,
 ) -> None:
     """
@@ -83,28 +83,34 @@ def main(
 
     Params:
     -------
-    agent_count: Number of agents to run in the simulation.
-    render_fps: Set the frame per second.
     seed: Initialize the random generators and make the simulation reproductible.
-    learning_rate: Set the learning rate. First training at 0.1 and then 0.01.
     mode: Set the mode; 'training' or 'validation'.
+    agent_count: Number of agents to run in the simulation.
+    learning_rate: Set the learning rate. First training at 0.1 and then 0.01.
     model_file: Load the model file to initialize the agents.
+    render_fps: Set the frame per second.
     duration: Duration in minutes of the simulation.
     """
 
-    assert agent_count > 0
     assert seed >= 0
     assert mode in ("training", "validation")
     assert mode == "training" or mode == "validation" and model_file is not None
+    assert agent_count > 0
+    assert render_fps is None or render_fps > 0
     assert duration > 0
-
-    env = gym.make("tutorial1/Tutorial1-v1", agent_count=agent_count, render_mode="human", render_fps=render_fps)
-
+    
+    if mode == "validation":
+        agent_count = 1
+        render_fps = 60
+        
     if model_file is not None and os.path.exists(model_file):
         best_model = get_agent_model()
         best_model.load(model_file)
     else:
         best_model = None
+
+
+    env = gym.make("tutorial1/Tutorial1-v1", agent_count=agent_count, render_mode="human", render_fps=render_fps)
 
     agents = spawn_agents(agent_count, best_model, False, learning_rate)
     observation, info = env.reset(seed=seed)
