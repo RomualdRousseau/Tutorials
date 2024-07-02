@@ -20,7 +20,7 @@ class Agent:
         self.fitness = 0.0
 
         self.model = get_agent_model() if model is None else model.clone()
-        self.model.compile(optimizer=pf.optimizers.sgd(momentum=0.9, lr=0.1, nesterov=True))
+        self.model.compile(optimizer=pf.optimizers.sgd(momentum=0.9, lr=0.01, nesterov=True))
 
         if mutate:
             self.model.fit(epochs=1, shuffle=False, verbose=False)
@@ -69,8 +69,8 @@ def main(
     agent_count: int = 100,
     render_fps: Optional[int] = None,
     seed: int = 5,
+    mode: str = "training",
     model_file: Optional[str] = None,
-    save: bool = False,
     duration: float = 15.0,
 ) -> None:
     """
@@ -85,14 +85,15 @@ def main(
     agent_count: Number of agents to run in the simulation.
     render_fps: Set the frame per second.
     seed: Initialize the random generators and make the simulation reproductible.
+    mode: Set the mode; 'training' or 'validation'.
     model_file: Load the model file to initialize the agents.
-    save: Save the model after the simulation ended. The model file is given by the model_file parameters.
     duration: Duration in minutes of the simulation.
     """
 
     assert agent_count > 0
     assert seed >= 0
-    assert not save or save and model_file is not None
+    assert mode in ("training", "validation")
+    assert mode == "training" or mode == "validation" and model_file is not None
     assert duration > 0
 
     env = gym.make("tutorial1/Tutorial1-v1", agent_count=agent_count, render_mode="human", render_fps=render_fps)
@@ -115,16 +116,19 @@ def main(
         best_model = max(zip(agents, info["scores"], strict=True), key=lambda x: x[1])[0].model
 
         if terminated or truncated:
-            pool = pf.GeneticPool(
-                [agent.set_fitness(score) for agent, score in zip(agents, info["scores"], strict=True)]
-            )
-            pool.sample()
-            pool.normalize()
+            if mode == "training":
+                pool = pf.GeneticPool(
+                    [agent.set_fitness(score) for agent, score in zip(agents, info["scores"], strict=True)]
+                )
+                pool.sample()
+                pool.normalize()
+                agents = spawn_agents(agent_count, pool, True)
+            else:
+                agents = spawn_agents(agent_count, best_model, False)
 
-            agents = spawn_agents(agent_count, pool, True)
             observation, info = env.reset()
 
-    if save and model_file is not None and best_model is not None:
+    if mode == "training" and model_file is not None and best_model is not None:
         best_model.save(model_file)
 
     env.close()

@@ -20,35 +20,40 @@ def test_point_to_vector2():
 
 def test_point_hash():
     a = Point(lst_2_vec([1, 1]))
-    b = 125751
+    b = 650
     assert a.__hash__() == b
 
 
-def test_points_equals():
+def test_point_equals():
     a = Point(lst_2_vec([1, 1]))
     b = Point(lst_2_vec([1, 1]))
     assert a == b
 
 
-def test_points_not_equals():
+def test_point_not_equals():
     a = Point(lst_2_vec([1, 1]))
     b = Point(lst_2_vec([2, 2]))
     assert a != b
 
 
-def test_points_almost():
+def test_point_not_equals_different_types():
+    a = Point(lst_2_vec([1, 1]))
+    assert a != "a string"
+
+
+def test_point_almost():
     a = Point(lst_2_vec([1, 1]))
     b = Point(lst_2_vec([0.9, 0.9]))
     assert a.almost(b, 0.1)
 
 
-def test_points_not_almost():
+def test_point_not_almost():
     a = Point(lst_2_vec([1, 1]))
     b = Point(lst_2_vec([0.9, 0.9]))
     assert not a.almost(b, 0.01)
 
 
-def test_points_distance():
+def test_point_distance():
     a = Point(lst_2_vec([1, 1]))
     b = Point(lst_2_vec([2, 2]))
     assert distance(a, b) == np.sqrt(2)

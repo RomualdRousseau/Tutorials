@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import datetime
+import random
 from dataclasses import dataclass
 from functools import lru_cache
 from typing import Callable, Optional
@@ -11,13 +12,16 @@ import pyray as pr
 import tutorial1.util.pyray_ex as prx
 from tutorial1.constants import WINDOW_HEIGHT, WINDOW_WIDTH
 from tutorial1.entities import car, world
+from tutorial1.entities.explosion import Explosion
+from tutorial1.math import envelope
+from tutorial1.math.geom import Point, distance
 from tutorial1.math.linalg import lst_2_vec
-from tutorial1.util.types import Entity
+from tutorial1.util.types import Entity, is_bit_set
 
 CAR_BEST_COLOR = pr.Color(255, 255, 255, 255)
 CAR_COLOR = pr.Color(255, 255, 255, 64)
 CAR_MIN_SPEED = 5
-
+CORRIDOR_COLOR = pr.Color(255, 255, 0, 255)
 ZOOM_DEFAULT = 20
 ZOOM_ACCELERATION_COEF = 0.1
 
@@ -26,10 +30,11 @@ ZOOM_ACCELERATION_COEF = 0.1
 class Context:
     agents: list[car.Car]
     entities: list[Entity]
+    corridor: envelope.Envelope
     camera: pr.Camera2D
     best_agent: Optional[car.Car]
     update_camera: Callable[[Context], None]
-    last_spawn_location: Optional[world.Location] = None
+    last_spawn_location: Optional[envelope.Location] = None
     spawn_location_changed: bool = False
     timestep: int = 0
 
@@ -42,7 +47,13 @@ def get_singleton(name: str = "default"):
         0,
         ZOOM_DEFAULT,
     )
-    return Context([], [world], camera, None, _update_camera_game_mode)
+
+    roads = world.get_singleton().roads
+    start = random.choice(roads.vertice)
+    stop = max(roads.vertice, key=lambda x: distance(start.point, x.point))
+    corridor, _ = envelope.generare_from_spatial_graph(roads.get_shortest_path(start, stop), world.ROAD_WIDTH)
+
+    return Context([], [world], corridor, camera, None, _update_camera_game_mode)
 
 
 def get_agents() -> list[car.Car]:
@@ -56,6 +67,7 @@ def spawn_agents(agent_count: int) -> None:
 def reset_agents() -> None:
     context = get_singleton()
     for agent in context.agents:
+        agent.set_corridor(context.corridor)
         if context.last_spawn_location is not None:
             agent.set_spawn_location(context.last_spawn_location)
 
@@ -70,14 +82,14 @@ def get_agent_obs(agent: car.Car) -> dict[str, np.ndarray]:
 def get_agent_score(agent: car.Car) -> float:
     score = int(agent.get_total_distance_in_km() * 1000)  # farest in meter
     score += int(agent.get_average_speed_in_kmh() * 10 / car.MAX_SPEED)  # fatest in meter per second
-    score += -10 if agent.out_of_track else -100  # penalties
+    score += -10 if is_bit_set(agent.flags, car.FLAG_OUT_OF_TRACK) else -100  # penalties
     return score
 
 
 def is_agent_alive(agent: car.Car) -> bool:
     return (
-        not agent.damaged
-        and not agent.out_of_track
+        not is_bit_set(agent.flags, car.FLAG_DAMAGED)
+        and not is_bit_set(agent.flags, car.FLAG_OUT_OF_TRACK)
         and np.dot(agent.vel, agent.head) >= 0
         and agent.get_speed_in_kmh() >= CAR_MIN_SPEED
     )
@@ -93,33 +105,37 @@ def is_terminated() -> bool:
 
 def reset() -> None:
     reset_agents()
-    
+
     context = get_singleton()
     context.entities = [world, *context.agents]
     context.best_agent = None
     context.timestep += 1
-    
+
     for entity in context.entities:
         entity.reset()
 
 
 def update(dt: float) -> str:
     context = get_singleton()
+
     for entity in context.entities:
         entity.update(dt)
 
-    alive_agents = sorted(
-        (agent for agent in context.agents if is_agent_alive(agent)), key=lambda x: get_agent_score(x)
-    )
+    for agent in context.agents:
+        if agent.is_alive() and not is_agent_alive(agent):
+            agent.hit(car.MAX_LIFE)
+            context.entities.append(Explosion(Point(agent.pos)))
 
-    context.entities = [world, *alive_agents]
+    alive_agents = sorted((agent for agent in context.agents if agent.is_alive()), key=lambda x: get_agent_score(x))
     context.best_agent = alive_agents[-1] if len(alive_agents) > 0 else None
-    context.update_camera(context)
 
     if context.best_agent is not None:
         last_spawn_location = context.best_agent.get_spawn_location()
         context.spawn_location_changed = context.last_spawn_location != last_spawn_location
         context.last_spawn_location = last_spawn_location
+
+    context.entities = [entity for entity in context.entities if entity.is_alive()]
+    context.update_camera(context)
 
     return "trainer"
 
@@ -131,11 +147,19 @@ def draw() -> None:
         agent.set_debug_mode(agent is context.best_agent)
 
     pr.begin_mode_2d(context.camera)
-    for layer in range(2):
-        for entity in context.entities:
-            entity.draw(layer)
+
+    for entity in context.entities:
+        entity.draw(0)
+
+    for segment in context.corridor.segments:
+        segment.draw(1, CORRIDOR_COLOR, None, True)
+
     if context.last_spawn_location is not None:
         context.last_spawn_location[1].draw(1, pr.BLUE)  # type: ignore
+
+    for entity in context.entities:
+        entity.draw(1)
+
     pr.end_mode_2d()
 
     match context.best_agent:

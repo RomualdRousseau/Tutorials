@@ -1,18 +1,24 @@
 from __future__ import annotations
 
 import datetime
+import random
 from dataclasses import dataclass
 from functools import lru_cache
 from typing import Callable
 
 import pyray as pr
 
+import tutorial1.resources as res
 import tutorial1.util.pyray_ex as prx
 from tutorial1.constants import WINDOW_HEIGHT, WINDOW_WIDTH
 from tutorial1.entities import car, world
-from tutorial1.util.types import Entity
+from tutorial1.entities.explosion import Explosion
+from tutorial1.math import envelope
+from tutorial1.math.geom import Point, distance
+from tutorial1.util.types import Entity, is_bit_set
 
 CAR_COLOR = pr.Color(255, 255, 255, 255)
+CORRIDOR_COLOR = pr.Color(255, 255, 0, 255)
 ZOOM_DEFAULT = 20
 ZOOM_ACCELERATION_COEF = 0.1
 
@@ -20,6 +26,7 @@ ZOOM_ACCELERATION_COEF = 0.1
 @dataclass
 class Context:
     player: car.Car
+    corridor: envelope.Envelope
     entities: list[Entity]
     camera: pr.Camera2D
     update_state: Callable[[Context, float], str]
@@ -27,15 +34,25 @@ class Context:
 
 @lru_cache(1)
 def get_singleton(name: str = "default"):
+    roads = world.get_singleton().roads
+    start = random.choice(roads.vertice)
+    stop = max(roads.vertice, key=lambda x: distance(start.point, x.point))
+    corridor, _ = envelope.generare_from_spatial_graph(roads.get_shortest_path(start, stop), world.ROAD_WIDTH)
+
     player = car.Car(CAR_COLOR)
+    player.set_corridor(corridor)
+    player.set_debug_mode(True)
+
     entities: list[Entity] = [world, player]
+
     camera = pr.Camera2D(
         pr.Vector2(WINDOW_WIDTH / 2, WINDOW_HEIGHT / 2),
         pr.Vector2(0, 0),
         0,
         ZOOM_DEFAULT,
     )
-    return Context(player, entities, camera, _update_game_mode)
+
+    return Context(player, corridor, entities, camera, _update_game_mode)
 
 
 def reset() -> None:
@@ -52,10 +69,18 @@ def update(dt: float) -> str:
 
 def draw() -> None:
     context = get_singleton()
+
     pr.begin_mode_2d(context.camera)
-    for layer in range(2):
-        for x in context.entities:
-            x.draw(layer)
+
+    for x in context.entities:
+        x.draw(0)
+
+    for segment in context.corridor.segments:
+        segment.draw(1, CORRIDOR_COLOR, None, True)
+
+    for x in context.entities:
+        x.draw(1)
+
     pr.end_mode_2d()
 
     prx.draw_text(f"Distance: {context.player.get_total_distance_in_km():.3f}km", pr.Vector2(2, 2), 20, pr.WHITE, shadow=True)  # type: ignore
@@ -82,8 +107,23 @@ def _update_free_mode(context: Context, dt: float) -> str:
 
 
 def _update_game_mode(context: Context, dt: float) -> str:
-    for x in context.entities:
-        x.update(dt)
+    prev_flags = context.player.flags
+
+    for entity in context.entities:
+        entity.update(dt)
+
+    if (
+        is_bit_set(context.player.flags, car.FLAG_DAMAGED)
+        and not is_bit_set(prev_flags, car.FLAG_DAMAGED)
+        and not pr.is_sound_playing(res.load_sound("crash"))
+    ):
+        context.entities.append(Explosion(Point(context.player.pos)))
+        pr.play_sound(res.load_sound("crash"))
+
+    if is_bit_set(context.player.flags, car.FLAG_OUT_OF_TRACK) and not pr.is_sound_playing(res.load_sound("klaxon")):
+        pr.play_sound(res.load_sound("klaxon"))
+
+    context.entities = [entity for entity in context.entities if entity.is_alive()]
 
     if pr.is_mouse_button_pressed(pr.MouseButton.MOUSE_BUTTON_RIGHT):
         pr.set_mouse_cursor(pr.MouseCursor.MOUSE_CURSOR_RESIZE_ALL)

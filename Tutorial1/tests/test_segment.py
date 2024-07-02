@@ -12,6 +12,13 @@ from tutorial1.math.geom import (
 from tutorial1.math.linalg import lst_2_vec
 
 
+def test_segment_not_equals_different_types():
+    a = Point(lst_2_vec([1, 1]))
+    b = Point(lst_2_vec([2, 2]))
+    e = Segment(a, b)
+    assert e != "a string"
+
+
 def test_segment_length():
     a = Point(lst_2_vec([1, 1]))
     b = Point(lst_2_vec([2, 2]))
@@ -194,6 +201,7 @@ def test_cast_ray_segments_intersect():
     e1 = Segment(a, b)
     e2 = Segment(d, e)
     assert cast_ray_segments(c, n, 2, [e1, e2]) == Segment(c, x)
+    assert cast_ray_segments(c, n, 2, [e1, e2], ordered=False) == Segment(c, x)
 
 
 def test_cast_ray_segments_not_intersect():
@@ -204,6 +212,7 @@ def test_cast_ray_segments_not_intersect():
     x = Point(lst_2_vec([-1, 2]))
     e = Segment(a, b)
     assert cast_ray_segments(c, n, 2, [e]) == Segment(c, x)
+    assert cast_ray_segments(c, n, 2, [e], ordered=False) == Segment(c, x)
 
 
 def test_points_to_segments_closed():

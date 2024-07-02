@@ -9,7 +9,9 @@ import pyray as pr
 
 import tutorial1.math.linalg as la
 import tutorial1.util.pyray_ex as prx
-from tutorial1.constants import VIRTUAL_WIDTH
+from tutorial1.constants import VIRTUAL_CELL, VIRTUAL_WIDTH
+
+VIRTUAL_SIZE = VIRTUAL_WIDTH // VIRTUAL_CELL
 
 
 @dataclass
@@ -31,7 +33,8 @@ class Point:
         return np.array_equal(self.xy, other.xy)
 
     def __hash__(self) -> int:
-        return int(self.xy[0] + VIRTUAL_WIDTH + (self.xy[1] + VIRTUAL_WIDTH) * VIRTUAL_WIDTH * 2)
+        x, y = VIRTUAL_SIZE + self.xy // VIRTUAL_CELL
+        return int(y * VIRTUAL_SIZE + x)
 
 
 @dataclass
@@ -125,31 +128,38 @@ def point_in_polygon(point: Point, polygon: list[Point], strict: bool = True) ->
 
 
 def intersect(seg1: Segment, seg2: Segment, strict: bool = True) -> Optional[Point]:
-    x = la.intersect(seg1.start.xy, seg1.end.xy, seg2.start.xy, seg2.end.xy, strict)
+    x = la.intersect_jit(seg1.start.xy, seg1.end.xy, seg2.start.xy, seg2.end.xy, strict)
     return Point(x) if x is not None else None
 
 
 def distance_point_segment(p: Point, seg: Segment, closest: bool = False) -> float:
-    return la.distance_point_segment(p.xy, seg.start.xy, seg.end.xy, closest)
+    return la.distance_point_segment_jit(p.xy, seg.start.xy, seg.end.xy, closest)
 
 
 def nearest_point_segment(p: Point, seg: Segment, closest: bool = False) -> Optional[Point]:
-    x = la.nearest_point_segment(p.xy, seg.start.xy, seg.end.xy, closest)
+    x = la.nearest_point_segment_jit(p.xy, seg.start.xy, seg.end.xy, closest)
     return Point(x) if x is not None else None
 
 
 def collision_circle_segment(center: Point, radius: float, seg: Segment) -> Optional[npt.NDArray[np.float64]]:
-    return la.collision_circle_segment(center.xy, radius, seg.start.xy, seg.end.xy)
+    return la.collision_circle_segment_jit(center.xy, radius, seg.start.xy, seg.end.xy)
 
 
 def cast_ray_segments(
-    position: Point, direction: npt.NDArray[np.float64], length: float, segments: Iterable[Segment]
+    position: Point,
+    direction: npt.NDArray[np.float64],
+    length: float,
+    segments: Iterable[Segment],
+    ordered: bool = True,
 ) -> Segment:
     target = Point(length * direction + position.xy)
     ray = Segment(position, target)
     intersect_with_ray = lambda x: intersect(ray, x, False)
-    closest = lambda x: distance(position, x)
-    point = min((x for x in map(intersect_with_ray, segments) if x is not None), key=closest, default=target)
+    if ordered:
+        point = next((x for x in map(intersect_with_ray, segments) if x is not None), target)
+    else:
+        closest = lambda x: distance(position, x)
+        point = min((x for x in map(intersect_with_ray, segments) if x is not None), key=closest, default=target)
     return Segment(position, point)
 
 

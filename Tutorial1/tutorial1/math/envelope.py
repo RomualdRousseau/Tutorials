@@ -1,6 +1,6 @@
 from dataclasses import dataclass
-from functools import reduce
-from typing import Iterable
+from functools import lru_cache, reduce
+from typing import Any, Iterable
 
 import numpy as np
 from tqdm import tqdm, trange
@@ -11,10 +11,15 @@ from tutorial1.math.geom import (
     Point,
     Segment,
     break_segment,
+    distance,
+    distance_point_segment,
+    nearest_point_segment,
     point_in_polygon,
     points_to_segments,
 )
 from tutorial1.math.linalg import lst_2_vec, normalize
+
+Location = tuple[Segment, Point]
 
 
 @dataclass
@@ -26,6 +31,14 @@ class Envelope:
     @property
     def points(self) -> list[Point]:
         return [s.start for s in self.segments]
+
+    def __eq__(self, other: Any) -> bool:
+        if not isinstance(other, Envelope):
+            return NotImplemented
+        return self is other
+
+    def __hash__(self) -> int:
+        return id(self)
 
 
 def generare_from_spatial_graph(agraph: graph.SpatialGraph, width: int) -> tuple[Envelope, list[Point]]:
@@ -127,3 +140,17 @@ def _union_envelopes(envelopes: list[Envelope]) -> Envelope:
                 segments_to_keep.append(s)
 
     return Envelope(segments_to_keep, skeleton, width)
+
+
+def get_nearest_location(envelope: Envelope, position: Point) -> Location:
+    nearest_location = lambda x: (x, nearest_point_segment(position, x, True))
+    closest_distance = lambda x: distance(position, x[1])
+    location = min(map(nearest_location, envelope.skeleton), key=closest_distance)
+    return location  # type: ignore
+
+
+@lru_cache(256)
+def get_nearest_segments(envelope: Envelope, position: Point, radius: int) -> list[Segment]:
+    radius = max(radius, VIRTUAL_WIDTH)
+    nearest_distance = lambda x: distance_point_segment(position, x, True)
+    return sorted((x for x in envelope.segments if nearest_distance(x) < radius), key=nearest_distance)
