@@ -19,9 +19,17 @@ update:
 pre-commit:
     poetry run pre-commit run --all-files
 
-# Run the tutorial
-run: pre-commit
-    poetry run python -m tutorial2 --model-file=agent.model --save --duration=120
+# Run the tutorial in training mode
+run-training: pre-commit
+    poetry run python -m tutorial2 --mode=training --model-file=agent.model --duration=120
+
+# Run the tutorial in training mode
+run-validation: pre-commit
+    poetry run python -m tutorial2 --mode=validation --model-file=agent.model --duration=120
+
+# Run the cli with the specified arguments.
+run-cli +args="--help":
+    poetry run python -m tutorial2 {{args}}
 
 # Profile the tutorial
 profile: pre-commit

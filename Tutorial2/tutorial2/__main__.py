@@ -16,11 +16,11 @@ BAR_FORMAT = "{l_bar}{bar}| {n_fmt}/{total_fmt}"
 class Agent:
     CK = np.array([0.25, 0.5, 0.25])
 
-    def __init__(self, model: Optional[pf.Sequential] = None, mutate: bool = False) -> None:
+    def __init__(self, model: Optional[pf.Sequential] = None, mutate: bool = False, lr: float = 0.1) -> None:
         self.fitness = 0.0
 
         self.model = get_agent_model() if model is None else model.clone()
-        self.model.compile(optimizer=pf.optimizers.sgd(momentum=0.9, lr=0.01, nesterov=True))
+        self.model.compile(optimizer=pf.optimizers.sgd(momentum=0.9, lr=lr, nesterov=True))
 
         if mutate:
             self.model.fit(epochs=1, shuffle=False, verbose=False)
@@ -54,13 +54,13 @@ def get_agent_model() -> pf.Sequential:
 
 
 def spawn_agents(
-    agent_count: int, model_or_pool: Optional[pf.Sequential] | pf.GeneticPool, mutate: bool
+    agent_count: int, model_or_pool: Optional[pf.Sequential] | pf.GeneticPool, mutate: bool, lr: float = 0.1
 ) -> list[Agent]:
     get_model = lambda: (
         model_or_pool.select_parent().get_model() if isinstance(model_or_pool, pf.GeneticPool) else model_or_pool
     )
     return [
-        Agent(get_model(), mutate)
+        Agent(get_model(), mutate, lr)
         for _ in trange(agent_count, desc="Spawning agents", ncols=120, bar_format=BAR_FORMAT)
     ]
 
@@ -69,6 +69,7 @@ def main(
     agent_count: int = 100,
     render_fps: Optional[int] = None,
     seed: int = 5,
+    learning_rate: float = 0.1,
     mode: str = "training",
     model_file: Optional[str] = None,
     duration: float = 15.0,
@@ -85,6 +86,7 @@ def main(
     agent_count: Number of agents to run in the simulation.
     render_fps: Set the frame per second.
     seed: Initialize the random generators and make the simulation reproductible.
+    learning_rate: Set the learning rate. First training at 0.1 and then 0.01.
     mode: Set the mode; 'training' or 'validation'.
     model_file: Load the model file to initialize the agents.
     duration: Duration in minutes of the simulation.
@@ -104,7 +106,7 @@ def main(
     else:
         best_model = None
 
-    agents = spawn_agents(agent_count, best_model, False)
+    agents = spawn_agents(agent_count, best_model, False, learning_rate)
     observation, info = env.reset(seed=seed)
 
     t_end = time.monotonic() + 60 * duration
@@ -122,9 +124,9 @@ def main(
                 )
                 pool.sample()
                 pool.normalize()
-                agents = spawn_agents(agent_count, pool, True)
+                agents = spawn_agents(agent_count, pool, True, learning_rate)
             else:
-                agents = spawn_agents(agent_count, best_model, False)
+                agents = spawn_agents(agent_count, best_model, False, learning_rate)
 
             observation, info = env.reset()
 
