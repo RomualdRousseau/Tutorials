@@ -21,7 +21,7 @@ from tutorial1.util.types import Entity, is_bit_set
 CAR_BEST_COLOR = pr.Color(255, 255, 255, 255)
 CAR_COLOR = pr.Color(255, 255, 255, 64)
 CAR_MIN_SPEED = 5
-CORRIDOR_COLOR = pr.Color(255, 255, 0, 255)
+CORRIDOR_COLOR = pr.Color(255, 255, 0, 64)
 ZOOM_DEFAULT = 20
 ZOOM_ACCELERATION_COEF = 0.1
 
@@ -155,7 +155,7 @@ def draw() -> None:
         segment.draw(1, CORRIDOR_COLOR, None, True)
 
     if context.last_spawn_location is not None:
-        context.last_spawn_location[1].draw(1, pr.BLUE)  # type: ignore
+        context.last_spawn_location[1].draw(1, CORRIDOR_COLOR)  # type: ignore
 
     for entity in context.entities:
         entity.draw(1)

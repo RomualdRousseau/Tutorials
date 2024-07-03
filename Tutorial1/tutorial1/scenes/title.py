@@ -1,17 +1,31 @@
 import pyray as pr
 
-import tutorial1.util.pyray_ex as prx
-from tutorial1.constants import WINDOW_HEIGHT
+import tutorial1.resources as res
+from tutorial1.constants import WINDOW_HEIGHT, WINDOW_WIDTH
+
+WAIT_TIME = 5  # s
+
+_timer = 0.0
 
 
 def reset() -> None:
-    pass
+    global _timer  # noqa: PLW0603
+    _timer = 0.0
 
 
-def update(_: float) -> str:
-    return "loading" if pr.get_key_pressed() != 0 else "title"
+def update(dt: float) -> str:
+    global _timer  # noqa: PLW0603
+    _timer += dt
+    return "loading" if pr.get_key_pressed() != 0 or _timer > WAIT_TIME else "title"
 
 
 def draw() -> None:
-    pr.clear_background(pr.BLUE)  # type: ignore
-    prx.draw_text("Press any key ...", pr.Vector2(0, WINDOW_HEIGHT * 0.5 - 11), 20, pr.WHITE, align="center")  # type: ignore
+    tex = res.load_texture("title")
+    pr.draw_texture_pro(
+        tex,
+        pr.Rectangle(0, 0, tex.width, tex.height),
+        pr.Rectangle(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT),
+        pr.Vector2(0, 0),
+        0,
+        pr.WHITE,  # type: ignore
+    )

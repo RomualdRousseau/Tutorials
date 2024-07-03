@@ -10,6 +10,8 @@ from tutorial2.pyflow.functions import __functions__
 
 
 class Trainer(Protocol):
+    """This protocol must be implemeted by all trainers to train a model."""
+
     def train(self, model: Model, x: Optional[np.ndarray], y: Optional[np.ndarray]) -> Optional[np.ndarray]:
         ...
 
@@ -52,14 +54,17 @@ class Params:
         self[1] = data[1]
         self[2] = data[2]
 
-    def copy(self) -> Params:
+    def clone(self) -> Params:
         return Params(self[0].shape, data=self.data.copy())
 
     def to_list(self) -> list:
-        return self.data.tolist()
+        return self[0].tolist()
 
     def from_list(self, alist: list):
-        self.data = np.asarray(alist)
+        if len(alist) == 3:  # Old format # noqa: PLR2004
+            self.data = np.asarray(alist)
+        else:
+            self[0] = np.asarray(alist)
 
 
 class Layer:
@@ -90,8 +95,8 @@ class Layer:
 
     def clone(self) -> Layer:
         cloned = copy.copy(self)
-        cloned.kernel = self.kernel.copy()
-        cloned.bias = self.bias.copy()
+        cloned.kernel = self.kernel.clone()
+        cloned.bias = self.bias.clone()
         return cloned
 
     def to_dict(self) -> dict[str, list]:

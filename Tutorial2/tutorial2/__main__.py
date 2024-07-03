@@ -1,3 +1,4 @@
+import logging
 import os
 import time
 from typing import Optional
@@ -20,7 +21,7 @@ class Agent:
         self.fitness = 0.0
 
         self.model = get_agent_model() if model is None else model.clone()
-        self.model.compile(optimizer=pf.optimizers.sgd(lr=lr))
+        self.model.compile(optimizer=pf.optimizers.sgd(momentum=(1 - lr), lr=lr, nesterov=True))
 
         if mutate:
             self.model.fit(epochs=1, shuffle=False, verbose=False)
@@ -49,19 +50,19 @@ def get_agent_model() -> pf.Sequential:
             pf.layers.GeneticDense(32, 16, activation="leaky_relu"),
             pf.layers.GeneticDense(16, 2, activation="tanh"),
         ],
-        trainer=pf.GeneticTrainer(rate=0.1, variance=1),
+        trainer=pf.GeneticTrainer(),
     )
 
 
 def spawn_agents(
-    agent_count: int, model_or_pool: Optional[pf.Sequential] | pf.GeneticPool, mutate: bool, lr: float = 0.1
+    mode: str, agent_count: int, model_or_pool: Optional[pf.Sequential] | pf.GeneticPool, mutate: bool, lr: float = 0.1
 ) -> list[Agent]:
     get_model = lambda: (
         model_or_pool.select_parent().get_model() if isinstance(model_or_pool, pf.GeneticPool) else model_or_pool
     )
     return [
         Agent(get_model(), mutate, lr)
-        for _ in trange(agent_count, desc="Spawning agents", ncols=120, bar_format=BAR_FORMAT)
+        for _ in trange(agent_count, desc=f"Spawning agents ({mode})", ncols=120, bar_format=BAR_FORMAT)
     ]
 
 
@@ -84,11 +85,11 @@ def main(
     Params:
     -------
     seed: Initialize the random generators and make the simulation reproductible.
-    mode: Set the mode; 'training' or 'validation'.
-    agent_count: Number of agents to run in the simulation.
-    learning_rate: Set the learning rate. First training at 0.1 and then 0.01.
-    model_file: Load the model file to initialize the agents.
-    render_fps: Set the frame per second.
+    mode: Set the mode of the simulation; 'training' or 'validation'. 'training" means the model will be trained when all agents fail.
+    agent_count: Number of agents to run during a training.
+    learning_rate: Set the learning rate during a training. First training at 0.1 and then 0.01.
+    model_file: Load the model file to initialize the agent' networks. AFter a training, the new model will be saved as model_file.new
+    render_fps: Set the frame per second during a training.
     duration: Duration in minutes of the simulation.
     """
 
@@ -96,23 +97,23 @@ def main(
     assert mode in ("training", "validation")
     assert mode == "training" or mode == "validation" and model_file is not None
     assert agent_count > 0
+    assert learning_rate > 0
     assert render_fps is None or render_fps > 0
     assert duration > 0
-    
+
     if mode == "validation":
         agent_count = 1
         render_fps = 60
-        
+
     if model_file is not None and os.path.exists(model_file):
         best_model = get_agent_model()
         best_model.load(model_file)
     else:
         best_model = None
 
-
     env = gym.make("tutorial1/Tutorial1-v1", agent_count=agent_count, render_mode="human", render_fps=render_fps)
 
-    agents = spawn_agents(agent_count, best_model, False, learning_rate)
+    agents = spawn_agents(mode, agent_count, best_model, False, learning_rate)
     observation, info = env.reset(seed=seed)
 
     t_end = time.monotonic() + 60 * duration
@@ -124,20 +125,20 @@ def main(
         best_model = max(zip(agents, info["scores"], strict=True), key=lambda x: x[1])[0].model
 
         if terminated or truncated:
+            logging.warning("All agents were destroyed, restarting a new episode ...")
+
             if mode == "training":
                 pool = pf.GeneticPool(
                     [agent.set_fitness(score) for agent, score in zip(agents, info["scores"], strict=True)]
                 )
                 pool.sample()
                 pool.normalize()
-                agents = spawn_agents(agent_count, pool, True, learning_rate)
-            else:
-                agents = spawn_agents(agent_count, best_model, False, learning_rate)
+                agents = spawn_agents(mode, agent_count, pool, True, learning_rate)
 
             observation, info = env.reset()
 
     if mode == "training" and model_file is not None and best_model is not None:
-        best_model.save(model_file)
+        best_model.save(f"{model_file}.new")
 
     env.close()
 

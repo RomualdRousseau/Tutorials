@@ -22,7 +22,7 @@ class Tutorial1Env(gym.Env):
         self.agent_count = agent_count
         self.render_mode = render_mode or self.metadata["render_modes"][0]
         self.render_fps = render_fps or self.metadata["render_fps"]
-        self._gfx_initialized = False
+        self.agent_count = agent_count
 
         agent_space = gym.spaces.Dict(
             {
@@ -34,7 +34,8 @@ class Tutorial1Env(gym.Env):
 
         self.action_space = gym.spaces.Box(-1, 1, shape=(agent_count, 2), dtype=np.float64)
 
-        trainer.spawn_agents(agent_count)
+        self._gfx_initialized = False
+        self._agent_spwaned = False
 
     def reset(self, seed=None, options=None):
         super().reset(seed=seed)
@@ -42,6 +43,10 @@ class Tutorial1Env(gym.Env):
         if seed is not None:
             random.seed(seed)
             np.random.seed(seed)
+
+        if not self._agent_spwaned:
+            trainer.spawn_agents(self.agent_count)
+            self._agent_spwaned = True
 
         trainer.reset()
 

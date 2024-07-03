@@ -18,7 +18,7 @@ from tutorial1.math.geom import Point, distance
 from tutorial1.util.types import Entity, is_bit_set
 
 CAR_COLOR = pr.Color(255, 255, 255, 255)
-CORRIDOR_COLOR = pr.Color(255, 255, 0, 255)
+CORRIDOR_COLOR = pr.Color(255, 255, 0, 64)
 ZOOM_DEFAULT = 20
 ZOOM_ACCELERATION_COEF = 0.1
 

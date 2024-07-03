@@ -3,7 +3,7 @@ import pyray as pr
 from tutorial1.math.geom import Point
 
 COLOR = pr.Color(255, 255, 255, 128)
-RADIUS = 3
+RADIUS = 6
 MAX_LIFE = 30
 
 
@@ -28,4 +28,8 @@ class Explosion:
         if layer != 1:
             return
 
-        pr.draw_circle_v(self.pos.to_vec(), self.life * RADIUS / MAX_LIFE, pr.color_alpha(COLOR, self.life * 128 / MAX_LIFE))
+        pr.draw_circle_v(
+            self.pos.to_vec(),
+            self.life * RADIUS / MAX_LIFE,
+            pr.color_alpha(COLOR, (self.life / MAX_LIFE) * (COLOR.a / 256)),
+        )

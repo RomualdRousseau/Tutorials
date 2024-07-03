@@ -130,6 +130,7 @@ class Car:
 
         if self.debug_mode:
             color: pr.Color = pr.YELLOW if not is_bit_set(self.flags, FLAG_DAMAGED | FLAG_OUT_OF_TRACK) else pr.RED  # type: ignore
+            color = pr.color_alpha(color, 0.25)
 
             pr.draw_line_v(self.visited_location[-1][1].to_vec(), self.current_location_pos.to_vec(), color)
 

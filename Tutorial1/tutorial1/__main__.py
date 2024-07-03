@@ -29,11 +29,9 @@ def main():
 
     while not pr.window_should_close():
         next = scene.update(pr.get_frame_time())
-
         pr.begin_drawing()
         scene.draw()
         pr.end_drawing()
-
         scene = next_scene(scene, next)
 
     pr.close_window()
