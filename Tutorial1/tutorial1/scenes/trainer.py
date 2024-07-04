@@ -141,7 +141,7 @@ def reset() -> None:
         entity.reset()
 
     if context.corridor is not None:
-        marker = Marker(context.agents[0].get_spawn_location(), True, world.ROAD_WIDTH * 0.5, 2)
+        marker = Marker(context.agents[0].get_spawn_location(), world.ROAD_WIDTH * 0.5, 2, context.agents[0].head)
         marker.add_listener(context)
         context.entities.append(marker)
 

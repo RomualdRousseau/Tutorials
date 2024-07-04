@@ -77,7 +77,7 @@ def reset() -> None:
 
     context.camera.target = pr.Vector2(*context.player.pos)
 
-    marker = Marker(context.player.get_spawn_location(), True, world.ROAD_WIDTH * 0.5, 2)
+    marker = Marker(context.player.get_spawn_location(), world.ROAD_WIDTH * 0.5, 2, context.player.head)
     marker.add_listener(context)
     context.entities.append(marker)
 

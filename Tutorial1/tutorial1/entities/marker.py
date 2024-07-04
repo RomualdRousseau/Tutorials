@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Protocol
+from typing import Optional, Protocol
 import numpy as np
 import pyray as pr
 
@@ -25,13 +25,17 @@ class MarkerListener(Protocol):
 
 
 class Marker:
-    def __init__(self, location: Location, direct: bool = True, width: float = 0.5, height: float = 0.5) -> None:
+    def __init__(
+        self, location: Location, width: float = 0.5, height: float = 0.5, direction: Optional[np.ndarray] = None
+    ) -> None:
         self.location = location
         self.width = width
         self.height = height
 
-        seg_dir = normalize(self.location[0].end.xy - self.location[0].start.xy)
-        self.front = seg_dir if direct else -seg_dir
+        if direction is None:
+            self.front = normalize(self.location[0].end.xy - self.location[0].start.xy)
+        else:
+            self.front = direction
         self.right = np.array([-self.front[1], self.front[0]])
 
         self.polygon = self._get_polygon()
