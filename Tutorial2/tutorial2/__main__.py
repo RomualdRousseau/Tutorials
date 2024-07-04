@@ -9,6 +9,7 @@ import numpy as np
 from tqdm import trange
 
 import tutorial2.pyflow as pf
+from tutorial2.pyflow.functions import lr_exp_decay
 
 BATCH_SIZE = 32
 BAR_FORMAT = "{l_bar}{bar}| {n_fmt}/{total_fmt}"
@@ -17,9 +18,10 @@ BAR_FORMAT = "{l_bar}{bar}| {n_fmt}/{total_fmt}"
 class Agent:
     CK = np.array([0.25, 0.5, 0.25])
 
-    def __init__(self, model: Optional[pf.Sequential] = None, mutate: bool = False, lr: float = 0.1) -> None:
+    def __init__(self, model: Optional[pf.Sequential] = None, mutate: bool = False, timestep: int = 0) -> None:
         self.fitness = 0.0
 
+        lr = lr_exp_decay(timestep, 1000, np.log(0.1), 0.1, 0.001)
         self.model = get_agent_model() if model is None else model.clone()
         self.model.compile(optimizer=pf.optimizers.sgd(momentum=(1 - lr), lr=lr, nesterov=True))
 
@@ -55,13 +57,17 @@ def get_agent_model() -> pf.Sequential:
 
 
 def spawn_agents(
-    mode: str, agent_count: int, model_or_pool: Optional[pf.Sequential] | pf.GeneticPool, mutate: bool, lr: float = 0.1
+    mode: str,
+    agent_count: int,
+    model_or_pool: Optional[pf.Sequential] | pf.GeneticPool,
+    mutate: bool,
+    timestep: int = 0,
 ) -> list[Agent]:
     get_model = lambda: (
         model_or_pool.select_parent().get_model() if isinstance(model_or_pool, pf.GeneticPool) else model_or_pool
     )
     return [
-        Agent(get_model(), mutate, lr)
+        Agent(get_model(), mutate, timestep)
         for _ in trange(agent_count, desc=f"Spawning agents ({mode})", ncols=120, bar_format=BAR_FORMAT)
     ]
 
@@ -70,10 +76,10 @@ def main(
     seed: int = 5,
     mode: str = "training",
     agent_count: int = 100,
-    learning_rate: float = 0.1,
     model_file: Optional[str] = None,
     render_fps: Optional[int] = None,
     duration: float = 15.0,
+    timestep: int = 0,
 ) -> None:
     """
     Welcome to the taxi driver simulation tutorial!
@@ -87,19 +93,19 @@ def main(
     seed: Initialize the random generators and make the simulation reproductible.
     mode: Set the mode of the simulation; 'training' or 'validation'. 'training" means the model will be trained when all agents fail.
     agent_count: Number of agents to run during a training.
-    learning_rate: Set the learning rate during a training. First training at 0.1 and then 0.01.
     model_file: Load the model file to initialize the agent' networks. AFter a training, the new model will be saved as model_file.new
     render_fps: Set the frame per second during a training.
     duration: Duration in minutes of the simulation.
+    timestep: Set the starting timestep. It is used to calculate the learning rate.
     """
 
     assert seed >= 0
     assert mode in ("training", "validation")
     assert mode == "training" or mode == "validation" and model_file is not None
     assert agent_count > 0
-    assert learning_rate > 0
     assert render_fps is None or render_fps > 0
     assert duration > 0
+    assert timestep >= 0
 
     if mode == "validation":
         agent_count = 1
@@ -113,7 +119,7 @@ def main(
 
     env = gym.make("tutorial1/Tutorial1-v1", agent_count=agent_count, render_mode="human", render_fps=render_fps)
 
-    agents = spawn_agents(mode, agent_count, best_model, False, learning_rate)
+    agents = spawn_agents(mode, agent_count, best_model, False, timestep)
     observation, info = env.reset(seed=seed)
 
     t_end = time.monotonic() + 60 * duration
@@ -121,19 +127,20 @@ def main(
         action = [agent.get_action(obs) for agent, obs in zip(agents, observation, strict=True)]
 
         observation, _, terminated, truncated, info = env.step(action)
+        scores, best_agent_vin = info["scores"], info["best_agent_vin"]
 
-        best_model = max(zip(agents, info["scores"], strict=True), key=lambda x: x[1])[0].model
+        if best_agent_vin >= 0:
+            best_model = agents[best_agent_vin].model
 
         if terminated or truncated:
-            logging.warning("All agents were destroyed, restarting a new episode ...")
+            logging.warning("All agents were destroyed, restarting a new time step ...")
+            timestep += 1
 
             if mode == "training":
-                pool = pf.GeneticPool(
-                    [agent.set_fitness(score) for agent, score in zip(agents, info["scores"], strict=True)]
-                )
+                pool = pf.GeneticPool([agent.set_fitness(score) for agent, score in zip(agents, scores, strict=True)])
                 pool.sample()
                 pool.normalize()
-                agents = spawn_agents(mode, agent_count, pool, True, learning_rate)
+                agents = spawn_agents(mode, agent_count, pool, True, timestep)
 
             observation, info = env.reset()
 

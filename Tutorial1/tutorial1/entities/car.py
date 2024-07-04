@@ -40,8 +40,9 @@ MAX_VISITED_LOCATION = 10
 
 
 class Car:
-    def __init__(self, color: pr.Color, input_mode: str = "human") -> None:
+    def __init__(self, color: pr.Color, input_mode: str = "human", vin: int = 0) -> None:
         assert input_mode in ("human", "ai")
+        self.vin = vin
         self.color = color
         self.input_mode = input_mode
         self.debug_mode = False
@@ -111,6 +112,9 @@ class Car:
 
         self.camera: list[Segment] = self._cast_rays()
         self.proximity: Optional[Segment] = None
+
+        self.prev_pos = Point(self.pos.copy())
+        self.curr_pos = self.prev_pos
 
         self.total_distance = 0.0
         self.total_velocity = 0.0
@@ -225,7 +229,7 @@ class Car:
         # Localisation
 
         is_new_location_added = False
-        seg, self.current_location_pos = envelope.get_nearest_location(self.corridor, pos)
+        seg, self.current_location_pos = self.corridor.get_nearest_location(pos)
         if self.visited_location[-1][0] != seg:
             self.visited_location.append((seg, seg.closest_ep(self.current_location_pos)))
             if len(self.visited_location) > MAX_VISITED_LOCATION:
@@ -233,6 +237,9 @@ class Car:
             is_new_location_added = True
 
         # Statistics
+
+        self.prev_pos = self.curr_pos
+        self.curr_pos = Point(self.pos.copy())
 
         self.total_distance += self.visited_location[-2][0].length if is_new_location_added else 0
         self.total_velocity += norm(self.vel)

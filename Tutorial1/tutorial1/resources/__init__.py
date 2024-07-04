@@ -9,6 +9,7 @@ RESOURCES = {
     "title": "screens/title.png",
     "loading": "screens/loading.png",
     "car": "sprites/car.png",
+    "start": "sprites/start.png",
     "tree1": "sprites/tree1.png",
     "tree2": "sprites/tree2.png",
     "tree3": "sprites/tree3.png",

@@ -13,6 +13,7 @@ import tutorial1.util.pyray_ex as prx
 from tutorial1.constants import WINDOW_HEIGHT, WINDOW_WIDTH
 from tutorial1.entities import car, world
 from tutorial1.entities.explosion import Explosion
+from tutorial1.entities.marker import Marker
 from tutorial1.math import envelope
 from tutorial1.math.geom import Point, distance
 from tutorial1.math.linalg import lst_2_vec
@@ -30,13 +31,26 @@ ZOOM_ACCELERATION_COEF = 0.1
 class Context:
     agents: list[car.Car]
     entities: list[Entity]
-    corridor: envelope.Envelope
     camera: pr.Camera2D
-    best_agent: Optional[car.Car]
     update_camera: Callable[[Context], None]
+    corridor: Optional[envelope.Envelope] = None
+    best_agent: Optional[car.Car] = None
     last_spawn_location: Optional[envelope.Location] = None
     spawn_location_changed: bool = False
     timestep: int = 0
+    lap: int = 0
+
+    def get_previous_pos(self) -> Point:
+        return self.best_agent.prev_pos if self.best_agent is not None else Point(np.zeros(2))
+
+    def get_current_pos(self) -> Point:
+        return self.best_agent.curr_pos if self.best_agent is not None else Point(np.zeros(2))
+
+    def on_enter(self, marker: Marker) -> None:
+        self.lap += 1
+
+    def on_leave(self, marker: Marker) -> None:
+        pass
 
 
 @lru_cache(1)
@@ -47,13 +61,15 @@ def get_singleton(name: str = "default"):
         0,
         ZOOM_DEFAULT,
     )
+    return Context([], [world], camera, _update_camera_game_mode)
 
+
+def reset_corridor():
+    context = get_singleton()
     roads = world.get_singleton().roads
     start = random.choice(roads.vertice)
     stop = max(roads.vertice, key=lambda x: distance(start.point, x.point))
-    corridor, _ = envelope.generare_from_spatial_graph(roads.get_shortest_path(start, stop), world.ROAD_WIDTH)
-
-    return Context([], [world], corridor, camera, None, _update_camera_game_mode)
+    context.corridor, _ = envelope.generare_from_spatial_graph(roads.get_shortest_path(start, stop), world.ROAD_WIDTH)
 
 
 def get_agents() -> list[car.Car]:
@@ -61,15 +77,21 @@ def get_agents() -> list[car.Car]:
 
 
 def spawn_agents(agent_count: int) -> None:
-    get_singleton().agents = [car.Car(CAR_COLOR, input_mode="ai") for _ in range(agent_count)]
+    get_singleton().agents = [car.Car(CAR_COLOR, input_mode="ai", vin=i) for i in range(agent_count)]
 
 
 def reset_agents() -> None:
     context = get_singleton()
+    assert context.corridor is not None
     for agent in context.agents:
         agent.set_corridor(context.corridor)
         if context.last_spawn_location is not None:
             agent.set_spawn_location(context.last_spawn_location)
+
+
+def get_best_agent():
+    context = get_singleton()
+    return context.best_agent
 
 
 def get_agent_obs(agent: car.Car) -> dict[str, np.ndarray]:
@@ -104,15 +126,24 @@ def is_terminated() -> bool:
 
 
 def reset() -> None:
+    context = get_singleton()
+
+    if context.corridor is None:
+        reset_corridor()
+
     reset_agents()
 
-    context = get_singleton()
     context.entities = [world, *context.agents]
     context.best_agent = None
     context.timestep += 1
 
     for entity in context.entities:
         entity.reset()
+
+    if context.corridor is not None:
+        marker = Marker(context.agents[0].get_spawn_location(), True, world.ROAD_WIDTH * 0.5, 2)
+        marker.add_listener(context)
+        context.entities.append(marker)
 
 
 def update(dt: float) -> str:
@@ -126,9 +157,7 @@ def update(dt: float) -> str:
             agent.hit(car.MAX_LIFE)
             context.entities.append(Explosion(Point(agent.pos)))
 
-    alive_agents = sorted((agent for agent in context.agents if agent.is_alive()), key=lambda x: get_agent_score(x))
-    context.best_agent = alive_agents[-1] if len(alive_agents) > 0 else None
-
+    context.best_agent = max((x for x in context.agents if x.is_alive()), key=get_agent_score, default=None)
     if context.best_agent is not None:
         last_spawn_location = context.best_agent.get_spawn_location()
         context.spawn_location_changed = context.last_spawn_location != last_spawn_location
@@ -142,6 +171,7 @@ def update(dt: float) -> str:
 
 def draw() -> None:
     context = get_singleton()
+    assert context.corridor is not None
 
     for agent in context.agents:
         agent.set_debug_mode(agent is context.best_agent)
@@ -172,6 +202,7 @@ def draw() -> None:
 
     prx.draw_text(f"Time Elapsed: {datetime.timedelta(seconds=pr.get_time())}", pr.Vector2(2, 46), 20, pr.WHITE, shadow=True)  # type: ignore
     prx.draw_text(f"Time Step: {context.timestep}", pr.Vector2(2, 68), 20, pr.WHITE, shadow=True)  # type: ignore
+    prx.draw_text(f"Lap: {context.lap}", pr.Vector2(2, 90), 20, pr.WHITE, shadow=True)  # type: ignore
 
     prx.draw_text(f"{pr.get_fps()}fps", pr.Vector2(2, 2), 20, pr.WHITE, align="right", shadow=True)  # type: ignore
 

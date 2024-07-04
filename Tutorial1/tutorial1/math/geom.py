@@ -127,6 +127,17 @@ def point_in_polygon(point: Point, polygon: list[Point], strict: bool = True) ->
     return inside
 
 
+def polygon_to_segments(polygon: list[Point], closed: bool = True) -> list[Segment]:
+    segments = []
+    n = len(polygon)
+    p1 = polygon[0]
+    for i in range(1, n + 1 if closed else n):
+        p2 = polygon[i % n]
+        segments.append(Segment(p1, p2))
+        p1 = p2
+    return segments
+
+
 def intersect(seg1: Segment, seg2: Segment, strict: bool = True) -> Optional[Point]:
     x = la.intersect_jit(seg1.start.xy, seg1.end.xy, seg2.start.xy, seg2.end.xy, strict)
     return Point(x) if x is not None else None
@@ -161,17 +172,6 @@ def cast_ray_segments(
         closest = lambda x: distance(position, x)
         point = min((x for x in map(intersect_with_ray, segments) if x is not None), key=closest, default=target)
     return Segment(position, point)
-
-
-def points_to_segments(points: list[Point], closed: bool = True) -> list[Segment]:
-    segments = []
-    n = len(points)
-    p1 = points[0]
-    for i in range(1, n + 1 if closed else n):
-        p2 = points[i % n]
-        segments.append(Segment(p1, p2))
-        p1 = p2
-    return segments
 
 
 def break_segment(seg1: Segment, seg2: Segment) -> list[Segment]:

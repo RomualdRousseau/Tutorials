@@ -13,6 +13,7 @@ import tutorial1.util.pyray_ex as prx
 from tutorial1.constants import WINDOW_HEIGHT, WINDOW_WIDTH
 from tutorial1.entities import car, world
 from tutorial1.entities.explosion import Explosion
+from tutorial1.entities.marker import Marker
 from tutorial1.math import envelope
 from tutorial1.math.geom import Point, distance
 from tutorial1.util.types import Entity, is_bit_set
@@ -30,6 +31,19 @@ class Context:
     entities: list[Entity]
     camera: pr.Camera2D
     update_state: Callable[[Context, float], str]
+    lap: int = 0
+
+    def get_previous_pos(self) -> Point:
+        return self.player.prev_pos
+
+    def get_current_pos(self) -> Point:
+        return self.player.curr_pos
+
+    def on_enter(self, marker: Marker) -> None:
+        self.lap += 1
+
+    def on_leave(self, marker: Marker) -> None:
+        pass
 
 
 @lru_cache(1)
@@ -57,9 +71,17 @@ def get_singleton(name: str = "default"):
 
 def reset() -> None:
     context = get_singleton()
+
     for x in context.entities:
         x.reset()
+
     context.camera.target = pr.Vector2(*context.player.pos)
+
+    marker = Marker(context.player.get_spawn_location(), True, world.ROAD_WIDTH * 0.5, 2)
+    marker.add_listener(context)
+    context.entities.append(marker)
+
+    context.lap = 0
 
 
 def update(dt: float) -> str:
@@ -86,6 +108,7 @@ def draw() -> None:
     prx.draw_text(f"Distance: {context.player.get_total_distance_in_km():.3f}km", pr.Vector2(2, 2), 20, pr.WHITE, shadow=True)  # type: ignore
     prx.draw_text(f"Speed: {context.player.get_speed_in_kmh():.1f}km/h", pr.Vector2(2, 24), 20, pr.WHITE, shadow=True)  # type: ignore
     prx.draw_text(f"Time Elapsed: {datetime.timedelta(seconds=pr.get_time())}", pr.Vector2(2, 46), 20, pr.WHITE, shadow=True)  # type: ignore
+    prx.draw_text(f"Lap: {context.lap}", pr.Vector2(2, 68), 20, pr.WHITE, shadow=True)  # type: ignore
 
     prx.draw_text(f"{pr.get_fps()}fps", pr.Vector2(2, 2), 20, pr.WHITE, align="right", shadow=True)  # type: ignore
 

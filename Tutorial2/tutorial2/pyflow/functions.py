@@ -81,8 +81,8 @@ def lo_bce_prime(x1, x2):
     return ((x2 - x1) / (x2 * (1.0 - x2))) / x2.shape[0]
 
 
-def lr_exp_decay(e):
-    return max(0.01 * np.exp(-0.95 * e), 0.001)
+def lr_exp_decay(e, s, a, lr1, lr2):
+    return max(lr1 * np.exp(a * np.floor(e / s)), lr2)
 
 
 def wi_zeros(n, m):

@@ -48,6 +48,10 @@ class Tutorial1Env(gym.Env):
             trainer.spawn_agents(self.agent_count)
             self._agent_spwaned = True
 
+        if options is not None and isinstance(options, dict):
+            if options.get("reset_corridor", False):
+                trainer.get_singleton().corridor = None
+
         trainer.reset()
 
         return self._get_obs(), self._get_info()
@@ -77,7 +81,12 @@ class Tutorial1Env(gym.Env):
         return [trainer.get_agent_obs(x) for x in trainer.get_agents()]
 
     def _get_info(self):
-        return {"scores": [trainer.get_agent_score(x) for x in trainer.get_agents()]}
+        agents = trainer.get_agents()
+        best_agent = trainer.get_best_agent()
+        return {
+            "scores": [trainer.get_agent_score(x) for x in agents],
+            "best_agent_vin": best_agent.vin if best_agent is not None else -1,
+        }
 
     def _gfx_init(self):
         pr.set_config_flags(pr.ConfigFlags.FLAG_MSAA_4X_HINT)

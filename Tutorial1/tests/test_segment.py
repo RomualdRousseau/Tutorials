@@ -7,7 +7,7 @@ from tutorial1.math.geom import (
     cast_ray_segments,
     collision_circle_segment,
     intersect,
-    points_to_segments,
+    polygon_to_segments,
 )
 from tutorial1.math.linalg import lst_2_vec
 
@@ -215,12 +215,12 @@ def test_cast_ray_segments_not_intersect():
     assert cast_ray_segments(c, n, 2, [e], ordered=False) == Segment(c, x)
 
 
-def test_points_to_segments_closed():
+def test_polygon_to_segments_closed():
     a = Point(lst_2_vec([1, 1]))
     b = Point(lst_2_vec([2, 1]))
     c = Point(lst_2_vec([2, 2]))
     d = Point(lst_2_vec([1, 2]))
-    assert points_to_segments([a, b, c, d]) == [
+    assert polygon_to_segments([a, b, c, d]) == [
         Segment(a, b),
         Segment(b, c),
         Segment(c, d),
@@ -228,12 +228,12 @@ def test_points_to_segments_closed():
     ]
 
 
-def test_points_to_segments_not_closed():
+def test_polygon_to_segments_not_closed():
     a = Point(lst_2_vec([1, 1]))
     b = Point(lst_2_vec([2, 1]))
     c = Point(lst_2_vec([2, 2]))
     d = Point(lst_2_vec([1, 2]))
-    assert points_to_segments([a, b, c, d], False) == [
+    assert polygon_to_segments([a, b, c, d], False) == [
         Segment(a, b),
         Segment(b, c),
         Segment(c, d),
