@@ -3,7 +3,7 @@ from threading import Thread
 import pyray as pr
 
 import tutorial1.resources as res
-import tutorial1.util.pyray_ex as prx
+import tutorial1.utils.pyray_ex as prx
 from tutorial1.constants import WINDOW_HEIGHT, WINDOW_WIDTH
 from tutorial1.entities import world
 

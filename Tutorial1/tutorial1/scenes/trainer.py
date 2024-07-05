@@ -9,7 +9,7 @@ from typing import Callable, Optional
 import numpy as np
 import pyray as pr
 
-import tutorial1.util.pyray_ex as prx
+import tutorial1.utils.pyray_ex as prx
 from tutorial1.constants import WINDOW_HEIGHT, WINDOW_WIDTH
 from tutorial1.entities import car, world
 from tutorial1.entities.explosion import Explosion
@@ -17,7 +17,8 @@ from tutorial1.entities.marker import Marker
 from tutorial1.math import envelope
 from tutorial1.math.geom import Point, distance
 from tutorial1.math.linalg import lst_2_vec
-from tutorial1.util.types import Entity, is_bit_set
+from tutorial1.utils.bitbang import is_bit_set
+from tutorial1.utils.types import Entity
 
 CAR_BEST_COLOR = pr.Color(255, 255, 255, 255)
 CAR_COLOR = pr.Color(255, 255, 255, 64)
@@ -69,7 +70,9 @@ def reset_corridor():
     roads = world.get_singleton().roads
     start = random.choice(roads.vertice)
     stop = max(roads.vertice, key=lambda x: distance(start.point, x.point))
-    context.corridor, _ = envelope.generare_from_spatial_graph(roads.get_shortest_path(start, stop), world.ROAD_WIDTH)
+    context.corridor, _ = envelope.generare_borders_from_spatial_graph(
+        roads.get_shortest_path(start, stop), world.ROAD_WIDTH
+    )
 
 
 def get_agents() -> list[car.Car]:

@@ -3,7 +3,7 @@ import random
 import numpy as np
 import pyray as pr
 
-import tutorial1.util.pyray_ex as prx
+import tutorial1.utils.pyray_ex as prx
 from tutorial1.constants import (
     APP_NAME,
     FRAME_RATE,

@@ -8,6 +8,8 @@ import tutorial1.resources as res
 RESOURCES = {
     "title": "screens/title.png",
     "loading": "screens/loading.png",
+    "pickup": "screens/pickup.png",
+    "dropoff": "screens/dropoff.png",
     "car": "sprites/car.png",
     "start": "sprites/start.png",
     "tree1": "sprites/tree1.png",

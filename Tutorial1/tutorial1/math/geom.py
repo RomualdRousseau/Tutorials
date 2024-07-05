@@ -8,7 +8,7 @@ import numpy.typing as npt
 import pyray as pr
 
 import tutorial1.math.linalg as la
-import tutorial1.util.pyray_ex as prx
+import tutorial1.utils.pyray_ex as prx
 from tutorial1.constants import VIRTUAL_CELL, VIRTUAL_WIDTH
 
 VIRTUAL_SIZE = VIRTUAL_WIDTH // VIRTUAL_CELL

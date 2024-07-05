@@ -89,6 +89,16 @@ class SpatialGraph:
 
         return SpatialGraph(vertice, edges)
 
+    def prepend_vertex(self, v: SpatialVertex):
+        new_edge = SpatialEdge(v, self.vertice[0])
+        self.vertice.insert(0, v)
+        self.edges.insert(0, new_edge)
+
+    def append_vertex(self, v: SpatialVertex):
+        new_edge = SpatialEdge(self.vertice[-1], v)
+        self.vertice.append(v)
+        self.edges.append(new_edge)
+
     def draw(self):
         for seg in self.edges:
             seg.draw()

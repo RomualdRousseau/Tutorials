@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import datetime
-import random
 from dataclasses import dataclass
 from functools import lru_cache
 from typing import Callable
@@ -9,14 +8,13 @@ from typing import Callable
 import pyray as pr
 
 import tutorial1.resources as res
-import tutorial1.util.pyray_ex as prx
+import tutorial1.utils.pyray_ex as prx
 from tutorial1.constants import WINDOW_HEIGHT, WINDOW_WIDTH
 from tutorial1.entities import car, world
 from tutorial1.entities.explosion import Explosion
-from tutorial1.entities.marker import Marker
-from tutorial1.math import envelope
-from tutorial1.math.geom import Point, distance
-from tutorial1.util.types import Entity, is_bit_set
+from tutorial1.entities.taxi_driver import TaxiDriver
+from tutorial1.utils.bitbang import is_bit_set
+from tutorial1.utils.types import Entity
 
 CAR_COLOR = pr.Color(255, 255, 255, 255)
 CORRIDOR_COLOR = pr.Color(255, 255, 0, 64)
@@ -26,62 +24,30 @@ ZOOM_ACCELERATION_COEF = 0.1
 
 @dataclass
 class Context:
-    player: car.Car
-    corridor: envelope.Envelope
+    player: TaxiDriver
     entities: list[Entity]
     camera: pr.Camera2D
     update_state: Callable[[Context, float], str]
-    lap: int = 0
-
-    def get_previous_pos(self) -> Point:
-        return self.player.prev_pos
-
-    def get_current_pos(self) -> Point:
-        return self.player.curr_pos
-
-    def on_enter(self, marker: Marker) -> None:
-        self.lap += 1
-
-    def on_leave(self, marker: Marker) -> None:
-        pass
 
 
 @lru_cache(1)
 def get_singleton(name: str = "default"):
-    roads = world.get_singleton().roads
-    start = random.choice(roads.vertice)
-    stop = max(roads.vertice, key=lambda x: distance(start.point, x.point))
-    corridor, _ = envelope.generare_from_spatial_graph(roads.get_shortest_path(start, stop), world.ROAD_WIDTH)
-
-    player = car.Car(CAR_COLOR)
-    player.set_corridor(corridor)
-    player.set_debug_mode(True)
-
+    player = TaxiDriver("human")
     entities: list[Entity] = [world, player]
-
     camera = pr.Camera2D(
         pr.Vector2(WINDOW_WIDTH / 2, WINDOW_HEIGHT / 2),
         pr.Vector2(0, 0),
         0,
         ZOOM_DEFAULT,
     )
-
-    return Context(player, corridor, entities, camera, _update_game_mode)
+    return Context(player, entities, camera, _update_game_mode)
 
 
 def reset() -> None:
     context = get_singleton()
-
     for x in context.entities:
         x.reset()
-
-    context.camera.target = pr.Vector2(*context.player.pos)
-
-    marker = Marker(context.player.get_spawn_location(), world.ROAD_WIDTH * 0.5, 2, context.player.head)
-    marker.add_listener(context)
-    context.entities.append(marker)
-
-    context.lap = 0
+    context.camera.target = context.player.car.curr_pos.to_vec()
 
 
 def update(dt: float) -> str:
@@ -93,22 +59,16 @@ def draw() -> None:
     context = get_singleton()
 
     pr.begin_mode_2d(context.camera)
-
-    for x in context.entities:
-        x.draw(0)
-
-    for segment in context.corridor.segments:
-        segment.draw(1, CORRIDOR_COLOR, None, True)
-
-    for x in context.entities:
-        x.draw(1)
-
+    for layer in range(2):
+        for entity in context.entities:
+            entity.draw(layer)
     pr.end_mode_2d()
 
-    prx.draw_text(f"Distance: {context.player.get_total_distance_in_km():.3f}km", pr.Vector2(2, 2), 20, pr.WHITE, shadow=True)  # type: ignore
-    prx.draw_text(f"Speed: {context.player.get_speed_in_kmh():.1f}km/h", pr.Vector2(2, 24), 20, pr.WHITE, shadow=True)  # type: ignore
+    context.player.draw(3)
+
+    prx.draw_text(f"Distance: {context.player.car.get_total_distance_in_km():.3f}km", pr.Vector2(2, 2), 20, pr.WHITE, shadow=True)  # type: ignore
+    prx.draw_text(f"Speed: {context.player.car.get_speed_in_kmh():.1f}km/h", pr.Vector2(2, 24), 20, pr.WHITE, shadow=True)  # type: ignore
     prx.draw_text(f"Time Elapsed: {datetime.timedelta(seconds=pr.get_time())}", pr.Vector2(2, 46), 20, pr.WHITE, shadow=True)  # type: ignore
-    prx.draw_text(f"Lap: {context.lap}", pr.Vector2(2, 68), 20, pr.WHITE, shadow=True)  # type: ignore
 
     prx.draw_text(f"{pr.get_fps()}fps", pr.Vector2(2, 2), 20, pr.WHITE, align="right", shadow=True)  # type: ignore
 
@@ -130,20 +90,28 @@ def _update_free_mode(context: Context, dt: float) -> str:
 
 
 def _update_game_mode(context: Context, dt: float) -> str:
-    prev_flags = context.player.flags
+    prev_flags = context.player.car.flags
+
+    if pr.is_key_pressed(pr.KeyboardKey.KEY_A):
+        context.player.accept_call(
+            world.get_singleton().borders.get_random_location(),
+            world.get_singleton().borders.get_random_location(),
+        )
 
     for entity in context.entities:
         entity.update(dt)
 
     if (
-        is_bit_set(context.player.flags, car.FLAG_DAMAGED)
+        is_bit_set(context.player.car.flags, car.FLAG_DAMAGED)
         and not is_bit_set(prev_flags, car.FLAG_DAMAGED)
         and not pr.is_sound_playing(res.load_sound("crash"))
     ):
-        context.entities.append(Explosion(Point(context.player.pos)))
+        context.entities.append(Explosion(context.player.car.curr_pos))
         pr.play_sound(res.load_sound("crash"))
 
-    if is_bit_set(context.player.flags, car.FLAG_OUT_OF_TRACK) and not pr.is_sound_playing(res.load_sound("klaxon")):
+    if is_bit_set(context.player.car.flags, car.FLAG_OUT_OF_TRACK) and not pr.is_sound_playing(
+        res.load_sound("klaxon")
+    ):
         pr.play_sound(res.load_sound("klaxon"))
 
     context.entities = [entity for entity in context.entities if entity.is_alive()]
@@ -154,11 +122,11 @@ def _update_game_mode(context: Context, dt: float) -> str:
         context.camera.zoom = ZOOM_DEFAULT
         context.update_state = _update_free_mode
     else:
-        context.camera.target = pr.vector2_lerp(context.camera.target, pr.Vector2(*context.player.pos), 0.2)
+        context.camera.target = pr.vector2_lerp(context.camera.target, context.player.car.curr_pos.to_vec(), 0.2)
         context.camera.zoom = 0.8 * context.camera.zoom + 0.2 * (
             max(
                 1,
-                ZOOM_DEFAULT - context.player.get_speed_in_kmh() * ZOOM_ACCELERATION_COEF,
+                ZOOM_DEFAULT - context.player.car.get_speed_in_kmh() * ZOOM_ACCELERATION_COEF,
             )
         )
 

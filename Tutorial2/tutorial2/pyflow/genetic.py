@@ -16,7 +16,7 @@ class GeneticIndividual(Protocol):
     def get_fitness(self) -> float:
         ...
 
-    def set_fitness(self, v: float) -> GeneticIndividual:
+    def set_fitness(self, fitness: float) -> GeneticIndividual:
         ...
 
 

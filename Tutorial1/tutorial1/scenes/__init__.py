@@ -1,5 +1,5 @@
 from tutorial1.scenes import gameloop, loading, title, trainer
-from tutorial1.util.types import Scene
+from tutorial1.utils.types import Scene
 
 SCENES = {"title": title, "loading": loading, "gameloop": gameloop, "trainer": trainer}
 

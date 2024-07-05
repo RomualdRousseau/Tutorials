@@ -1,3 +1,4 @@
+import random
 from dataclasses import dataclass
 from functools import lru_cache, reduce
 from typing import Any, Iterable
@@ -46,22 +47,34 @@ class Envelope:
         location = min(map(nearest_location, self.skeleton), key=closest_distance)
         return location  # type: ignore
 
+    def get_random_location(self) -> Location:
+        s = random.choice(self.skeleton)
+        t = random.random()
+        return s, Point(s.start.xy * (1 - t) + s.end.xy * t)
 
-def generare_from_spatial_graph(agraph: graph.SpatialGraph, width: int) -> tuple[Envelope, list[Point]]:
+
+def generare_borders_from_spatial_graph(agraph: graph.SpatialGraph, width: int) -> tuple[Envelope, list[Point]]:
     with tqdm(total=4, desc="Generating envelope", ncols=120, bar_format="{l_bar}{bar}| {n_fmt}/{total_fmt}") as pbar:
         envelopes = [_generate_envelope(e, width) for e in agraph.edges]
         pbar.update(1)
-
         anchors = _generate_anchors(envelopes)
         pbar.update(1)
-
         envelopes = _break_envelopes(envelopes)
         pbar.update(1)
-
         envelope = _union_envelopes(envelopes)
         pbar.update(1)
-
     return envelope, anchors
+
+
+def generare_corridor_from_spatial_graph(agraph: graph.SpatialGraph, width: int) -> Envelope:
+    with tqdm(total=4, desc="Generating envelope", ncols=120, bar_format="{l_bar}{bar}| {n_fmt}/{total_fmt}") as pbar:
+        envelopes = [_generate_envelope(e, width) for e in agraph.edges]
+        pbar.update(1)
+        envelopes = _break_envelopes(envelopes)
+        pbar.update(1)
+        envelope = _union_envelopes(envelopes)
+        pbar.update(1)
+    return envelope
 
 
 def _generate_envelope(edge: graph.SpatialEdge, width: int, slices: int = 10) -> Envelope:

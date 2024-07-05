@@ -7,6 +7,7 @@ import fire
 import gymnasium as gym
 import numpy as np
 from tqdm import trange
+from tutorial1.utils.colorize import colorize
 
 import tutorial2.pyflow as pf
 from tutorial2.pyflow.functions import lr_exp_decay
@@ -133,7 +134,7 @@ def main(
             best_model = agents[best_agent_vin].model
 
         if terminated or truncated:
-            logging.warning("All agents were destroyed, restarting a new time step ...")
+            logging.warning(colorize("All agents were destroyed, restarting a new time step ...", "yellow"))
             timestep += 1
 
             if mode == "training":

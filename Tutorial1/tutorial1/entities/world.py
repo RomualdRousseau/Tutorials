@@ -81,7 +81,7 @@ def get_singleton(name: str = "default"):
 
     roads = graph.generate_random()
 
-    borders, anchors = envelope.generare_from_spatial_graph(roads, ROAD_WIDTH)
+    borders, anchors = envelope.generare_borders_from_spatial_graph(roads, ROAD_WIDTH)
 
     houses: list[House] = []
     for anchor in anchors:
@@ -103,6 +103,29 @@ def get_singleton(name: str = "default"):
     ]
 
     return World(roads, borders, houses, trees)
+
+
+def get_random_corridor():
+    roads = get_singleton().roads
+    start = random.choice(roads.vertice)
+    stop = max(roads.vertice, key=lambda x: distance(start.point, x.point))
+    return envelope.generare_corridor_from_spatial_graph(roads.get_shortest_path(start, stop), ROAD_WIDTH)
+
+
+def get_corridor_from_a_to_b(a: envelope.Location, b: envelope.Location) -> envelope.Envelope:
+    roads = get_singleton().roads
+
+    start = min(roads.vertice, key=lambda x: distance(a[0].closest_ep(a[1]), x.point))
+    stop = min(roads.vertice, key=lambda x: distance(b[0].closest_ep(b[1]), x.point))
+    shortest_path = roads.get_shortest_path(start, stop)
+
+    if shortest_path.edges[0].segment != a[0]:
+        shortest_path.prepend_vertex(graph.SpatialVertex(a[0].farest_ep(a[1])))
+
+    if shortest_path.edges[-1].segment != b[0]:
+        shortest_path.append_vertex(graph.SpatialVertex(b[0].farest_ep(b[1])))
+
+    return envelope.generare_corridor_from_spatial_graph(shortest_path, ROAD_WIDTH)
 
 
 def is_alive() -> bool:

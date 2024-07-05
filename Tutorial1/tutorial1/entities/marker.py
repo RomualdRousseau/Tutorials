@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from typing import Optional, Protocol
+
 import numpy as np
 import pyray as pr
 
@@ -15,13 +16,17 @@ MAX_LIFE = 30
 
 
 class MarkerListener(Protocol):
-    def get_previous_pos(self) -> Point: ...
+    def get_previous_pos(self) -> Point:
+        ...
 
-    def get_current_pos(self) -> Point: ...
+    def get_current_pos(self) -> Point:
+        ...
 
-    def on_enter(self, marker: Marker) -> None: ...
+    def on_enter(self, marker: Marker) -> None:
+        ...
 
-    def on_leave(self, marker: Marker) -> None: ...
+    def on_leave(self, marker: Marker) -> None:
+        ...
 
 
 class Marker:
