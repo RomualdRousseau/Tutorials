@@ -1,7 +1,7 @@
 import random
 from dataclasses import dataclass
 from functools import lru_cache, reduce
-from typing import Any, Iterable
+from typing import Any, Callable, Iterable
 
 import numpy as np
 from tqdm import tqdm, trange
@@ -21,6 +21,7 @@ from tutorial1.math.geom import (
 from tutorial1.math.linalg import lst_2_vec, normalize
 
 Location = tuple[Segment, Point]
+ProgressCallBack = Callable[[float], None]
 
 
 @dataclass
@@ -53,27 +54,38 @@ class Envelope:
         return s, Point(s.start.xy * (1 - t) + s.end.xy * t)
 
 
-def generare_borders_from_spatial_graph(agraph: graph.SpatialGraph, width: int) -> tuple[Envelope, list[Point]]:
+@lru_cache(256)
+def get_nearest_segments(envelope: Envelope, position: Point, radius: int) -> list[Segment]:
+    radius = max(radius, VIRTUAL_WIDTH)
+    nearest_distance = lambda x: distance_point_segment(position, x, True)
+    return sorted((x for x in envelope.segments if nearest_distance(x) < radius), key=nearest_distance)
+
+
+def generare_borders_from_spatial_graph(
+    agraph: graph.SpatialGraph, width: int, progress_callbacks: list[ProgressCallBack]
+) -> tuple[Envelope, list[Point]]:
     with tqdm(total=4, desc="Generating envelope", ncols=120, bar_format="{l_bar}{bar}| {n_fmt}/{total_fmt}") as pbar:
         envelopes = [_generate_envelope(e, width) for e in agraph.edges]
-        pbar.update(1)
+        _pbar_update(pbar, progress_callbacks)
         anchors = _generate_anchors(envelopes)
-        pbar.update(1)
+        _pbar_update(pbar, progress_callbacks)
         envelopes = _break_envelopes(envelopes)
-        pbar.update(1)
+        _pbar_update(pbar, progress_callbacks)
         envelope = _union_envelopes(envelopes)
-        pbar.update(1)
+        _pbar_update(pbar, progress_callbacks)
     return envelope, anchors
 
 
-def generare_corridor_from_spatial_graph(agraph: graph.SpatialGraph, width: int) -> Envelope:
-    with tqdm(total=4, desc="Generating envelope", ncols=120, bar_format="{l_bar}{bar}| {n_fmt}/{total_fmt}") as pbar:
+def generare_corridor_from_spatial_graph(
+    agraph: graph.SpatialGraph, width: int, progress_callbacks: list[ProgressCallBack]
+) -> Envelope:
+    with tqdm(total=3, desc="Generating envelope", ncols=120, bar_format="{l_bar}{bar}| {n_fmt}/{total_fmt}") as pbar:
         envelopes = [_generate_envelope(e, width) for e in agraph.edges]
-        pbar.update(1)
+        _pbar_update(pbar, progress_callbacks)
         envelopes = _break_envelopes(envelopes)
-        pbar.update(1)
+        _pbar_update(pbar, progress_callbacks)
         envelope = _union_envelopes(envelopes)
-        pbar.update(1)
+        _pbar_update(pbar, progress_callbacks)
     return envelope
 
 
@@ -161,8 +173,7 @@ def _union_envelopes(envelopes: list[Envelope]) -> Envelope:
     return Envelope(segments_to_keep, skeleton, width)
 
 
-@lru_cache(256)
-def get_nearest_segments(envelope: Envelope, position: Point, radius: int) -> list[Segment]:
-    radius = max(radius, VIRTUAL_WIDTH)
-    nearest_distance = lambda x: distance_point_segment(position, x, True)
-    return sorted((x for x in envelope.segments if nearest_distance(x) < radius), key=nearest_distance)
+def _pbar_update(pbar: tqdm, progress_callbacks: list[ProgressCallBack]):
+    pbar.update(1)
+    for progress_callback in progress_callbacks:
+        progress_callback(pbar.n / pbar.total)

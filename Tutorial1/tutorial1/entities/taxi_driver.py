@@ -2,17 +2,14 @@ from typing import Optional
 
 import pyray as pr
 
-import tutorial1.resources as res
-from tutorial1.entities.minimap import Minimap
 from tutorial1.entities import car, world
 from tutorial1.entities.marker import Marker
 from tutorial1.math import envelope
 from tutorial1.math.geom import Point
-from tutorial1.utils.colorize import colorize
-
 
 CAR_COLOR = pr.Color(255, 255, 255, 255)
 CORRIDOR_COLOR = pr.Color(255, 255, 0, 64)
+WAIT_TIMER = 2  # s
 
 
 class TaxiDriver:
@@ -32,7 +29,6 @@ class TaxiDriver:
         self.car.set_debug_mode(debug_mode)
         self.pickup: Optional[Marker] = None
         self.dropoff: Optional[Marker] = None
-        self.minimap = Minimap(self.car)
 
     def get_previous_pos(self) -> Point:
         return self.car.prev_pos
@@ -78,10 +74,9 @@ class TaxiDriver:
 
             case TaxiDriver.STATE_WAITING_CALL:
                 pass
-            
+
             case TaxiDriver.STATE_ACCEPT_CALL:
                 assert self.pickup is not None
-                print(colorize("Customer hailed", "blue"))
                 self.car.set_corridor(world.get_corridor_from_a_to_b(self.car.current_location, self.pickup.location))
                 self.state = TaxiDriver.STATE_GOING_TO_PICKUP
 
@@ -94,15 +89,14 @@ class TaxiDriver:
 
             case TaxiDriver.STATE_PICKUP_WAIT:
                 self.timer += dt
-                if self.timer > 2:
+                if self.timer > WAIT_TIMER:
                     assert self.dropoff is not None
-                    print(colorize("Pick up customer", "blue"))
                     self.car.set_corridor(
                         world.get_corridor_from_a_to_b(self.car.current_location, self.dropoff.location)
                     )
                     self.state = TaxiDriver.STATE_GOING_TO_DROPOFF
                 return
-            
+
             case TaxiDriver.STATE_GOING_TO_DROPOFF:
                 pass
 
@@ -112,14 +106,13 @@ class TaxiDriver:
 
             case TaxiDriver.STATE_DROPOFF_WAIT:
                 self.timer += dt
-                if self.timer > 2:
+                if self.timer > WAIT_TIMER:
                     assert self.dropoff is not None
-                    print(colorize("Drop off customer", "blue"))
                     self.pickup = None
                     self.dropoff = None
                     self.state = TaxiDriver.STATE_WAITING_CALL
                 return
-            
+
         if self.pickup is not None:
             self.pickup.update(dt)
 
@@ -127,8 +120,6 @@ class TaxiDriver:
             self.dropoff.update(dt)
 
         self.car.update(dt)
-        
-        self.minimap.update(dt)
 
     def draw(self, layer: int) -> None:
         if self.pickup is not None:
@@ -142,28 +133,3 @@ class TaxiDriver:
                 segment.draw(1, CORRIDOR_COLOR, None, True)
 
         self.car.draw(layer)
-
-        if layer == 3:
-            if self.state == TaxiDriver.STATE_PICKUP_WAIT:
-                tex = res.load_texture("pickup")
-                pr.draw_texture_pro(
-                    tex,
-                    pr.Rectangle(0, 0, tex.width, tex.height),
-                    pr.Rectangle(100, 100, 200, 200),
-                    pr.Vector2(0, 0),
-                    0,
-                    pr.WHITE,  # type: ignore
-                )
-                
-            if self.state == TaxiDriver.STATE_DROPOFF_WAIT:
-                tex = res.load_texture("dropoff")
-                pr.draw_texture_pro(
-                    tex,
-                    pr.Rectangle(0, 0, tex.width, tex.height),
-                    pr.Rectangle(100, 100, 200, 200),
-                    pr.Vector2(0, 0),
-                    0,
-                    pr.WHITE,  # type: ignore
-                )
-        
-        self.minimap.draw(layer)

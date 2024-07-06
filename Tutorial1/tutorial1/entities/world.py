@@ -75,13 +75,24 @@ class World:
     trees: list[Tree]
 
 
+_progress_callback: list[envelope.ProgressCallBack] = []
+
+
+def add_progress_callback(progress_callback: envelope.ProgressCallBack):
+    _progress_callback.append(progress_callback)
+
+
+def remove_progress_callback(progress_callback: envelope.ProgressCallBack):
+    _progress_callback.remove(progress_callback)
+
+
 @lru_cache(1)
-def get_singleton(name: str = "default"):
+def get_singleton(name: str = "default") -> World:
     pr.trace_log(pr.TraceLogLevel.LOG_INFO, "WORLD: Initialize singleton")
 
     roads = graph.generate_random()
 
-    borders, anchors = envelope.generare_borders_from_spatial_graph(roads, ROAD_WIDTH)
+    borders, anchors = envelope.generare_borders_from_spatial_graph(roads, ROAD_WIDTH, _progress_callback)
 
     houses: list[House] = []
     for anchor in anchors:
@@ -109,7 +120,7 @@ def get_random_corridor():
     roads = get_singleton().roads
     start = random.choice(roads.vertice)
     stop = max(roads.vertice, key=lambda x: distance(start.point, x.point))
-    return envelope.generare_corridor_from_spatial_graph(roads.get_shortest_path(start, stop), ROAD_WIDTH)
+    return envelope.generare_corridor_from_spatial_graph(roads.get_shortest_path(start, stop), ROAD_WIDTH, [])
 
 
 def get_corridor_from_a_to_b(a: envelope.Location, b: envelope.Location) -> envelope.Envelope:
@@ -125,7 +136,7 @@ def get_corridor_from_a_to_b(a: envelope.Location, b: envelope.Location) -> enve
     if shortest_path.edges[-1].segment != b[0]:
         shortest_path.append_vertex(graph.SpatialVertex(b[0].farest_ep(b[1])))
 
-    return envelope.generare_corridor_from_spatial_graph(shortest_path, ROAD_WIDTH)
+    return envelope.generare_corridor_from_spatial_graph(shortest_path, ROAD_WIDTH, [])
 
 
 def is_alive() -> bool:
@@ -133,8 +144,7 @@ def is_alive() -> bool:
 
 
 def reset() -> None:
-    get_singleton()
-    # get_nearest_location.cache_clear()
+    pass
 
 
 def hit(damage: int) -> None:

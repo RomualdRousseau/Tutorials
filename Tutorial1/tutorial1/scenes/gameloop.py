@@ -12,6 +12,7 @@ import tutorial1.utils.pyray_ex as prx
 from tutorial1.constants import WINDOW_HEIGHT, WINDOW_WIDTH
 from tutorial1.entities import car, world
 from tutorial1.entities.explosion import Explosion
+from tutorial1.entities.minimap import Minimap
 from tutorial1.entities.taxi_driver import TaxiDriver
 from tutorial1.utils.bitbang import is_bit_set
 from tutorial1.utils.types import Entity
@@ -25,6 +26,7 @@ ZOOM_ACCELERATION_COEF = 0.1
 @dataclass
 class Context:
     player: TaxiDriver
+    minimap: Minimap
     entities: list[Entity]
     camera: pr.Camera2D
     update_state: Callable[[Context, float], str]
@@ -33,14 +35,15 @@ class Context:
 @lru_cache(1)
 def get_singleton(name: str = "default"):
     player = TaxiDriver("human")
-    entities: list[Entity] = [world, player]
+    minimap = Minimap(player.car)
+    entities: list[Entity] = [world, player, minimap]
     camera = pr.Camera2D(
         pr.Vector2(WINDOW_WIDTH / 2, WINDOW_HEIGHT / 2),
         pr.Vector2(0, 0),
         0,
         ZOOM_DEFAULT,
     )
-    return Context(player, entities, camera, _update_game_mode)
+    return Context(player, minimap, entities, camera, _update_game_mode)
 
 
 def reset() -> None:
@@ -64,7 +67,29 @@ def draw() -> None:
             entity.draw(layer)
     pr.end_mode_2d()
 
-    context.player.draw(3)
+    context.minimap.draw(3)
+
+    if context.player.state == TaxiDriver.STATE_PICKUP_WAIT:
+        tex = res.load_texture("pickup")
+        pr.draw_texture_pro(
+            tex,
+            pr.Rectangle(0, 0, tex.width, tex.height),
+            pr.Rectangle(100, 100, 200, 200),
+            pr.Vector2(0, 0),
+            0,
+            pr.WHITE,  # type: ignore
+        )
+
+    if context.player.state == TaxiDriver.STATE_DROPOFF_WAIT:
+        tex = res.load_texture("dropoff")
+        pr.draw_texture_pro(
+            tex,
+            pr.Rectangle(0, 0, tex.width, tex.height),
+            pr.Rectangle(100, 100, 200, 200),
+            pr.Vector2(0, 0),
+            0,
+            pr.WHITE,  # type: ignore
+        )
 
     prx.draw_text(f"Distance: {context.player.car.get_total_distance_in_km():.3f}km", pr.Vector2(2, 2), 20, pr.WHITE, shadow=True)  # type: ignore
     prx.draw_text(f"Speed: {context.player.car.get_speed_in_kmh():.1f}km/h", pr.Vector2(2, 24), 20, pr.WHITE, shadow=True)  # type: ignore

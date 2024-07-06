@@ -11,6 +11,10 @@ def lst_2_vec(a: npt.ArrayLike) -> npt.NDArray[np.float64]:
     return np.array(a, dtype=np.float64)
 
 
+def clamp(n: float, minn: float, maxn: float) -> float:
+    return max(min(maxn, n), minn)
+
+
 @njit
 def det(a: npt.ArrayLike) -> float:
     return np.linalg.det(np.array(a))
