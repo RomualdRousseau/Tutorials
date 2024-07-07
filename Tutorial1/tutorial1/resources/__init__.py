@@ -1,5 +1,6 @@
 from functools import cache
 from importlib import resources as impresources
+from typing import Callable
 
 import pyray as pr
 
@@ -23,12 +24,24 @@ RESOURCES = {
     "crash": "sounds/crash.ogg",
 }
 
+_gc: list[Callable[[], None]] = []
+
+
+def clear_caches():
+    [x() or True for x in _gc]
+    load_texture.cache_clear()
+    load_sound.cache_clear()
+
 
 @cache
 def load_texture(name: str) -> pr.Texture:
-    return pr.load_texture(str(impresources.files(res) / RESOURCES[name]))
+    texture = pr.load_texture(str(impresources.files(res) / RESOURCES[name]))
+    _gc.append(lambda: pr.unload_texture(texture))
+    return texture
 
 
 @cache
 def load_sound(name: str) -> pr.Sound:
-    return pr.load_sound(str(impresources.files(res) / RESOURCES[name]))
+    sound = pr.load_sound(str(impresources.files(res) / RESOURCES[name]))
+    _gc.append(lambda: pr.unload_sound(sound))
+    return sound

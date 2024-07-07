@@ -1,5 +1,7 @@
 from typing import Protocol
 
+import pyray as pr
+
 
 class Scene(Protocol):
     def reset(self) -> None:
@@ -13,7 +15,10 @@ class Scene(Protocol):
 
 
 class Widget(Protocol):
-    def is_playing(self, latency: float = 0.1) -> bool:
+    def get_bound(self) -> pr.Rectangle:
+        ...
+
+    def is_playing(self, latency: float) -> bool:
         ...
 
     def reset(self) -> None:

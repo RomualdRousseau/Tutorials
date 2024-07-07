@@ -71,7 +71,7 @@ def reset_corridor():
     start = random.choice(roads.vertice)
     stop = max(roads.vertice, key=lambda x: distance(start.point, x.point))
     context.corridor, _ = envelope.generare_borders_from_spatial_graph(
-        roads.get_shortest_path(start, stop), world.ROAD_WIDTH
+        roads.get_shortest_path(start, stop), world.ROAD_WIDTH, []
     )
 
 

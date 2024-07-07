@@ -19,12 +19,12 @@ from tutorial1.math.linalg import EPS, lst_2_vec, norm, normalize
 from tutorial1.utils.bitbang import bit_set, bit_set_if, bit_unset, is_bit_set
 
 MAX_LIFE = 100
-MASS = 650  # kg
-LENGTH = 5  # m
-WIDTH = 2  # m
+MASS = 650.0  # kg
+LENGTH = 5.0  # m
+WIDTH = 2.0  # m
 WHEEL_ANGLE_RATE = np.pi / 100  # rad
-MAX_ENGINE_POWER = 200  # kN
-MAX_SPEED = 125  # km.h-1
+MAX_ENGINE_POWER = 200.0  # kN
+MAX_SPEED = 125.0  # km.h-1
 DRAG_ROAD = 0.9  # Concrete/Rubber
 DRAG_ROLLING = 0.01  # Concrete/Rubber
 C_G = 9.81  # m.s-2

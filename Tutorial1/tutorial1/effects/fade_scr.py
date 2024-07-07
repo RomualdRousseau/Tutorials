@@ -1,21 +1,21 @@
 import pyray as pr
 
-from tutorial1.constants import FRAME_RATE
+from tutorial1.constants import FRAME_RATE, WINDOW_HEIGHT, WINDOW_WIDTH
 from tutorial1.math.linalg import EPS, clamp
 
 
 class FadeScr:
-
     def __init__(self, duration: float) -> None:
         self.duration = duration
-        self.timer = 0
-        self.snapshot = self._take_screen_snapshot()
+
+    def get_bound(self) -> pr.Rectangle:
+        return pr.Rectangle(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT)
 
     def is_playing(self, latency: float = 0.1) -> bool:
         return self.timer < self.duration + latency
 
     def reset(self) -> None:
-        self.timer = 0
+        self.timer = 0.0
         self.snapshot = self._take_screen_snapshot()
 
     def update(self, dt: float) -> None:
@@ -24,7 +24,7 @@ class FadeScr:
     def draw(self) -> None:
         t = self.timer / (self.duration + EPS)
         alpha = clamp(255 * (1.0 - t), 0, 255)
-        if alpha > 0.0:
+        if alpha > 0:
             pr.draw_texture(self.snapshot, 0, 0, pr.fade(pr.WHITE, alpha / 255.0))  # type: ignore
         elif self.snapshot is not None:
             pr.unload_texture(self.snapshot)

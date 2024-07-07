@@ -1,0 +1,15 @@
+[tool.poetry]
+name = "taxi-driver-agent"
+version = "0.1.0"
+description = ""
+authors = ["Romuald Rousseau <romualdrousseau@gmail.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.11"
+gymnasium = "^0.29.1"
+taxi-driver-env = {path = "../taxi_driver_env"}
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

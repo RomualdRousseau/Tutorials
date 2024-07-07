@@ -78,14 +78,6 @@ class World:
 _progress_callback: list[envelope.ProgressCallBack] = []
 
 
-def add_progress_callback(progress_callback: envelope.ProgressCallBack):
-    _progress_callback.append(progress_callback)
-
-
-def remove_progress_callback(progress_callback: envelope.ProgressCallBack):
-    _progress_callback.remove(progress_callback)
-
-
 @lru_cache(1)
 def get_singleton(name: str = "default") -> World:
     pr.trace_log(pr.TraceLogLevel.LOG_INFO, "WORLD: Initialize singleton")
@@ -116,6 +108,14 @@ def get_singleton(name: str = "default") -> World:
     return World(roads, borders, houses, trees)
 
 
+def add_progress_callback(progress_callback: envelope.ProgressCallBack):
+    _progress_callback.append(progress_callback)
+
+
+def remove_progress_callback(progress_callback: envelope.ProgressCallBack):
+    _progress_callback.remove(progress_callback)
+
+
 def get_random_corridor():
     roads = get_singleton().roads
     start = random.choice(roads.vertice)
@@ -139,15 +139,7 @@ def get_corridor_from_a_to_b(a: envelope.Location, b: envelope.Location) -> enve
     return envelope.generare_corridor_from_spatial_graph(shortest_path, ROAD_WIDTH, [])
 
 
-def is_alive() -> bool:
-    return True
-
-
 def reset() -> None:
-    pass
-
-
-def hit(damage: int) -> None:
     pass
 
 

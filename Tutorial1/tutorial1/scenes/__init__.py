@@ -1,7 +1,7 @@
-from tutorial1.scenes import gameloop, loading, title, trainer
+from tutorial1.scenes import gameplay, loading, title, trainer
 from tutorial1.utils.types import Scene
 
-SCENES = {"title": title, "loading": loading, "gameloop": gameloop, "trainer": trainer}
+SCENES = {"title": title, "loading": loading, "gameplay": gameplay, "trainer": trainer}
 
 
 def first_scene(next: str) -> Scene:
