@@ -21,9 +21,6 @@ class CameraFollower:
     def get_bound(self) -> pr.Rectangle:
         return pr.Rectangle(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT)
 
-    def is_playing(self, latency: float) -> bool:
-        return True
-
     def reset(self) -> None:
         self.camera.target = self.car.curr_pos.to_vec()
 

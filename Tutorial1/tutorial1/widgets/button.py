@@ -30,9 +30,6 @@ class Button:
     def get_bound(self) -> pr.Rectangle:
         return pr.Rectangle(self.position.x, self.position.y, self.size.x, self.size.y)
 
-    def is_playing(self, _: float = 0.1) -> bool:
-        return True
-
     def reset(self) -> None:
         self.clicked = False
         self.action = False

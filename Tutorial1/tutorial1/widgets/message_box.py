@@ -28,9 +28,6 @@ class MessageBox:
             self.size.y,
         )
 
-    def is_playing(self, _: float = 0.1) -> bool:
-        return True
-
     def reset(self) -> None:
         self.button_ok = Button(
             self._compute_button_position(self.get_bound()),

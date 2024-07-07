@@ -12,9 +12,6 @@ class Screen:
     def get_bound(self) -> pr.Rectangle:
         return pr.Rectangle(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT)
     
-    def is_playing(self, _: float = 0.1) -> bool:
-        return True
-
     def reset(self) -> None:
         self.surface = res.load_texture(self.texture_name)
 
