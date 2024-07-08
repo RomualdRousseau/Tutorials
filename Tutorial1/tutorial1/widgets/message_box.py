@@ -1,6 +1,9 @@
+from typing import Callable, Optional
+
 import pyray as pr
 
 from tutorial1.constants import WINDOW_HEIGHT, WINDOW_WIDTH
+from tutorial1.utils.types import Widget
 from tutorial1.widgets.button import Button
 
 
@@ -14,10 +17,17 @@ class MessageBox:
     FG_COLOR = pr.Color(38, 51, 59, 255)
     BG_COLOR = pr.Color(82, 96, 105, 216)
 
-    def __init__(self, size: pr.Vector2, message: str, callback=None):
+    def __init__(self, size: pr.Vector2, message: str, callback: Optional[Callable[[Widget], None]] = None):
         self.size = size
         self.message = message
         self.callback = callback
+        self.button_ok = Button(
+            self._compute_button_position(self.get_bound()),
+            pr.Vector2(MessageBox.BUTTON_WIDTH, MessageBox.BUTTON_HEIGHT),
+            "OK",
+            MessageBox.BUTTON_COLOR,
+            self._button_is_clicked,
+        )
 
     def get_bound(self) -> pr.Rectangle:
         return pr.Rectangle(
@@ -28,13 +38,7 @@ class MessageBox:
         )
 
     def reset(self) -> None:
-        self.button_ok = Button(
-            self._compute_button_position(self.get_bound()),
-            pr.Vector2(MessageBox.BUTTON_WIDTH, MessageBox.BUTTON_HEIGHT),
-            "OK",
-            MessageBox.BUTTON_COLOR,
-            self._button_is_clicked,
-        )
+        self.button_ok.reset()
 
     def update(self, dt: float):
         self.button_ok.update(dt)
@@ -72,4 +76,5 @@ class MessageBox:
 
     def _button_is_clicked(self, button: Button):
         if button is self.button_ok and self.callback is not None:
+            print("a")
             self.callback(self)

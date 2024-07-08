@@ -25,6 +25,8 @@ class Button:
         self.color_up = color
         self.color_dn = pr.Color(color.r // 2, color.g // 2, color.b // 2, 255)
         self.callback = callback
+        self.clicked = False
+        self.action = False
 
     def get_bound(self) -> pr.Rectangle:
         return pr.Rectangle(self.position.x, self.position.y, self.size.x, self.size.y)

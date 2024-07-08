@@ -62,7 +62,7 @@ def get_singleton(name: str = "default"):
         0,
         ZOOM_DEFAULT,
     )
-    return Context([], [world], camera, _update_camera_game_mode)
+    return Context([], [], camera, _update_camera_game_mode)
 
 
 def reset_corridor():
@@ -136,7 +136,7 @@ def reset() -> None:
 
     reset_agents()
 
-    context.entities = [world, *context.agents]
+    context.entities = [*context.agents]
     context.best_agent = None
     context.timestep += 1
 
@@ -152,8 +152,11 @@ def reset() -> None:
 def update(dt: float) -> str:
     context = get_singleton()
 
+    world.update(dt)
+
     for entity in context.entities:
         entity.update(dt)
+    context.entities = [entity for entity in context.entities if entity.is_alive()]
 
     for agent in context.agents:
         if agent.is_alive() and not is_agent_alive(agent):
@@ -166,7 +169,6 @@ def update(dt: float) -> str:
         context.spawn_location_changed = context.last_spawn_location != last_spawn_location
         context.last_spawn_location = last_spawn_location
 
-    context.entities = [entity for entity in context.entities if entity.is_alive()]
     context.update_camera(context)
 
     return "trainer"
@@ -181,6 +183,8 @@ def draw() -> None:
 
     pr.begin_mode_2d(context.camera)
 
+    world.draw(0)
+
     for entity in context.entities:
         entity.draw(0)
 
@@ -189,6 +193,8 @@ def draw() -> None:
 
     if context.last_spawn_location is not None:
         context.last_spawn_location[1].draw(1, CORRIDOR_COLOR)  # type: ignore
+
+    world.draw(1)
 
     for entity in context.entities:
         entity.draw(1)
