@@ -5,7 +5,6 @@ from tutorial1.widgets.button import Button
 
 
 class MessageBox:
-
     FONT_SIZE = 20
     FONT_COLOR = pr.Color(216, 216, 216, 255)
     BORDER_SIZE = 10

@@ -4,7 +4,6 @@ import pyray as pr
 
 
 class Button:
-
     FONT_SIZE = 20
     FG_COLOR = pr.Color(38, 51, 59, 255)
 

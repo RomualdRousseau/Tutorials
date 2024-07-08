@@ -7,9 +7,7 @@ class TaxiDriverEnv(gym.Env):
 
     def __init__(self, render_mode=None):
         self.action_space = gym.spaces.Discrete(2)
-        self.observation_space = gym.spaces.Box(
-            low=0, high=1, shape=(3,), dtype=np.float64
-        )
+        self.observation_space = gym.spaces.Box(low=0, high=1, shape=(3,), dtype=np.float64)
         self.render_mode = render_mode
 
     def reset(self, seed=None, options=None):

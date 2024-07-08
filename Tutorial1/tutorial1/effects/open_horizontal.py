@@ -6,7 +6,6 @@ from tutorial1.utils.types import Widget
 
 
 class OpenHorizontal:
-
     def __init__(self, widget: Widget, duration: float, color: pr.Color):
         self.duration = duration
         self.widget = widget
@@ -38,5 +37,5 @@ class OpenHorizontal:
             self.widget.draw()
         else:
             bound = self.get_bound()
-            if bound.width > 0.0:
+            if bound.width > 0:
                 pr.draw_rectangle_rec(bound, self.color)

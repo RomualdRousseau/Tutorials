@@ -3,14 +3,13 @@ from __future__ import annotations
 import datetime
 from dataclasses import dataclass
 from functools import lru_cache
-from typing import Callable
 
 import pyray as pr
 
-from tutorial1.cameras.camera_follower import CameraFollower
-from tutorial1.effects.fade_scr import FadeScr
 import tutorial1.resources as res
 import tutorial1.utils.pyray_ex as prx
+from tutorial1.cameras.camera_follower import CameraFollower
+from tutorial1.effects.fade_scr import FadeScr
 from tutorial1.entities import car, world
 from tutorial1.entities.explosion import Explosion
 from tutorial1.entities.minimap import Minimap
@@ -25,7 +24,7 @@ ZOOM_ACCELERATION_COEF = 0.1
 
 
 @dataclass
-class ctx:
+class Context:
     state: int
     entities: list[Entity]
     player: TaxiDriver
@@ -41,13 +40,13 @@ def get_singleton(name: str = "default"):
     camera = CameraFollower(player.car)
     minimap = Minimap(player.car)
     fade_in = FadeScr(1)
-    return ctx(0, entities, player, camera, minimap, fade_in)
+    return Context(0, entities, player, camera, minimap, fade_in)
 
 
 def reset() -> None:
     res.clear_caches()
     ctx = get_singleton()
-    ctx.state = 0 
+    ctx.state = 0
     for x in ctx.entities:
         x.reset()
     ctx.camera.reset()
@@ -58,20 +57,20 @@ def reset() -> None:
 def update(dt: float) -> str:
     ctx = get_singleton()
     prev_flags = ctx.player.car.flags
-    
+
     world.update(dt)
     for entity in ctx.entities:
         entity.update(dt)
-    ctx.entities = [entity for entity in ctx.entities if entity.is_alive()]     
+    ctx.entities = [entity for entity in ctx.entities if entity.is_alive()]
     ctx.minimap.update(dt)
     ctx.camera.update(dt)
-    
+
     match ctx.state:
         case 0:
             ctx.fade_in.update(dt)
             if not ctx.fade_in.is_playing():
                 ctx.state = 1
-                
+
         case 1:
             if pr.is_key_pressed(pr.KeyboardKey.KEY_A):
                 ctx.player.accept_call(
@@ -91,7 +90,7 @@ def update(dt: float) -> str:
                 res.load_sound("klaxon")
             ):
                 pr.play_sound(res.load_sound("klaxon"))
-    
+
     return "gameplay"
 
 
@@ -134,6 +133,6 @@ def draw() -> None:
     prx.draw_text(f"Time Elapsed: {datetime.timedelta(seconds=pr.get_time())}", pr.Vector2(2, 46), 20, pr.WHITE, shadow=True)  # type: ignore
 
     prx.draw_text(f"{pr.get_fps()}fps", pr.Vector2(2, 2), 20, pr.WHITE, align="right", shadow=True)  # type: ignore
-    
+
     if ctx.state == 0:
         ctx.fade_in.draw()
