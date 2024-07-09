@@ -11,6 +11,7 @@ import tutorial1.resources as res
 import tutorial1.utils.pyray_ex as prx
 from tutorial1.cameras.camera_follower import CameraFollower
 from tutorial1.effects.fade_scr import FadeScr
+from tutorial1.effects.open_vertical import OpenVertical
 from tutorial1.entities import car, world
 from tutorial1.entities.explosion import Explosion
 from tutorial1.entities.minimap import Minimap
@@ -35,7 +36,7 @@ class Context:
     entities: list[Entity]
 
     fade_in: FadeScr
-    message_box: Optional[MessageBox]
+    message_box: Optional[OpenVertical]
 
 
 @lru_cache(1)
@@ -77,14 +78,32 @@ def update(dt: float) -> str:
                 )
 
             if ctx.player.state == TaxiDriver.STATE_PICKUP_WAIT and ctx.message_box is None:
-                ctx.message_box = MessageBox(pr.Vector2(500, 200), "Welcome to my taxi!", message_box_cb)
+                ctx.message_box = OpenVertical(
+                    MessageBox(
+                        pr.Vector2(800, 256),
+                        "\nWelcome to my taxi!\n\nAttach your seat belt and let's go ...",
+                        title="YOU:",
+                        icon="pickup",
+                        callback=message_box_cb,
+                    ),
+                    0.5,
+                    MessageBox.BG_COLOR,
+                )
                 ctx.message_box.reset()
                 pr.show_cursor()
                 ctx.state = 2
 
             if ctx.player.state == TaxiDriver.STATE_DROPOFF_WAIT and ctx.message_box is None:
-                ctx.message_box = MessageBox(
-                    pr.Vector2(500, 200), "Goodbye, make sure to check your belongings.", message_box_cb
+                ctx.message_box = OpenVertical(
+                    MessageBox(
+                        pr.Vector2(800, 256),
+                        "\nGoodbye!\n\nMake sure to check for your belongings.\n\nHave a nice nice day!",
+                        title="YOU:",
+                        icon="dropoff",
+                        callback=message_box_cb,
+                    ),
+                    0.5,
+                    MessageBox.BG_COLOR,
                 )
                 ctx.message_box.reset()
                 pr.show_cursor()
@@ -134,28 +153,6 @@ def draw() -> None:
 
     if ctx.message_box is not None:
         ctx.message_box.draw()
-
-    # if ctx.player.state == TaxiDriver.STATE_PICKUP_WAIT:
-    #     tex = res.load_texture("pickup")
-    #     pr.draw_texture_pro(
-    #         tex,
-    #         pr.Rectangle(0, 0, tex.width, tex.height),
-    #         pr.Rectangle(100, 100, 200, 200),
-    #         pr.Vector2(0, 0),
-    #         0,
-    #         pr.WHITE,  # type: ignore
-    #     )
-
-    # if ctx.player.state == TaxiDriver.STATE_DROPOFF_WAIT:
-    #     tex = res.load_texture("dropoff")
-    #     pr.draw_texture_pro(
-    #         tex,
-    #         pr.Rectangle(0, 0, tex.width, tex.height),
-    #         pr.Rectangle(100, 100, 200, 200),
-    #         pr.Vector2(0, 0),
-    #         0,
-    #         pr.WHITE,  # type: ignore
-    #     )
 
     prx.draw_text(f"Distance: {ctx.player.car.get_total_distance_in_km():.3f}km", pr.Vector2(2, 2), 20, pr.WHITE, shadow=True)  # type: ignore
     prx.draw_text(f"Speed: {ctx.player.car.get_speed_in_kmh():.1f}km/h", pr.Vector2(2, 24), 20, pr.WHITE, shadow=True)  # type: ignore
