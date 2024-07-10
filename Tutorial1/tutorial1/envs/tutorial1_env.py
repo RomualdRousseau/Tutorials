@@ -35,7 +35,7 @@ class Tutorial1Env(gym.Env):
         self.action_space = gym.spaces.Box(-1, 1, shape=(agent_count, 2), dtype=np.float64)
 
         self._gfx_initialized = False
-        self._agent_spwaned = False
+        self._agent_spawned = False
 
     def reset(self, seed=None, options=None):
         super().reset(seed=seed)
@@ -44,13 +44,13 @@ class Tutorial1Env(gym.Env):
             random.seed(seed)
             np.random.seed(seed)
 
-        if not self._agent_spwaned:
-            trainer.spawn_agents(self.agent_count)
-            self._agent_spwaned = True
-
         if options is not None and isinstance(options, dict):
             if options.get("reset_corridor", False):
                 trainer.get_singleton().corridor = None
+
+        if not self._agent_spawned:
+            trainer.spawn_agents(self.agent_count)
+            self._agent_spawned = True
 
         trainer.reset()
 

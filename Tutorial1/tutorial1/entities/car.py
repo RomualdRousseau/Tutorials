@@ -40,14 +40,16 @@ MAX_VISITED_LOCATION = 10
 
 
 class Car:
-    def __init__(self, color: pr.Color, input_mode: str = "human", vin: int = 0) -> None:
+    def __init__(
+        self, color: pr.Color, input_mode: str = "human", vin: int = 0, corridor: Optional[envelope.Envelope] = None
+    ) -> None:
         assert input_mode in ("human", "ai")
         self.vin = vin
         self.color = color
         self.input_mode = input_mode
         self.debug_mode = False
 
-        self.corridor: envelope.Envelope = world.get_random_corridor()
+        self.corridor: envelope.Envelope = corridor if corridor is not None else world.get_random_corridor()
         self.spawn_location: envelope.Location = (self.corridor.skeleton[0], self.corridor.skeleton[0].start)
 
     def set_debug_mode(self, debug_mode: bool) -> None:

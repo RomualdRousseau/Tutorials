@@ -66,11 +66,11 @@ def get_singleton(name: str = "default"):
 
 
 def reset_corridor():
-    context = get_singleton()
+    ctx = get_singleton()
     roads = world.get_singleton().roads
     start = random.choice(roads.vertice)
     stop = max(roads.vertice, key=lambda x: distance(start.point, x.point))
-    context.corridor, _ = envelope.generare_borders_from_spatial_graph(
+    ctx.corridor, _ = envelope.generare_borders_from_spatial_graph(
         roads.get_shortest_path(start, stop), world.ROAD_WIDTH, []
     )
 
@@ -80,16 +80,19 @@ def get_agents() -> list[car.Car]:
 
 
 def spawn_agents(agent_count: int) -> None:
-    get_singleton().agents = [car.Car(CAR_COLOR, input_mode="ai", vin=i) for i in range(agent_count)]
+    ctx = get_singleton()
+
+    if ctx.corridor is None:
+        reset_corridor()
+
+    ctx.agents = [car.Car(CAR_COLOR, input_mode="ai", vin=i, corridor=ctx.corridor) for i in range(agent_count)]
 
 
 def reset_agents() -> None:
-    context = get_singleton()
-    assert context.corridor is not None
-    for agent in context.agents:
-        agent.set_corridor(context.corridor)
-        if context.last_spawn_location is not None:
-            agent.set_spawn_location(context.last_spawn_location)
+    ctx = get_singleton()
+    for agent in ctx.agents:
+        if ctx.last_spawn_location is not None:
+            agent.set_spawn_location(ctx.last_spawn_location)
 
 
 def get_best_agent():
@@ -129,79 +132,75 @@ def is_terminated() -> bool:
 
 
 def reset() -> None:
-    context = get_singleton()
-
-    if context.corridor is None:
-        reset_corridor()
+    ctx = get_singleton()
 
     reset_agents()
 
-    context.entities = [*context.agents]
-    context.best_agent = None
-    context.timestep += 1
+    ctx.entities = [*ctx.agents]
+    ctx.best_agent = None
+    ctx.timestep += 1
 
-    for entity in context.entities:
+    for entity in ctx.entities:
         entity.reset()
 
-    if context.corridor is not None:
-        marker = Marker(context.agents[0].get_spawn_location(), world.ROAD_WIDTH * 0.5, 2, context.agents[0].head)
-        marker.add_listener(context)
-        context.entities.append(marker)
+    marker = Marker(ctx.agents[0].get_spawn_location(), world.ROAD_WIDTH * 0.5, 2, ctx.agents[0].head)
+    marker.add_listener(ctx)
+    ctx.entities.append(marker)
 
 
 def update(dt: float) -> str:
-    context = get_singleton()
+    ctx = get_singleton()
 
     world.update(dt)
 
-    for entity in context.entities:
+    for entity in ctx.entities:
         entity.update(dt)
-    context.entities = [entity for entity in context.entities if entity.is_alive()]
+    ctx.entities = [entity for entity in ctx.entities if entity.is_alive()]
 
-    for agent in context.agents:
+    for agent in ctx.agents:
         if agent.is_alive() and not is_agent_alive(agent):
             agent.hit(car.MAX_LIFE)
-            context.entities.append(Explosion(Point(agent.pos)))
+            ctx.entities.append(Explosion(Point(agent.pos)))
 
-    context.best_agent = max((x for x in context.agents if x.is_alive()), key=get_agent_score, default=None)
-    if context.best_agent is not None:
-        last_spawn_location = context.best_agent.get_spawn_location()
-        context.spawn_location_changed = context.last_spawn_location != last_spawn_location
-        context.last_spawn_location = last_spawn_location
+    ctx.best_agent = max((x for x in ctx.agents if x.is_alive()), key=get_agent_score, default=None)
+    if ctx.best_agent is not None:
+        last_spawn_location = ctx.best_agent.get_spawn_location()
+        ctx.spawn_location_changed = ctx.last_spawn_location != last_spawn_location
+        ctx.last_spawn_location = last_spawn_location
 
-    context.update_camera(context)
+    ctx.update_camera(ctx)
 
     return "trainer"
 
 
 def draw() -> None:
-    context = get_singleton()
-    assert context.corridor is not None
+    ctx = get_singleton()
+    assert ctx.corridor is not None
 
-    for agent in context.agents:
-        agent.set_debug_mode(agent is context.best_agent)
+    for agent in ctx.agents:
+        agent.set_debug_mode(agent is ctx.best_agent)
 
-    pr.begin_mode_2d(context.camera)
+    pr.begin_mode_2d(ctx.camera)
 
     world.draw(0)
 
-    for entity in context.entities:
+    for entity in ctx.entities:
         entity.draw(0)
 
-    for segment in context.corridor.segments:
+    for segment in ctx.corridor.segments:
         segment.draw(1, CORRIDOR_COLOR, None, True)
 
-    if context.last_spawn_location is not None:
-        context.last_spawn_location[1].draw(1, CORRIDOR_COLOR)  # type: ignore
+    if ctx.last_spawn_location is not None:
+        ctx.last_spawn_location[1].draw(1, CORRIDOR_COLOR)  # type: ignore
 
     world.draw(1)
 
-    for entity in context.entities:
+    for entity in ctx.entities:
         entity.draw(1)
 
     pr.end_mode_2d()
 
-    match context.best_agent:
+    match ctx.best_agent:
         case None:
             prx.draw_text("Distance: ---", pr.Vector2(2, 2), 20, pr.WHITE, shadow=True)  # type: ignore
             prx.draw_text("Speed: ---", pr.Vector2(2, 24), 20, pr.WHITE, shadow=True)  # type: ignore
@@ -210,8 +209,8 @@ def draw() -> None:
             prx.draw_text(f"Speed: {best_car.get_speed_in_kmh():.1f}km/h", pr.Vector2(2, 24), 20, pr.WHITE, shadow=True)  # type: ignore
 
     prx.draw_text(f"Time Elapsed: {datetime.timedelta(seconds=pr.get_time())}", pr.Vector2(2, 46), 20, pr.WHITE, shadow=True)  # type: ignore
-    prx.draw_text(f"Time Step: {context.timestep}", pr.Vector2(2, 68), 20, pr.WHITE, shadow=True)  # type: ignore
-    prx.draw_text(f"Lap: {context.lap}", pr.Vector2(2, 90), 20, pr.WHITE, shadow=True)  # type: ignore
+    prx.draw_text(f"Time Step: {ctx.timestep}", pr.Vector2(2, 68), 20, pr.WHITE, shadow=True)  # type: ignore
+    prx.draw_text(f"Lap: {ctx.lap}", pr.Vector2(2, 90), 20, pr.WHITE, shadow=True)  # type: ignore
 
     prx.draw_text(f"{pr.get_fps()}fps", pr.Vector2(2, 2), 20, pr.WHITE, align="right", shadow=True)  # type: ignore
 
