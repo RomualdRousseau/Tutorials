@@ -17,7 +17,7 @@ update:
 
 # Execute the pre-commit hooks
 pre-commit:
-    pre-commit run --files **
+    pre-commit run -a
 
 # Run the tutorial in training mode
 run-training: pre-commit
