@@ -2,7 +2,6 @@ from typing import Optional
 
 import numpy as np
 import pyray as pr
-
 import taxi_driver_env.resources as res
 from taxi_driver_env.constants import GAMEPAD_AXIS_X, GAMEPAD_AXIS_Y, GAMEPAD_ID
 from taxi_driver_env.entities import world
@@ -41,7 +40,11 @@ MAX_VISITED_LOCATION = 10
 
 class Car:
     def __init__(
-        self, color: pr.Color, input_mode: str = "human", vin: int = 0, corridor: Optional[envelope.Envelope] = None
+        self,
+        color: pr.Color,
+        input_mode: str = "human",
+        vin: int = 0,
+        corridor: Optional[envelope.Envelope] = None,
     ) -> None:
         assert input_mode in ("human", "ai")
         self.vin = vin
@@ -50,7 +53,10 @@ class Car:
         self.debug_mode = False
 
         self.corridor: envelope.Envelope = corridor if corridor is not None else world.get_random_corridor()
-        self.spawn_location: envelope.Location = (self.corridor.skeleton[0], self.corridor.skeleton[0].start)
+        self.spawn_location: envelope.Location = (
+            self.corridor.skeleton[0],
+            self.corridor.skeleton[0].start,
+        )
 
     def set_debug_mode(self, debug_mode: bool) -> None:
         self.debug_mode = debug_mode
@@ -132,7 +138,11 @@ class Car:
             color: pr.Color = pr.YELLOW if not is_bit_set(self.flags, FLAG_DAMAGED | FLAG_OUT_OF_TRACK) else pr.RED  # type: ignore
             color = pr.color_alpha(color, 0.25)
 
-            pr.draw_line_v(self.visited_location[-1][1].to_vec(), self.current_location[1].to_vec(), color)
+            pr.draw_line_v(
+                self.visited_location[-1][1].to_vec(),
+                self.current_location[1].to_vec(),
+                color,
+            )
 
             for ray in self.camera:
                 pr.draw_line_v(ray.start.to_vec(), ray.end.to_vec(), color)

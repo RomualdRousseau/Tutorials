@@ -1,5 +1,4 @@
 import numpy as np
-
 from taxi_driver_env.math.linalg import EPS, lst_2_vec, normalize
 
 

@@ -1,5 +1,4 @@
 import pyray as pr
-
 from taxi_driver_env.constants import FRAME_RATE
 from taxi_driver_env.math.linalg import EPS
 from taxi_driver_env.utils.types import Widget

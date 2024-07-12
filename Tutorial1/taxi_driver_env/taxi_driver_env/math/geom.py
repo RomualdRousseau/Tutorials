@@ -6,7 +6,6 @@ from typing import Any, Iterable, Optional
 import numpy as np
 import numpy.typing as npt
 import pyray as pr
-
 import taxi_driver_env.math.linalg as la
 import taxi_driver_env.utils.pyray_ex as prx
 from taxi_driver_env.constants import VIRTUAL_CELL, VIRTUAL_WIDTH
@@ -170,7 +169,11 @@ def cast_ray_segments(
         point = next((x for x in map(intersect_with_ray, segments) if x is not None), target)
     else:
         closest = lambda x: distance(position, x)
-        point = min((x for x in map(intersect_with_ray, segments) if x is not None), key=closest, default=target)
+        point = min(
+            (x for x in map(intersect_with_ray, segments) if x is not None),
+            key=closest,
+            default=target,
+        )
     return Segment(position, point)
 
 

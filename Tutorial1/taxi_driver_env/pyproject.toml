@@ -30,27 +30,3 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.coverage.run]
 omit = ["tests/*", "taxi_driver_env/utils/*", "taxi_driver_env/math/linalg.py"]
-
-[tool.black]
-line-length = 120
-
-[tool.ruff]
-select = [
-    "E",  # pycodestyle errors
-    "W",  # pycodestyle warnings
-    "F",  # pyflakes
-    "I",  # isort
-    "C",  # flake8-comprehensions
-    "B",  # flake8-bugbear
-    "N",  # pep8-naming
-    #    "D",  # pydocstyle
-    "PD",  # pandas-vet
-    "PL",  # Pylint
-    "RUF",  # Ruff-specific rules
-]
-ignore = [
-    "E501",    # line too long, handled by black
-    "E731",    # accept lambda
-    "RUF005",  # collection literal concatenation
-    "PLR0913"  # Too many arguments to function call
-]

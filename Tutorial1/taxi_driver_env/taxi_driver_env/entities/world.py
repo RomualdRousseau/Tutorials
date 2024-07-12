@@ -6,7 +6,6 @@ from functools import lru_cache
 
 import numpy as np
 import pyray as pr
-
 import taxi_driver_env.resources as res
 from taxi_driver_env.math import envelope, graph
 from taxi_driver_env.math.geom import (
@@ -29,7 +28,12 @@ START_OFFSET = 2  # m
 
 HOUSE_DENSITY = 0.9
 HOUSE_DISTANCE = 10  # m
-HOUSE_SIZES = {"house1": (16, 16, 1), "house2": (16, 16, 2), "house3": (32, 24, 3), "house4": (32, 24, 4)}
+HOUSE_SIZES = {
+    "house1": (16, 16, 1),
+    "house2": (16, 16, 2),
+    "house3": (32, 24, 3),
+    "house4": (32, 24, 4),
+}
 HOUSE_TYPES = list(HOUSE_SIZES.keys())
 HOUSE_REAL_ESTATE = 0.5
 
@@ -88,7 +92,10 @@ def get_singleton(name: str = "default") -> World:
 
     houses: list[House] = []
     for anchor in anchors:
-        dist, seg = min(((distance_point_segment(anchor, seg), seg) for seg in borders.segments), key=lambda x: x[0])
+        dist, seg = min(
+            ((distance_point_segment(anchor, seg), seg) for seg in borders.segments),
+            key=lambda x: x[0],
+        )
         if HOUSE_DISTANCE <= dist <= TREE_DISTANCE and random.random() < HOUSE_DENSITY:
             house = House(anchor, seg, random.choice(HOUSE_TYPES))
             if not any(x.is_overlap(house) for x in houses):
@@ -96,7 +103,13 @@ def get_singleton(name: str = "default") -> World:
 
     trees = [
         Tree(
-            Point(anchor.xy + [random.randint(-TREE_OFFSET, TREE_OFFSET), random.randint(-TREE_OFFSET, TREE_OFFSET)]),
+            Point(
+                anchor.xy
+                + [
+                    random.randint(-TREE_OFFSET, TREE_OFFSET),
+                    random.randint(-TREE_OFFSET, TREE_OFFSET),
+                ]
+            ),
             random.random() * np.pi / 2,
             random.choice(TREE_TYPES),
         )

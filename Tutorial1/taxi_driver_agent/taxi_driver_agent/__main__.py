@@ -18,7 +18,12 @@ BAR_FORMAT = "{l_bar}{bar}| {n_fmt}/{total_fmt}"
 class Agent:
     CK = np.array([0.25, 0.5, 0.25])
 
-    def __init__(self, model: Optional[pf.Sequential] = None, mutate: bool = False, timestep: int = 0) -> None:
+    def __init__(
+        self,
+        model: Optional[pf.Sequential] = None,
+        mutate: bool = False,
+        timestep: int = 0,
+    ) -> None:
         self.fitness = 0.0
 
         lr = pf.functions.lr_exp_decay(timestep, 1000, np.log(0.1), 0.1, 0.001)
@@ -68,7 +73,12 @@ def spawn_agents(
     )
     return [
         Agent(get_model(), mutate, timestep)
-        for _ in trange(agent_count, desc=f"Spawning agents ({mode})", ncols=120, bar_format=BAR_FORMAT)
+        for _ in trange(
+            agent_count,
+            desc=f"Spawning agents ({mode})",
+            ncols=120,
+            bar_format=BAR_FORMAT,
+        )
     ]
 
 
@@ -117,7 +127,12 @@ def main(
     else:
         best_model = None
 
-    env = gym.make("tutorial1/Tutorial1-v1", agent_count=agent_count, render_mode="human", render_fps=render_fps)
+    env = gym.make(
+        "tutorial1/Tutorial1-v1",
+        agent_count=agent_count,
+        render_mode="human",
+        render_fps=render_fps,
+    )
 
     agents = spawn_agents(mode, agent_count, best_model, False, timestep)
     observation, info = env.reset(seed=seed)
@@ -133,7 +148,12 @@ def main(
             best_model = agents[best_agent_vin].model
 
         if terminated or truncated:
-            logging.warning(colorize("All agents were destroyed, restarting a new time step ...", "yellow"))
+            logging.warning(
+                colorize(
+                    "All agents were destroyed, restarting a new time step ...",
+                    "yellow",
+                )
+            )
             timestep += 1
 
             if mode == "training":

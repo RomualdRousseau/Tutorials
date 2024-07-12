@@ -143,7 +143,12 @@ def reset() -> None:
     for entity in ctx.entities:
         entity.reset()
 
-    marker = Marker(ctx.agents[0].get_spawn_location(), world.ROAD_WIDTH * 0.5, 2, ctx.agents[0].head)
+    marker = Marker(
+        ctx.agents[0].get_spawn_location(),
+        world.ROAD_WIDTH * 0.5,
+        2,
+        ctx.agents[0].head,
+    )
     marker.add_listener(ctx)
     ctx.entities.append(marker)
 
@@ -224,7 +229,9 @@ def _update_camera_free_mode(_context: Context) -> None:
     else:
         if pr.is_mouse_button_down(pr.MouseButton.MOUSE_BUTTON_LEFT):
             _context.camera.target = pr.vector2_lerp(
-                _context.camera.target, pr.vector2_subtract(_context.camera.target, pr.get_mouse_delta()), 0.2
+                _context.camera.target,
+                pr.vector2_subtract(_context.camera.target, pr.get_mouse_delta()),
+                0.2,
             )
         _context.camera.zoom = max(1, _context.camera.zoom + pr.get_mouse_wheel_move() * 0.5)
 

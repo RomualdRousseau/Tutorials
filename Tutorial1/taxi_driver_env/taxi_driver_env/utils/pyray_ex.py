@@ -1,5 +1,4 @@
 import pyray as pr
-
 from taxi_driver_env.constants import WINDOW_HEIGHT, WINDOW_WIDTH
 
 SCREEN = pr.Rectangle(0, 0, WINDOW_WIDTH - 1, WINDOW_HEIGHT - 1)
@@ -10,7 +9,14 @@ def init_gamepad():
         pr.trace_log(pr.TraceLogLevel.LOG_INFO, f"GAMEPAD: id: {i} - {pr.get_gamepad_name(i)}")
 
 
-def draw_text(text: str, pos: pr.Vector2, font_size: int, color: pr.Color, align: str = "left", shadow: bool = False):
+def draw_text(
+    text: str,
+    pos: pr.Vector2,
+    font_size: int,
+    color: pr.Color,
+    align: str = "left",
+    shadow: bool = False,
+):
     assert align in ["left", "right", "center"]
     if align == "left":
         x = int(pos.x)
@@ -32,7 +38,12 @@ def draw_line(
     color: pr.Color,
     rounded: bool,
 ) -> None:
-    aabb = pr.Rectangle(min(start.x, end.x), min(start.y, end.y), abs(end.x - start.x), abs(end.y - start.y))
+    aabb = pr.Rectangle(
+        min(start.x, end.x),
+        min(start.y, end.y),
+        abs(end.x - start.x),
+        abs(end.y - start.y),
+    )
     if pr.get_collision_rec(SCREEN, aabb) is None:
         return
 
@@ -50,7 +61,12 @@ def draw_dashed_line(
     dashed: tuple[int, pr.Color],
     rounded: bool,
 ) -> None:
-    aabb = pr.Rectangle(min(start.x, end.x), min(start.y, end.y), abs(end.x - start.x), abs(end.y - start.y))
+    aabb = pr.Rectangle(
+        min(start.x, end.x),
+        min(start.y, end.y),
+        abs(end.x - start.x),
+        abs(end.y - start.y),
+    )
     if pr.get_collision_rec(SCREEN, aabb) is None:
         return
 

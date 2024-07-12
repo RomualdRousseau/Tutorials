@@ -60,7 +60,10 @@ def intersect_jit(
 
 @njit
 def distance_point_segment_jit(
-    p: npt.NDArray[np.float64], a: npt.NDArray[np.float64], b: npt.NDArray[np.float64], closest: bool = False
+    p: npt.NDArray[np.float64],
+    a: npt.NDArray[np.float64],
+    b: npt.NDArray[np.float64],
+    closest: bool = False,
 ) -> float:
     u = p - a
     v = b - a
@@ -77,7 +80,10 @@ def distance_point_segment_jit(
 
 @njit
 def nearest_point_segment_jit(
-    p: npt.NDArray[np.float64], a: npt.NDArray[np.float64], b: npt.NDArray[np.float64], closest: bool = False
+    p: npt.NDArray[np.float64],
+    a: npt.NDArray[np.float64],
+    b: npt.NDArray[np.float64],
+    closest: bool = False,
 ) -> Optional[npt.NDArray[np.float64]]:
     u = p - a
     v = b - a
@@ -94,7 +100,10 @@ def nearest_point_segment_jit(
 
 @njit
 def collision_circle_segment_jit(
-    center: npt.NDArray[np.float64], radius: float, a: npt.NDArray[np.float64], b: npt.NDArray[np.float64]
+    center: npt.NDArray[np.float64],
+    radius: float,
+    a: npt.NDArray[np.float64],
+    b: npt.NDArray[np.float64],
 ) -> Optional[npt.NDArray[np.float64]]:
     x = nearest_point_segment_jit(center, a, b, True)
     if x is not None:

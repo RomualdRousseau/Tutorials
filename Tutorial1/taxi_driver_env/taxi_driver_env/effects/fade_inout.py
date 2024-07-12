@@ -1,5 +1,4 @@
 import pyray as pr
-
 from taxi_driver_env.constants import FRAME_RATE, WINDOW_HEIGHT, WINDOW_WIDTH
 from taxi_driver_env.math.linalg import EPS, clamp
 

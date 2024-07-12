@@ -8,7 +8,6 @@ from typing import Iterable
 
 import numpy as np
 import pyray as pr
-
 from taxi_driver_env.constants import VIRTUAL_WIDTH
 from taxi_driver_env.math.geom import (
     Point,
@@ -55,7 +54,7 @@ class SpatialGraph:
     edges: list[SpatialEdge]
 
     def get_edges_from_vextex(self, v: SpatialVertex) -> Iterable[tuple[SpatialEdge, SpatialVertex]]:
-        is_neighboor = lambda x: x.start == v or x.end == v
+        is_neighboor = lambda x: v in (x.start, x.end)
         other_vertex = lambda x: (x, x.end if x.start == v else x.start)
         return map(other_vertex, filter(is_neighboor, self.edges))
 

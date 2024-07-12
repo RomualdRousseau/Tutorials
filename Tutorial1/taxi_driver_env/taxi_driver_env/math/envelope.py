@@ -4,8 +4,6 @@ from functools import lru_cache, reduce
 from typing import Any, Callable, Iterable
 
 import numpy as np
-from tqdm import tqdm, trange
-
 from taxi_driver_env.constants import VIRTUAL_WIDTH
 from taxi_driver_env.math import graph
 from taxi_driver_env.math.geom import (
@@ -19,6 +17,7 @@ from taxi_driver_env.math.geom import (
     polygon_to_segments,
 )
 from taxi_driver_env.math.linalg import lst_2_vec, normalize
+from tqdm import tqdm, trange
 
 Location = tuple[Segment, Point]
 ProgressCallBack = Callable[[float], None]
@@ -58,13 +57,21 @@ class Envelope:
 def get_nearest_segments(envelope: Envelope, position: Point, radius: int) -> list[Segment]:
     radius = max(radius, VIRTUAL_WIDTH)
     nearest_distance = lambda x: distance_point_segment(position, x, True)
-    return sorted((x for x in envelope.segments if nearest_distance(x) < radius), key=nearest_distance)
+    return sorted(
+        (x for x in envelope.segments if nearest_distance(x) < radius),
+        key=nearest_distance,
+    )
 
 
 def generare_borders_from_spatial_graph(
     agraph: graph.SpatialGraph, width: int, progress_callbacks: list[ProgressCallBack]
 ) -> tuple[Envelope, list[Point]]:
-    with tqdm(total=4, desc="Generating envelope", ncols=120, bar_format="{l_bar}{bar}| {n_fmt}/{total_fmt}") as pbar:
+    with tqdm(
+        total=4,
+        desc="Generating envelope",
+        ncols=120,
+        bar_format="{l_bar}{bar}| {n_fmt}/{total_fmt}",
+    ) as pbar:
         envelopes = [_generate_envelope(e, width) for e in agraph.edges]
         _pbar_update(pbar, progress_callbacks)
         anchors = _generate_anchors(envelopes)
@@ -79,7 +86,12 @@ def generare_borders_from_spatial_graph(
 def generare_corridor_from_spatial_graph(
     agraph: graph.SpatialGraph, width: int, progress_callbacks: list[ProgressCallBack]
 ) -> Envelope:
-    with tqdm(total=3, desc="Generating envelope", ncols=120, bar_format="{l_bar}{bar}| {n_fmt}/{total_fmt}") as pbar:
+    with tqdm(
+        total=3,
+        desc="Generating envelope",
+        ncols=120,
+        bar_format="{l_bar}{bar}| {n_fmt}/{total_fmt}",
+    ) as pbar:
         envelopes = [_generate_envelope(e, width) for e in agraph.edges]
         _pbar_update(pbar, progress_callbacks)
         envelopes = _break_envelopes(envelopes)
@@ -131,7 +143,7 @@ def _generate_anchors(envelopes: list[Envelope], step: int = 20):
 
 def _break_envelopes(envelopes: list[Envelope]) -> list[Envelope]:
     def break_envelope(e: Envelope, s: Segment) -> Envelope:
-        segments: list[Segment] = sum((break_segment(s, x) for x in e.segments), [])
+        segments: list[Segment] = reduce(lambda a, x: [*a, *x], (break_segment(s, x) for x in e.segments), [])
         return Envelope(segments, e.skeleton, e.width)
 
     def break_two_envelopes(e1: Envelope, e2: Envelope) -> tuple[Envelope, Envelope]:
@@ -159,7 +171,12 @@ def _union_envelopes(envelopes: list[Envelope]) -> Envelope:
 
     segment_in_polygon = lambda y: lambda x: point_in_polygon(y.middle, x.points)
 
-    for e in tqdm(envelopes, desc="Union", ncols=120, bar_format="{l_bar}{bar}| {n_fmt}/{total_fmt}"):
+    for e in tqdm(
+        envelopes,
+        desc="Union",
+        ncols=120,
+        bar_format="{l_bar}{bar}| {n_fmt}/{total_fmt}",
+    ):
         for s in e.segments:
             inside = any(
                 map(

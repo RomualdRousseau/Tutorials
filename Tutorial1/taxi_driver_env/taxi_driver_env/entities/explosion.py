@@ -1,5 +1,4 @@
 import pyray as pr
-
 from taxi_driver_env.math.geom import Point
 
 COLOR = pr.Color(255, 255, 255, 128)
