@@ -21,20 +21,21 @@ def get_singleton(name: str = "default") -> Context:
 
 
 def reset() -> None:
-    context = get_singleton()
+    ctx = get_singleton()
 
     def progress_callback(progress: float) -> None:
-        context.progress = progress
+        ctx.progress = progress
 
     def done_callback(_: Future) -> None:
-        context.done = True
+        ctx.done = True
 
     world.add_progress_callback(progress_callback)
-    context.executor.submit(world.get_singleton).add_done_callback(done_callback)
+    ctx.executor.submit(world.get_singleton).add_done_callback(done_callback)
 
 
 def update(_: float) -> str:
-    return "gameplay" if get_singleton().done else "loading"
+    ctx = get_singleton()
+    return "gameplay" if ctx.done else "loading"
 
 
 def draw() -> None:
