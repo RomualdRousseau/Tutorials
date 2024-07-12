@@ -69,7 +69,7 @@ def generare_borders_from_spatial_graph(
     with tqdm(
         total=4,
         desc="Generating envelope",
-        ncols=120,
+        ncols=80,
         bar_format="{l_bar}{bar}| {n_fmt}/{total_fmt}",
     ) as pbar:
         envelopes = [_generate_envelope(e, width) for e in agraph.edges]
@@ -89,7 +89,7 @@ def generare_corridor_from_spatial_graph(
     with tqdm(
         total=3,
         desc="Generating envelope",
-        ncols=120,
+        ncols=80,
         bar_format="{l_bar}{bar}| {n_fmt}/{total_fmt}",
     ) as pbar:
         envelopes = [_generate_envelope(e, width) for e in agraph.edges]
@@ -155,7 +155,7 @@ def _break_envelopes(envelopes: list[Envelope]) -> list[Envelope]:
     result = envelopes
     n = len(envelopes)
 
-    for i in trange(n, desc="Break", ncols=120, bar_format="{l_bar}{bar}| {n_fmt}/{total_fmt}"):
+    for i in trange(n, desc="Break", ncols=80, bar_format="{l_bar}{bar}| {n_fmt}/{total_fmt}"):
         head, acc = result[i], []
         for j in range(i + 1, n):
             head, tail = break_two_envelopes(head, result[j])
@@ -174,7 +174,7 @@ def _union_envelopes(envelopes: list[Envelope]) -> Envelope:
     for e in tqdm(
         envelopes,
         desc="Union",
-        ncols=120,
+        ncols=80,
         bar_format="{l_bar}{bar}| {n_fmt}/{total_fmt}",
     ):
         for s in e.segments:

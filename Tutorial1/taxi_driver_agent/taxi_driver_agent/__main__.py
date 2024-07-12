@@ -76,7 +76,7 @@ def spawn_agents(
         for _ in trange(
             agent_count,
             desc=f"Spawning agents ({mode})",
-            ncols=120,
+            ncols=80,
             bar_format=BAR_FORMAT,
         )
     ]

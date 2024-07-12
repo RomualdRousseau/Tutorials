@@ -21,7 +21,7 @@ build:
 
 # Execute the pre-commit hooks
 pre-commit:
-    pre-commit run -a
+    poetry run pre-commit run -a
 
 # Run the tests
 test:
