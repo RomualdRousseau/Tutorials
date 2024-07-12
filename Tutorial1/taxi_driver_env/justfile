@@ -27,13 +27,17 @@ pre-commit:
 test:
     poetry run coverage run -m pytest -vv
 
+# Display the coverage report
+coverage: test
+    poetry run coverage report -m --fail-under=80
+
 # Run the tutorial
 run: pre-commit coverage
     poetry run python -m taxi_driver_env
 
-# Display the coverage report
-coverage: test
-    poetry run coverage report -m --fail-under=80
+# Run the tutorial without pre-commit and coverage
+quick-run:
+    poetry run python -m taxi_driver_env
 
 # Profile the tutorial
 profile: pre-commit coverage

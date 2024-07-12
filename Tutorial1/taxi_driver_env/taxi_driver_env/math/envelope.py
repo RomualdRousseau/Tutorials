@@ -73,13 +73,13 @@ def generare_borders_from_spatial_graph(
         bar_format="{l_bar}{bar}| {n_fmt}/{total_fmt}",
     ) as pbar:
         envelopes = [_generate_envelope(e, width) for e in agraph.edges]
-        _pbar_update(pbar, progress_callbacks)
+        _pbar_update_and_call(pbar, progress_callbacks)
         anchors = _generate_anchors(envelopes)
-        _pbar_update(pbar, progress_callbacks)
+        _pbar_update_and_call(pbar, progress_callbacks)
         envelopes = _break_envelopes(envelopes)
-        _pbar_update(pbar, progress_callbacks)
+        _pbar_update_and_call(pbar, progress_callbacks)
         envelope = _union_envelopes(envelopes)
-        _pbar_update(pbar, progress_callbacks)
+        _pbar_update_and_call(pbar, progress_callbacks)
     return envelope, anchors
 
 
@@ -93,11 +93,11 @@ def generare_corridor_from_spatial_graph(
         bar_format="{l_bar}{bar}| {n_fmt}/{total_fmt}",
     ) as pbar:
         envelopes = [_generate_envelope(e, width) for e in agraph.edges]
-        _pbar_update(pbar, progress_callbacks)
+        _pbar_update_and_call(pbar, progress_callbacks)
         envelopes = _break_envelopes(envelopes)
-        _pbar_update(pbar, progress_callbacks)
+        _pbar_update_and_call(pbar, progress_callbacks)
         envelope = _union_envelopes(envelopes)
-        _pbar_update(pbar, progress_callbacks)
+        _pbar_update_and_call(pbar, progress_callbacks)
     return envelope
 
 
@@ -190,7 +190,7 @@ def _union_envelopes(envelopes: list[Envelope]) -> Envelope:
     return Envelope(segments_to_keep, skeleton, width)
 
 
-def _pbar_update(pbar: tqdm, progress_callbacks: list[ProgressCallBack]):
+def _pbar_update_and_call(pbar: tqdm, progress_callbacks: list[ProgressCallBack]):
     pbar.update(1)
     for progress_callback in progress_callbacks:
         progress_callback(pbar.n / pbar.total)
