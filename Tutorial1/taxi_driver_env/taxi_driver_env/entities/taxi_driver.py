@@ -22,7 +22,7 @@ class TaxiDriver:
     STATE_DROPOFF = 7
     STATE_DROPOFF_WAIT = 8
 
-    def __init__(self, input_mode: str, debug_mode: bool = True) -> None:
+    def __init__(self, input_mode: str, debug_mode: bool = False) -> None:
         self.state = TaxiDriver.STATE_INIT
         self.car = car.Car(CAR_COLOR, input_mode)
         self.car.set_debug_mode(debug_mode)

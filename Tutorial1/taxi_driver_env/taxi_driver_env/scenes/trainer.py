@@ -9,7 +9,7 @@ from typing import Optional
 import numpy as np
 import pyray as pr
 
-import taxi_driver_env.utils.pyray_ex as prx
+import taxi_driver_env.utils.pyrayex as prx
 from taxi_driver_env.cameras.camera_follower import CameraFollower
 from taxi_driver_env.cameras.camera_free import CameraFree
 from taxi_driver_env.entities import car, world

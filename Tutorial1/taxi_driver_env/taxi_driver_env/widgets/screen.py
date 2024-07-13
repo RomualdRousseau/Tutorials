@@ -1,6 +1,6 @@
 import pyray as pr
 import taxi_driver_env.resources as res
-from taxi_driver_env.constants import WINDOW_HEIGHT, WINDOW_WIDTH
+import taxi_driver_env.utils.pyrayex as prx
 
 
 class Screen:
@@ -8,7 +8,7 @@ class Screen:
         self.texture_name = texture_name
 
     def get_bound(self) -> pr.Rectangle:
-        return pr.Rectangle(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT)
+        return prx.SCREEN
 
     def reset(self) -> None:
         self.surface = res.load_texture(self.texture_name)
@@ -20,8 +20,8 @@ class Screen:
         pr.draw_texture_pro(
             self.surface,
             pr.Rectangle(0, 0, self.surface.width, self.surface.height),
-            pr.Rectangle(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT),
-            pr.Vector2(0, 0),
+            self.get_bound(),
+            pr.vector2_zero(),
             0,
             pr.WHITE,  # type: ignore
         )

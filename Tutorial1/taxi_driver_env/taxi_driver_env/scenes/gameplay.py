@@ -8,7 +8,7 @@ from typing import Optional
 import pyray as pr
 
 import taxi_driver_env.resources as res
-import taxi_driver_env.utils.pyray_ex as prx
+import taxi_driver_env.utils.pyrayex as prx
 from taxi_driver_env.cameras.camera_follower import CameraFollower
 from taxi_driver_env.effects.fade_scr import FadeScr
 from taxi_driver_env.effects.open_vertical import OpenVertical
@@ -35,6 +35,7 @@ class Context:
     entities: list[Entity]
     fade_in: FadeScr
     message_box: Optional[OpenVertical]
+    minimap_visible: bool = True
 
 
 @lru_cache(1)
@@ -61,6 +62,11 @@ def reset() -> None:
 def update(dt: float) -> str:
     ctx = get_singleton()
     prev_flags = ctx.player.car.flags
+
+    if pr.is_key_pressed(pr.KeyboardKey.KEY_F1):
+        ctx.player.car.set_debug_mode(not ctx.player.car.debug_mode)
+    if pr.is_key_pressed(pr.KeyboardKey.KEY_F2):
+        ctx.minimap_visible = not ctx.minimap_visible
 
     match ctx.state:
         case 0:
@@ -145,16 +151,18 @@ def draw() -> None:
             entity.draw(layer)
     pr.end_mode_2d()
 
-    ctx.minimap.draw()
+    if ctx.minimap_visible:
+        ctx.minimap.draw()
 
     if ctx.message_box is not None:
         ctx.message_box.draw()
 
-    prx.draw_text(f"Distance: {ctx.player.car.get_total_distance_in_km():.3f}km", pr.Vector2(2, 2), 20, pr.WHITE, shadow=True)  # type: ignore
-    prx.draw_text(f"Speed: {ctx.player.car.get_speed_in_kmh():.1f}km/h", pr.Vector2(2, 24), 20, pr.WHITE, shadow=True)  # type: ignore
-    prx.draw_text(f"Time Elapsed: {datetime.timedelta(seconds=pr.get_time())}", pr.Vector2(2, 46), 20, pr.WHITE, shadow=True)  # type: ignore
+    if ctx.player.car.debug_mode:
+        prx.draw_text(f"Distance: {ctx.player.car.get_total_distance_in_km():.3f}km", pr.Vector2(2, 2), 20, pr.WHITE, shadow=True)  # type: ignore
+        prx.draw_text(f"Speed: {ctx.player.car.get_speed_in_kmh():.1f}km/h", pr.Vector2(2, 24), 20, pr.WHITE, shadow=True)  # type: ignore
+        prx.draw_text(f"Time Elapsed: {datetime.timedelta(seconds=pr.get_time())}", pr.Vector2(2, 46), 20, pr.WHITE, shadow=True)  # type: ignore
 
-    prx.draw_text(f"{pr.get_fps()}fps", pr.Vector2(2, 2), 20, pr.WHITE, align="right", shadow=True)  # type: ignore
+        prx.draw_text(f"{pr.get_fps()}fps", pr.Vector2(2, 2), 20, pr.WHITE, align="right", shadow=True)  # type: ignore
 
     if ctx.state == 0:
         ctx.fade_in.draw()

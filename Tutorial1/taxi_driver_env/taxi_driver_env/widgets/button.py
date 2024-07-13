@@ -1,7 +1,5 @@
 import pyray as pr
 
-# import taxi_driver_env.resources as res
-
 
 class Button:
     FONT_SIZE = 20

@@ -1,7 +1,7 @@
 import pyray as pr
+import taxi_driver_env.utils.pyrayex as prx
 from taxi_driver_env.constants import FRAME_RATE
 from taxi_driver_env.math.linalg import EPS, clamp
-from taxi_driver_env.utils.pyray_ex import SCREEN
 
 
 class FadeInOut:
@@ -13,7 +13,7 @@ class FadeInOut:
         self.color = color
 
     def get_bound(self) -> pr.Rectangle:
-        return SCREEN
+        return prx.SCREEN
 
     def is_playing(self, latency: float = 0.1) -> bool:
         return self.timer < self.duration + latency

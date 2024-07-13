@@ -3,7 +3,7 @@ import random
 import numpy as np
 import pyray as pr
 
-import taxi_driver_env.utils.pyray_ex as prx
+import taxi_driver_env.utils.pyrayex as prx
 from taxi_driver_env.constants import (
     APP_NAME,
     FRAME_RATE,
