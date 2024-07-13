@@ -1,7 +1,7 @@
 import pyray as pr
 from taxi_driver_env.constants import WINDOW_HEIGHT, WINDOW_WIDTH
 
-SCREEN = pr.Rectangle(0, 0, WINDOW_WIDTH - 1, WINDOW_HEIGHT - 1)
+SCREEN = pr.Rectangle(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT)
 
 
 def init_gamepad():

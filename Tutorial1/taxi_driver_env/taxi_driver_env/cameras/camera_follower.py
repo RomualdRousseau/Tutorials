@@ -19,9 +19,6 @@ class CameraFollower:
     def set_target(self, acar: car.Car) -> None:
         self.car = acar
 
-    def get_bound(self) -> pr.Rectangle:
-        return pr.Rectangle(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT)
-
     def reset(self) -> None:
         pr.set_mouse_cursor(pr.MouseCursor.MOUSE_CURSOR_ARROW)
         pr.hide_cursor()

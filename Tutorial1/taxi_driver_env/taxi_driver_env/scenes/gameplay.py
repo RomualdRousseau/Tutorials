@@ -16,8 +16,8 @@ from taxi_driver_env.entities import car, world
 from taxi_driver_env.entities.explosion import Explosion
 from taxi_driver_env.entities.minimap import Minimap
 from taxi_driver_env.entities.taxi_driver import WAIT_TIMER, TaxiDriver
+from taxi_driver_env.types import Entity, Widget
 from taxi_driver_env.utils.bitbang import is_bit_set
-from taxi_driver_env.utils.types import Entity, Widget
 from taxi_driver_env.widgets.message_box import MessageBox
 
 CAR_COLOR = pr.Color(255, 255, 255, 255)

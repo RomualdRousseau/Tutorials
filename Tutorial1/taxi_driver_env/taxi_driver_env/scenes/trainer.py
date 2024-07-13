@@ -18,8 +18,8 @@ from taxi_driver_env.entities.marker import Marker
 from taxi_driver_env.math import envelope
 from taxi_driver_env.math.geom import Point, distance
 from taxi_driver_env.math.linalg import lst_2_vec
+from taxi_driver_env.types import Entity
 from taxi_driver_env.utils.bitbang import is_bit_set
-from taxi_driver_env.utils.types import Entity
 
 CAR_BEST_COLOR = pr.Color(255, 255, 255, 255)
 CAR_COLOR = pr.Color(255, 255, 255, 64)

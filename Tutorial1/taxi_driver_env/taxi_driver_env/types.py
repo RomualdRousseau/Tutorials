@@ -14,6 +14,17 @@ class Scene(Protocol):
         ...
 
 
+class Camera(Protocol):
+    def reset(self) -> None:
+        ...
+
+    def update(self, dt: float) -> str:
+        ...
+
+    def draw(self) -> None:
+        ...
+
+
 class Entity(Protocol):
     def is_alive(self) -> bool:
         ...
@@ -45,7 +56,7 @@ class Widget(Protocol):
         ...
 
 
-class Animator(Protocol):
+class Effect(Protocol):
     def get_bound(self) -> pr.Rectangle:
         ...
 

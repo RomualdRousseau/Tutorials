@@ -15,9 +15,6 @@ class CameraFree:
             ZOOM_DEFAULT,
         )
 
-    def get_bound(self) -> pr.Rectangle:
-        return pr.Rectangle(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT)
-
     def reset(self) -> None:
         pr.set_mouse_cursor(pr.MouseCursor.MOUSE_CURSOR_RESIZE_ALL)
         pr.show_cursor()
