@@ -152,6 +152,14 @@ def get_corridor_from_a_to_b(a: envelope.Location, b: envelope.Location) -> enve
     return envelope.generare_corridor_from_spatial_graph(shortest_path, ROAD_WIDTH, [])
 
 
+def is_alive() -> bool:
+    return True
+
+
+def hit(damage: int) -> None:
+    pass
+
+
 def reset() -> None:
     pass
 

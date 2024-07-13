@@ -4,13 +4,14 @@ import datetime
 import random
 from dataclasses import dataclass
 from functools import lru_cache
-from typing import Callable, Optional
+from typing import Optional
 
 import numpy as np
 import pyray as pr
 
 import taxi_driver_env.utils.pyray_ex as prx
-from taxi_driver_env.constants import WINDOW_HEIGHT, WINDOW_WIDTH
+from taxi_driver_env.cameras.camera_follower import CameraFollower
+from taxi_driver_env.cameras.camera_free import CameraFree
 from taxi_driver_env.entities import car, world
 from taxi_driver_env.entities.explosion import Explosion
 from taxi_driver_env.entities.marker import Marker
@@ -32,8 +33,7 @@ ZOOM_ACCELERATION_COEF = 0.1
 class Context:
     agents: list[car.Car]
     entities: list[Entity]
-    camera: pr.Camera2D
-    update_camera: Callable[[Context], None]
+    camera: Optional[CameraFollower | CameraFree] = None
     corridor: Optional[envelope.Envelope] = None
     best_agent: Optional[car.Car] = None
     last_spawn_location: Optional[envelope.Location] = None
@@ -56,13 +56,7 @@ class Context:
 
 @lru_cache(1)
 def get_singleton(name: str = "default"):
-    camera = pr.Camera2D(
-        pr.Vector2(WINDOW_WIDTH / 2, WINDOW_HEIGHT / 2),
-        pr.Vector2(0, 0),
-        0,
-        ZOOM_DEFAULT,
-    )
-    return Context([], [], camera, _update_camera_game_mode)
+    return Context([], [])
 
 
 def reset_corridor():
@@ -135,8 +129,10 @@ def reset() -> None:
     ctx = get_singleton()
 
     reset_agents()
+    default_agent = ctx.agents[0]
 
-    ctx.entities = [*ctx.agents]
+    ctx.entities = [world, *ctx.agents]
+    ctx.camera = CameraFollower(default_agent)
     ctx.best_agent = None
     ctx.timestep += 1
 
@@ -144,19 +140,32 @@ def reset() -> None:
         entity.reset()
 
     marker = Marker(
-        ctx.agents[0].get_spawn_location(),
+        default_agent.get_spawn_location(),
         world.ROAD_WIDTH * 0.5,
         2,
-        ctx.agents[0].head,
+        default_agent.head,
     )
     marker.add_listener(ctx)
     ctx.entities.append(marker)
 
+    ctx.camera.reset()
+
 
 def update(dt: float) -> str:
     ctx = get_singleton()
+    assert ctx.corridor is not None
+    assert ctx.camera is not None
 
-    world.update(dt)
+    if pr.is_mouse_button_pressed(pr.MouseButton.MOUSE_BUTTON_RIGHT):
+        match ctx.camera:
+            case CameraFollower():
+                acar = ctx.best_agent if ctx.best_agent is not None else ctx.agents[0]
+                ctx.camera = CameraFree(acar.curr_pos)
+                ctx.camera.reset()
+            case CameraFree():
+                acar = ctx.best_agent if ctx.best_agent is not None else ctx.agents[0]
+                ctx.camera = CameraFollower(acar)
+                ctx.camera.reset()
 
     for entity in ctx.entities:
         entity.update(dt)
@@ -172,8 +181,10 @@ def update(dt: float) -> str:
         last_spawn_location = ctx.best_agent.get_spawn_location()
         ctx.spawn_location_changed = ctx.last_spawn_location != last_spawn_location
         ctx.last_spawn_location = last_spawn_location
+        if isinstance(ctx.camera, CameraFollower):
+            ctx.camera.set_target(ctx.best_agent)
 
-    ctx.update_camera(ctx)
+    ctx.camera.update(dt)
 
     return "trainer"
 
@@ -181,13 +192,12 @@ def update(dt: float) -> str:
 def draw() -> None:
     ctx = get_singleton()
     assert ctx.corridor is not None
+    assert ctx.camera is not None
 
     for agent in ctx.agents:
         agent.set_debug_mode(agent is ctx.best_agent)
 
-    pr.begin_mode_2d(ctx.camera)
-
-    world.draw(0)
+    pr.begin_mode_2d(ctx.camera.camera)
 
     for entity in ctx.entities:
         entity.draw(0)
@@ -197,8 +207,6 @@ def draw() -> None:
 
     if ctx.last_spawn_location is not None:
         ctx.last_spawn_location[1].draw(1, CORRIDOR_COLOR)  # type: ignore
-
-    world.draw(1)
 
     for entity in ctx.entities:
         entity.draw(1)
@@ -218,35 +226,3 @@ def draw() -> None:
     prx.draw_text(f"Lap: {ctx.lap}", pr.Vector2(2, 90), 20, pr.WHITE, shadow=True)  # type: ignore
 
     prx.draw_text(f"{pr.get_fps()}fps", pr.Vector2(2, 2), 20, pr.WHITE, align="right", shadow=True)  # type: ignore
-
-
-def _update_camera_free_mode(_context: Context) -> None:
-    if pr.is_mouse_button_pressed(pr.MouseButton.MOUSE_BUTTON_RIGHT):
-        pr.set_mouse_cursor(pr.MouseCursor.MOUSE_CURSOR_ARROW)
-        pr.hide_cursor()
-        _context.camera.zoom = ZOOM_DEFAULT
-        _context.update_camera = _update_camera_game_mode
-    else:
-        if pr.is_mouse_button_down(pr.MouseButton.MOUSE_BUTTON_LEFT):
-            _context.camera.target = pr.vector2_lerp(
-                _context.camera.target,
-                pr.vector2_subtract(_context.camera.target, pr.get_mouse_delta()),
-                0.2,
-            )
-        _context.camera.zoom = max(1, _context.camera.zoom + pr.get_mouse_wheel_move() * 0.5)
-
-
-def _update_camera_game_mode(_context: Context) -> None:
-    if pr.is_mouse_button_pressed(pr.MouseButton.MOUSE_BUTTON_RIGHT):
-        pr.set_mouse_cursor(pr.MouseCursor.MOUSE_CURSOR_RESIZE_ALL)
-        pr.show_cursor()
-        _context.camera.zoom = ZOOM_DEFAULT
-        _context.update_camera = _update_camera_free_mode
-    elif _context.best_agent is not None:
-        _context.camera.target = pr.vector2_lerp(_context.camera.target, pr.Vector2(*_context.best_agent.pos), 0.2)
-        _context.camera.zoom = 0.8 * _context.camera.zoom + 0.2 * (
-            max(
-                1,
-                ZOOM_DEFAULT - _context.best_agent.get_speed_in_kmh() * ZOOM_ACCELERATION_COEF,
-            )
-        )

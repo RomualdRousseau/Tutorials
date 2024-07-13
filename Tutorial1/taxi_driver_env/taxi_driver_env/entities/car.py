@@ -58,6 +58,8 @@ class Car:
             self.corridor.skeleton[0].start,
         )
 
+        self.reset()
+
     def set_debug_mode(self, debug_mode: bool) -> None:
         self.debug_mode = debug_mode
 
@@ -90,6 +92,9 @@ class Car:
     def is_alive(self) -> bool:
         return self.life > 0
 
+    def hit(self, damage: int) -> None:
+        self.life: float = max(0.0, self.life - damage)
+
     def reset(self) -> None:
         start_seg = self.spawn_location[0]
         start_pos, end_pos = (
@@ -121,9 +126,6 @@ class Car:
         self.total_distance = 0.0
         self.total_velocity = 0.0
         self.total_tick = 0
-
-    def hit(self, damage: int) -> None:
-        self.life = max(0, self.life - damage)
 
     def update(self, dt: float) -> None:
         if self.input_mode == "human":

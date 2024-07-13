@@ -10,16 +10,22 @@ class CameraFollower:
     def __init__(self, acar: car.Car):
         self.camera = pr.Camera2D(
             pr.Vector2(WINDOW_WIDTH / 2, WINDOW_HEIGHT / 2),
-            pr.Vector2(0, 0),
+            acar.curr_pos.to_vec(),
             0,
             ZOOM_DEFAULT,
         )
+        self.car = acar
+
+    def set_target(self, acar: car.Car) -> None:
         self.car = acar
 
     def get_bound(self) -> pr.Rectangle:
         return pr.Rectangle(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT)
 
     def reset(self) -> None:
+        pr.set_mouse_cursor(pr.MouseCursor.MOUSE_CURSOR_ARROW)
+        pr.hide_cursor()
+        self.camera.zoom = ZOOM_DEFAULT
         self.camera.target = self.car.curr_pos.to_vec()
 
     def update(self, dt: float) -> None:

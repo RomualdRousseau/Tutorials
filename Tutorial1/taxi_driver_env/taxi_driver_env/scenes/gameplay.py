@@ -32,9 +32,7 @@ class Context:
     player: TaxiDriver
     camera: CameraFollower
     minimap: Minimap
-
     entities: list[Entity]
-
     fade_in: FadeScr
     message_box: Optional[OpenVertical]
 
@@ -45,7 +43,7 @@ def get_singleton(name: str = "default"):
     camera = CameraFollower(player.car)
     minimap = Minimap(player.car)
     fade_in = FadeScr(1)
-    entities: list[Entity] = [player]
+    entities: list[Entity] = [world, player]
     return Context(0, player, camera, minimap, entities, fade_in, None)
 
 
@@ -115,7 +113,6 @@ def update(dt: float) -> str:
             pr.hide_cursor()
             ctx.state = 1
 
-    world.update(dt)
     if ctx.message_box is None:
         for entity in ctx.entities:
             entity.update(dt)
@@ -144,7 +141,6 @@ def draw() -> None:
 
     pr.begin_mode_2d(ctx.camera.camera)
     for layer in range(2):
-        world.draw(layer)
         for entity in ctx.entities:
             entity.draw(layer)
     pr.end_mode_2d()
