@@ -7,9 +7,9 @@ ZOOM_ACCELERATION_COEF = 0.1
 
 
 class CameraFree:
-    def __init__(self, initial_position: Point):
+    def __init__(self, initial_position: Point) -> None:
         self.camera = pr.Camera2D(
-            pr.Vector2(WINDOW_WIDTH / 2, WINDOW_HEIGHT / 2),
+            pr.Vector2(WINDOW_WIDTH // 2, WINDOW_HEIGHT // 2),
             initial_position.to_vec(),
             0,
             ZOOM_DEFAULT,

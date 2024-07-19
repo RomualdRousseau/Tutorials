@@ -7,7 +7,7 @@ ZOOM_ACCELERATION_COEF = 0.1
 
 
 class CameraFollower:
-    def __init__(self, acar: car.Car):
+    def __init__(self, acar: car.Car) -> None:
         self.camera = pr.Camera2D(
             pr.Vector2(WINDOW_WIDTH / 2, WINDOW_HEIGHT / 2),
             acar.curr_pos.to_vec(),

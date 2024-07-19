@@ -42,7 +42,7 @@ class Context:
 def get_singleton(name: str = "default"):
     player = TaxiDriver("human")
     camera = CameraFollower(player.car)
-    minimap = Minimap(player.car)
+    minimap = Minimap(player)
     fade_in = FadeScr(1)
     entities: list[Entity] = [world, player]
     return Context(0, player, camera, minimap, entities, fade_in, None)
@@ -80,6 +80,22 @@ def update(dt: float) -> str:
                     world.get_singleton().borders.get_random_location(),
                     world.get_singleton().borders.get_random_location(),
                 )
+
+            if ctx.player.state == TaxiDriver.STATE_ACCEPTING_CALL and ctx.message_box is None:
+                ctx.message_box = OpenVertical(
+                    MessageBox(
+                        pr.Vector2(800, 256),
+                        "\nYou receive a call from a customer!\n\nPlease go to the pickup ...",
+                        title="GRAB:",
+                        icon="accept",
+                        callback=message_box_cb,
+                    ),
+                    0.5,
+                    MessageBox.BG_COLOR,
+                )
+                ctx.message_box.reset()
+                pr.show_cursor()
+                ctx.state = 2
 
             if ctx.player.state == TaxiDriver.STATE_PICKUP_WAIT and ctx.message_box is None:
                 ctx.message_box = OpenVertical(

@@ -14,13 +14,14 @@ WAIT_TIMER = 2  # s
 class TaxiDriver:
     STATE_INIT = 0
     STATE_WAITING_CALL = 1
-    STATE_ACCEPT_CALL = 2
-    STATE_GOING_TO_PICKUP = 3
-    STATE_PICKUP = 4
-    STATE_PICKUP_WAIT = 5
-    STATE_GOING_TO_DROPOFF = 6
-    STATE_DROPOFF = 7
-    STATE_DROPOFF_WAIT = 8
+    STATE_ACCEPTING_CALL = 2
+    STATE_ACCEPT_CALL = 3
+    STATE_GOING_TO_PICKUP = 4
+    STATE_PICKUP = 5
+    STATE_PICKUP_WAIT = 6
+    STATE_GOING_TO_DROPOFF = 7
+    STATE_DROPOFF = 8
+    STATE_DROPOFF_WAIT = 9
 
     def __init__(self, input_mode: str, debug_mode: bool = False) -> None:
         self.state = TaxiDriver.STATE_INIT
@@ -52,7 +53,7 @@ class TaxiDriver:
         self.pickup.add_listener(self)
         self.dropoff = Marker(dropoff, world.ROAD_WIDTH * 0.5, 2)
         self.dropoff.add_listener(self)
-        self.state = TaxiDriver.STATE_ACCEPT_CALL
+        self.state = TaxiDriver.STATE_ACCEPTING_CALL
 
     def is_alive(self) -> bool:
         return self.car.is_alive()
@@ -72,7 +73,14 @@ class TaxiDriver:
                 pass
 
             case TaxiDriver.STATE_WAITING_CALL:
+                self.timer = 0.0
                 pass
+
+            case TaxiDriver.STATE_ACCEPTING_CALL:
+                self.timer += dt
+                if self.timer > WAIT_TIMER:
+                    self.state = TaxiDriver.STATE_ACCEPT_CALL
+                return
 
             case TaxiDriver.STATE_ACCEPT_CALL:
                 assert self.pickup is not None

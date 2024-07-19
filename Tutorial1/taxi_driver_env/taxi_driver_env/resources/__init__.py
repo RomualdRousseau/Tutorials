@@ -9,8 +9,11 @@ import taxi_driver_env.resources as res
 RESOURCES = {
     "title": "screens/title.png",
     "loading": "screens/loading.png",
-    "pickup": "screens/pickup.png",
-    "dropoff": "screens/dropoff.png",
+    "accept": "sprites/accept.png",
+    "pickup": "sprites/pickup.png",
+    "dropoff": "sprites/dropoff.png",
+    "smartphone": "sprites/smartphone.png",
+    "meter": "sprites/meter.png",
     "car": "sprites/car.png",
     "start": "sprites/start.png",
     "tree1": "sprites/tree1.png",
