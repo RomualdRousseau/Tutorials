@@ -13,6 +13,7 @@ from taxi_driver_env.cameras.camera_follower import CameraFollower
 from taxi_driver_env.effects.fade_scr import FadeScr
 from taxi_driver_env.effects.open_vertical import OpenVertical
 from taxi_driver_env.entities import car, world
+from taxi_driver_env.entities.badge import Badge
 from taxi_driver_env.entities.explosion import Explosion
 from taxi_driver_env.entities.minimap import Minimap
 from taxi_driver_env.entities.taxi_driver import WAIT_TIMER, TaxiDriver
@@ -130,6 +131,9 @@ def update(dt: float) -> str:
                 ctx.state = 2
 
         case 3:
+            if ctx.player.state == TaxiDriver.STATE_DROPOFF_WAIT:
+                ctx.entities.append(Badge(ctx.player.car.curr_pos, "+$5"))
+                ctx.player.money += 5
             ctx.message_box = None
             ctx.player.timer = WAIT_TIMER
             pr.hide_cursor()
@@ -150,9 +154,13 @@ def update(dt: float) -> str:
         and not pr.is_sound_playing(res.load_sound("crash"))
     ):
         ctx.entities.append(Explosion(ctx.player.car.curr_pos))
+        ctx.entities.append(Badge(ctx.player.car.curr_pos, "-$100"))
+        ctx.player.money -= 100
         pr.play_sound(res.load_sound("crash"))
 
     if is_bit_set(ctx.player.car.flags, car.FLAG_OUT_OF_TRACK) and not pr.is_sound_playing(res.load_sound("klaxon")):
+        ctx.entities.append(Badge(ctx.player.car.curr_pos, "-$10"))
+        ctx.player.money -= 10
         pr.play_sound(res.load_sound("klaxon"))
 
     return "gameplay"
@@ -177,8 +185,9 @@ def draw() -> None:
         prx.draw_text(f"Distance: {ctx.player.car.get_total_distance_in_km():.3f}km", pr.Vector2(2, 2), 20, pr.WHITE, shadow=True)  # type: ignore
         prx.draw_text(f"Speed: {ctx.player.car.get_speed_in_kmh():.1f}km/h", pr.Vector2(2, 24), 20, pr.WHITE, shadow=True)  # type: ignore
         prx.draw_text(f"Time Elapsed: {datetime.timedelta(seconds=pr.get_time())}", pr.Vector2(2, 46), 20, pr.WHITE, shadow=True)  # type: ignore
-
         prx.draw_text(f"{pr.get_fps()}fps", pr.Vector2(2, 2), 20, pr.WHITE, align="right", shadow=True)  # type: ignore
+
+    prx.draw_text(f"${ctx.player.money}", pr.Vector2(2, 2), 20, pr.WHITE, align="left", shadow=True)  # type: ignore
 
     if ctx.state == 0:
         ctx.fade_in.draw()

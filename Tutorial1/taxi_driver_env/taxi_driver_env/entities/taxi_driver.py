@@ -29,6 +29,7 @@ class TaxiDriver:
         self.car.set_debug_mode(debug_mode)
         self.pickup: Optional[Marker] = None
         self.dropoff: Optional[Marker] = None
+        self.money = 1000
 
     def get_previous_pos(self) -> Point:
         return self.car.prev_pos
@@ -62,6 +63,7 @@ class TaxiDriver:
         self.state = TaxiDriver.STATE_WAITING_CALL
         self.pickup = None
         self.dropoff = None
+        self.money = 1000
         self.car.reset()
 
     def hit(self, damage: int) -> None:

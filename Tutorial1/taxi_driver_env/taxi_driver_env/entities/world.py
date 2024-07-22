@@ -29,17 +29,21 @@ START_OFFSET = 2  # m
 HOUSE_DENSITY = 0.9
 HOUSE_DISTANCE = 10  # m
 HOUSE_SIZES = {
-    "house1": (16, 16, 1),
-    "house2": (16, 16, 2),
-    "house3": (32, 24, 3),
-    "house4": (32, 24, 4),
+    "house1": (544, 0, 192, 192, 16, 16, 1),
+    "house2": (800, 0, 192, 192, 16, 16, 2),
+    "house3": (0, 256, 256, 192, 32, 24, 3),
+    "house4": (256, 256, 256, 192, 32, 24, 4),
 }
 HOUSE_TYPES = list(HOUSE_SIZES.keys())
 HOUSE_REAL_ESTATE = 0.5
 
 TREE_DENSITY = 0.5
 TREE_DISTANCE = 25  # m
-TREE_SIZES = {"tree1": (16, 16, 1), "tree2": (16, 16, 1), "tree3": (16, 16, 0.5)}
+TREE_SIZES = {
+    "tree1": (256, 0, 128, 128, 16, 16, 1),
+    "tree2": (384, 0, 128, 128, 16, 16, 1),
+    "tree3": (256, 128, 128, 128, 16, 16, 0.5),
+}
 TREE_TYPES = list(TREE_SIZES.keys())
 TREE_OFFSET = 5  # m
 
@@ -59,8 +63,8 @@ class House:
             self.path = Segment(self.position, path_end)
 
     def is_overlap(self, other: House) -> bool:
-        p1, r1 = self.position, HOUSE_SIZES[self.type][0] * HOUSE_REAL_ESTATE
-        p2, r2 = other.position, HOUSE_SIZES[other.type][0] * HOUSE_REAL_ESTATE
+        p1, r1 = self.position, HOUSE_SIZES[self.type][4] * HOUSE_REAL_ESTATE
+        p2, r2 = other.position, HOUSE_SIZES[other.type][4] * HOUSE_REAL_ESTATE
         return distance(p1, p2) < r1 + r2
 
 
@@ -176,7 +180,7 @@ def draw(layer: int) -> None:
         for bone in world.borders.skeleton:
             bone.draw(world.borders.width + TREE_DISTANCE * 0.5, BASE_COLOR, None, True)
         for house in world.houses:
-            sx, _, _ = HOUSE_SIZES[house.type]
+            _, _, _, _, sx, _, _ = HOUSE_SIZES[house.type]
             house.path.draw(sx * (1 + HOUSE_REAL_ESTATE), BASE_COLOR)
         for bone in world.borders.skeleton:
             bone.draw(world.borders.width, ROAD_COLOR, None, True)
@@ -186,12 +190,12 @@ def draw(layer: int) -> None:
             segment.draw(0.5, BORDER1_COLOR, None, True)
 
     def draw_fg():
+        tex = res.load_texture("spritesheet")
         for tree in world.trees:
-            tex = res.load_texture(tree.type)
-            sx, sy, sh = TREE_SIZES[tree.type]
+            tx, ty, tw, th, sx, sy, sh = TREE_SIZES[tree.type]
             pr.draw_texture_pro(
                 tex,
-                pr.Rectangle(0, 0, tex.width, tex.height),
+                pr.Rectangle(tx, ty, tw, th),
                 pr.Rectangle(tree.position.xy[0] - sh, tree.position.xy[1] + sh, sx, sy),
                 pr.Vector2(sx * 0.5, sy * 0.5),
                 np.rad2deg(tree.angle),
@@ -199,18 +203,17 @@ def draw(layer: int) -> None:
             )
             pr.draw_texture_pro(
                 tex,
-                pr.Rectangle(0, 0, tex.width, tex.height),
+                pr.Rectangle(tx, ty, tw, th),
                 pr.Rectangle(tree.position.xy[0], tree.position.xy[1], sx, sy),
                 pr.Vector2(sx * 0.5, sy * 0.5),
                 np.rad2deg(tree.angle),
                 pr.WHITE,  # type: ignore
             )
         for house in world.houses:
-            tex = res.load_texture(house.type)
-            sx, sy, sh = HOUSE_SIZES[house.type]
+            tx, ty, tw, th, sx, sy, sh = HOUSE_SIZES[house.type]
             pr.draw_texture_pro(
                 tex,
-                pr.Rectangle(0, 0, tex.width, tex.height),
+                pr.Rectangle(tx, ty, tw, th),
                 pr.Rectangle(house.position.xy[0] - sh, house.position.xy[1] + sh, sx, sy),
                 pr.Vector2(sx * 0.5, sy * 0.5),
                 np.rad2deg(house.angle),
@@ -218,7 +221,7 @@ def draw(layer: int) -> None:
             )
             pr.draw_texture_pro(
                 tex,
-                pr.Rectangle(0, 0, tex.width, tex.height),
+                pr.Rectangle(tx, ty, tw, th),
                 pr.Rectangle(house.position.xy[0], house.position.xy[1], sx, sy),
                 pr.Vector2(sx * 0.5, sy * 0.5),
                 np.rad2deg(house.angle),

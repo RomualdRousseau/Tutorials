@@ -15,10 +15,6 @@ def clamp(n: float, minn: float, maxn: float) -> float:
     return max(min(maxn, n), minn)
 
 
-def absmin(x: float, y: float) -> float:
-    return x if abs(x) < abs(y) else y
-
-
 @njit
 def det(a: npt.ArrayLike) -> float:
     return np.linalg.det(np.array(a))

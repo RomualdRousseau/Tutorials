@@ -6,10 +6,10 @@ from taxi_driver_env.entities import world
 from taxi_driver_env.entities.taxi_driver import TaxiDriver
 
 BORDER = 0.01 * WINDOW_WIDTH
-BOUND_WIDTH = 0.195 * WINDOW_WIDTH
-BOUND_HEIGHT = 0.405 * WINDOW_HEIGHT
-MAP_WIDTH = 0.175 * WINDOW_WIDTH
-MAP_HEIGHT = 0.321 * WINDOW_HEIGHT
+BOUND_WIDTH = 0.128 * WINDOW_WIDTH
+BOUND_HEIGHT = 0.256 * WINDOW_HEIGHT
+MAP_WIDTH = 0.109 * WINDOW_WIDTH
+MAP_HEIGHT = 0.199 * WINDOW_HEIGHT
 MAP_RATIO = MAP_WIDTH / MAP_HEIGHT
 
 
@@ -27,23 +27,21 @@ class Minimap:
 
     def get_map_bound(self) -> pr.Rectangle:
         return pr.Rectangle(
-            WINDOW_WIDTH - BOUND_WIDTH // 2 - BORDER - MAP_WIDTH // 2,
-            WINDOW_HEIGHT - BOUND_HEIGHT // 2 - BORDER - MAP_HEIGHT // 2,
+            WINDOW_WIDTH - BOUND_WIDTH // 2 - BORDER - MAP_WIDTH // 2 - 1,
+            WINDOW_HEIGHT - BOUND_HEIGHT // 2 - BORDER - MAP_HEIGHT // 2 - 1,
             MAP_WIDTH,
             MAP_HEIGHT,
         )
 
     def get_corridor_bound(self) -> pr.Rectangle:
-        x1 = int(min([x.xy[0] for x in self.player.car.corridor.points]))
-        y1 = int(min([x.xy[1] for x in self.player.car.corridor.points]))
-        x2 = int(max([x.xy[0] for x in self.player.car.corridor.points]))
-        y2 = int(max([x.xy[1] for x in self.player.car.corridor.points]))
+        x1 = int(min((p.xy[0] for p in self.player.car.corridor.points)))
+        y1 = int(min((p.xy[1] for p in self.player.car.corridor.points)))
+        x2 = int(max((p.xy[0] for p in self.player.car.corridor.points)))
+        y2 = int(max((p.xy[1] for p in self.player.car.corridor.points)))
         return pr.Rectangle(x1, y1, x2 - x1, y2 - y1)
 
     def reset(self) -> None:
-        self.frame_buffer = pr.load_render_texture(
-            int(WINDOW_WIDTH * MAP_RATIO), WINDOW_HEIGHT
-        )
+        self.frame_buffer = pr.load_render_texture(int(WINDOW_WIDTH * MAP_RATIO), WINDOW_HEIGHT)
         self.camera = CameraZoomer(
             self.get_map_bound().width,
             self.get_map_bound().height,
@@ -81,10 +79,10 @@ class Minimap:
             pr.WHITE,
         )
 
-        tex = res.load_texture("smartphone")
+        tex = res.load_texture("spritesheet")
         pr.draw_texture_pro(
             tex,
-            pr.Rectangle(0, 0, tex.width, tex.height),
+            pr.Rectangle(512, 256, 128, 256),
             self.get_bound(),
             pr.Vector2(0, 0),
             0,

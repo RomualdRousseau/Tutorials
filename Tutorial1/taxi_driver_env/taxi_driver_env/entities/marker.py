@@ -9,10 +9,6 @@ from taxi_driver_env.math.envelope import Location
 from taxi_driver_env.math.geom import Point, point_in_polygon
 from taxi_driver_env.math.linalg import normalize
 
-COLOR = pr.Color(255, 255, 255, 128)
-RADIUS = 6
-MAX_LIFE = 30
-
 
 class MarkerListener(Protocol):
     def get_previous_pos(self) -> Point:
@@ -77,10 +73,10 @@ class Marker:
             return
 
         pos = self.location[1].xy + self.right * self.width * 0.5
-        tex = res.load_texture("start")
+        tex = res.load_texture("spritesheet")
         pr.draw_texture_pro(
             tex,
-            pr.Rectangle(0, 0, tex.width, tex.height),
+            pr.Rectangle(768, 256, 20, 16),
             pr.Rectangle(pos[0], pos[1], self.width, self.height),
             pr.Vector2(self.width * 0.5, self.height * 0.5),
             np.rad2deg(np.arctan2(self.right[1], self.right[0])),

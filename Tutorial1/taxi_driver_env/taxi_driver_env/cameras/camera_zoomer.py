@@ -1,21 +1,17 @@
 import pyray as pr
-from taxi_driver_env.math.linalg import absmin
 
-BORDER = 10
+BORDER = 20
 ZOOM_RATE = 0.001
 
 
 class CameraZoomer:
-    def __init__(
-        self, map_width: float, map_height: float, tex_width: float, tex_height: float
-    ) -> None:
+    def __init__(self, map_width: float, map_height: float, tex_width: float, tex_height: float) -> None:
         self.width = map_width
         self.height = map_height
-        self.rx = map_width / tex_width
-        self.ry = map_height / tex_height
+        self.scale = pr.Vector2(map_width / tex_width, map_height / tex_height)
         self.camera = pr.Camera2D(
             pr.Vector2(tex_width // 2, tex_height // 2),
-            pr.Vector2(0, 0),
+            pr.vector2_zero(),
             0,
             1,
         )
@@ -24,23 +20,35 @@ class CameraZoomer:
         self.bound = bound
 
     def reset(self) -> None:
+        self.camera.target = pr.vector2_zero()
         self.camera.zoom = 1
 
     def update(self, dt: float) -> None:
-        target = pr.Vector2(
-            self.bound.x + self.bound.width // 2, self.bound.y + self.bound.height // 2
-        )
+        target = pr.Vector2(self.bound.x + self.bound.width // 2, self.bound.y + self.bound.height // 2)
         self.camera.target = pr.vector2_lerp(self.camera.target, target, 0.2)
 
-        xy1 = pr.Vector2(self.bound.x, self.bound.y)
-        xy1 = pr.get_world_to_screen_2d(xy1, self.camera)
-        xy2 = pr.Vector2(
-            self.bound.x + self.bound.width, self.bound.y + self.bound.height
+        tl = self._to_screen_2d(
+            pr.Vector2(
+                self.bound.x - BORDER,
+                self.bound.y - BORDER,
+            )
         )
-        xy2 = pr.get_world_to_screen_2d(xy2, self.camera)
-        dx = absmin(xy1.x * self.rx - BORDER, self.width - xy2.x * self.rx + BORDER)
-        dy = absmin(xy1.y * self.ry - BORDER, self.height - xy2.y * self.ry + BORDER)
-        self.camera.zoom += absmin(dx, dy) * ZOOM_RATE
+        br = self._to_screen_2d(
+            pr.Vector2(
+                self.bound.x + self.bound.width + BORDER,
+                self.bound.y + self.bound.height + BORDER,
+            )
+        )
+        if abs(br.x - tl.x) >= abs(br.y - tl.y):
+            self.camera.zoom += ZOOM_RATE * min(tl.x, self.width - br.x, key=abs)
+        else:
+            self.camera.zoom += ZOOM_RATE * min(tl.y, self.height - br.y, key=abs)
 
     def draw(self) -> None:
         pass
+
+    def _to_screen_2d(self, v: pr.Vector2) -> pr.Vector2:
+        return pr.vector2_multiply(
+            pr.get_world_to_screen_2d(v, self.camera),
+            self.scale,
+        )

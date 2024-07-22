@@ -152,10 +152,10 @@ class Car:
             if self.proximity is not None:
                 pr.draw_line_v(self.proximity.start.to_vec(), self.proximity.end.to_vec(), color)
 
-        tex = res.load_texture("car")
+        tex = res.load_texture("spritesheet")
         pr.draw_texture_pro(
             tex,
-            pr.Rectangle(0, 0, tex.width, tex.height),
+            pr.Rectangle(0, 0, 128, 128),
             pr.Rectangle(self.pos[0], self.pos[1], LENGTH, LENGTH),
             pr.Vector2(LENGTH * 0.5, LENGTH * 0.5),
             np.rad2deg(np.arctan2(self.head[1], self.head[0]) + np.pi / 2),
