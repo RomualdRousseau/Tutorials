@@ -23,7 +23,7 @@ class Explosion:
     def update(self, dt: float) -> None:
         self.life = max(0, self.life - 1)
 
-    def draw(self, layer: int) -> None:
+    def draw(self, layer: int = 1) -> None:
         if layer != 1:
             return
 

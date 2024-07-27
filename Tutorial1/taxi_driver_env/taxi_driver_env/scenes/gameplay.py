@@ -13,13 +13,13 @@ from taxi_driver_env.cameras.camera_follower import CameraFollower
 from taxi_driver_env.effects.fade_scr import FadeScr
 from taxi_driver_env.effects.open_vertical import OpenVertical
 from taxi_driver_env.entities import car, world
-from taxi_driver_env.entities.badge import Badge
 from taxi_driver_env.entities.explosion import Explosion
+from taxi_driver_env.entities.floating import Floating
 from taxi_driver_env.entities.minimap import Minimap
 from taxi_driver_env.entities.taxi_driver import WAIT_TIMER, TaxiDriver
 from taxi_driver_env.types import Entity, Widget
 from taxi_driver_env.utils.bitbang import is_bit_set
-from taxi_driver_env.widgets.message_box import MessageBox
+from taxi_driver_env.widgets.message_box import BG_COLOR, MessageBox
 
 CAR_COLOR = pr.Color(255, 255, 255, 255)
 CORRIDOR_COLOR = pr.Color(255, 255, 0, 64)
@@ -34,6 +34,7 @@ class Context:
     camera: CameraFollower
     minimap: Minimap
     entities: list[Entity]
+    floatings: list[Entity]
     fade_in: FadeScr
     message_box: Optional[OpenVertical]
     minimap_visible: bool = True
@@ -46,7 +47,7 @@ def get_singleton(name: str = "default"):
     minimap = Minimap(player)
     fade_in = FadeScr(1)
     entities: list[Entity] = [world, player]
-    return Context(0, player, camera, minimap, entities, fade_in, None)
+    return Context(0, player, camera, minimap, entities, [], fade_in, None)
 
 
 def reset() -> None:
@@ -60,14 +61,9 @@ def reset() -> None:
     ctx.fade_in.reset()
 
 
-def update(dt: float) -> str:
+def update(dt: float) -> str:  # noqa: PLR0915
     ctx = get_singleton()
     prev_flags = ctx.player.car.flags
-
-    if pr.is_key_pressed(pr.KeyboardKey.KEY_F1):
-        ctx.player.car.set_debug_mode(not ctx.player.car.debug_mode)
-    if pr.is_key_pressed(pr.KeyboardKey.KEY_F2):
-        ctx.minimap_visible = not ctx.minimap_visible
 
     match ctx.state:
         case 0:
@@ -76,6 +72,10 @@ def update(dt: float) -> str:
                 ctx.state = 1
 
         case 1:
+            if pr.is_key_pressed(pr.KeyboardKey.KEY_F1):
+                ctx.player.car.set_debug_mode(not ctx.player.car.debug_mode)
+            if pr.is_key_pressed(pr.KeyboardKey.KEY_F2):
+                ctx.minimap_visible = not ctx.minimap_visible
             if pr.is_key_pressed(pr.KeyboardKey.KEY_A):
                 ctx.player.accept_call(
                     world.get_singleton().borders.get_random_location(),
@@ -92,7 +92,7 @@ def update(dt: float) -> str:
                         callback=message_box_cb,
                     ),
                     0.5,
-                    MessageBox.BG_COLOR,
+                    BG_COLOR,
                 )
                 ctx.message_box.reset()
                 pr.show_cursor()
@@ -108,7 +108,7 @@ def update(dt: float) -> str:
                         callback=message_box_cb,
                     ),
                     0.5,
-                    MessageBox.BG_COLOR,
+                    BG_COLOR,
                 )
                 ctx.message_box.reset()
                 pr.show_cursor()
@@ -124,29 +124,38 @@ def update(dt: float) -> str:
                         callback=message_box_cb,
                     ),
                     0.5,
-                    MessageBox.BG_COLOR,
+                    BG_COLOR,
                 )
                 ctx.message_box.reset()
                 pr.show_cursor()
                 ctx.state = 2
 
+        case 2:
+            if pr.is_key_pressed(pr.KeyboardKey.KEY_ENTER):
+                ctx.message_box.widget.button_ok.click()  # type: ignore
+
         case 3:
             if ctx.player.state == TaxiDriver.STATE_DROPOFF_WAIT:
-                ctx.entities.append(Badge(ctx.player.car.curr_pos, "+$5"))
+                ctx.floatings.append(Floating(ctx.player.car.curr_pos, ctx.camera.camera, "+$5"))
                 ctx.player.money += 5
             ctx.message_box = None
             ctx.player.timer = WAIT_TIMER
             pr.hide_cursor()
             ctx.state = 1
 
-    if ctx.message_box is None:
-        for entity in ctx.entities:
-            entity.update(dt)
-        ctx.entities = [entity for entity in ctx.entities if entity.is_alive()]
-        ctx.minimap.update(dt)
-        ctx.camera.update(dt)
-    else:
+    if ctx.message_box is not None:
         ctx.message_box.update(dt)
+
+    for entity in ctx.entities:
+        entity.update(dt)
+    ctx.entities = [entity for entity in ctx.entities if entity.is_alive()]
+
+    for floating in ctx.floatings:
+        floating.update(dt)
+    ctx.floatings = [floating for floating in ctx.floatings if floating.is_alive()]
+
+    ctx.minimap.update(dt)
+    ctx.camera.update(dt)
 
     if (
         is_bit_set(ctx.player.car.flags, car.FLAG_DAMAGED)
@@ -154,12 +163,16 @@ def update(dt: float) -> str:
         and not pr.is_sound_playing(res.load_sound("crash"))
     ):
         ctx.entities.append(Explosion(ctx.player.car.curr_pos))
-        ctx.entities.append(Badge(ctx.player.car.curr_pos, "-$100"))
+        ctx.floatings.append(Floating(ctx.player.car.curr_pos, ctx.camera.camera, "-$100"))
         ctx.player.money -= 100
         pr.play_sound(res.load_sound("crash"))
 
-    if is_bit_set(ctx.player.car.flags, car.FLAG_OUT_OF_TRACK) and not pr.is_sound_playing(res.load_sound("klaxon")):
-        ctx.entities.append(Badge(ctx.player.car.curr_pos, "-$10"))
+    if (
+        is_bit_set(ctx.player.car.flags, car.FLAG_OUT_OF_TRACK)
+        and not is_bit_set(prev_flags, car.FLAG_OUT_OF_TRACK)
+        and not pr.is_sound_playing(res.load_sound("klaxon"))
+    ):
+        ctx.floatings.append(Floating(ctx.player.car.curr_pos, ctx.camera.camera, "-$10"))
         ctx.player.money -= 10
         pr.play_sound(res.load_sound("klaxon"))
 
@@ -174,6 +187,9 @@ def draw() -> None:
         for entity in ctx.entities:
             entity.draw(layer)
     pr.end_mode_2d()
+
+    for floating in ctx.floatings:
+        floating.draw()
 
     if ctx.minimap_visible:
         ctx.minimap.draw()

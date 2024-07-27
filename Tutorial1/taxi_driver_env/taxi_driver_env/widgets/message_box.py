@@ -2,24 +2,24 @@ from typing import Callable, Optional
 
 import pyray as pr
 import taxi_driver_env.resources as res
-from taxi_driver_env.constants import WINDOW_HEIGHT, WINDOW_WIDTH
+from taxi_driver_env.constants import WINDOW_HEIGHT
 from taxi_driver_env.types import Widget
 from taxi_driver_env.widgets.button import Button
 
+FONT_SIZE = 20  # pixel
+FONT_COLOR = pr.Color(216, 216, 216, 255)
+BORDER_SIZE = 10  # pixel
+BUTTON_WIDTH = 100  # pixel
+BUTTON_HEIGHT = 38  # pixel
+BUTTON_COLOR = pr.Color(255, 125, 109, 192)
+FG_COLOR = pr.Color(38, 51, 59, 255)
+BG_COLOR = pr.Color(82, 96, 105, 216)
+TITLE_COLOR = pr.Color(192, 192, 192, 255)
+ICON_BORDER = 10  # pixel
+TYPEWRITER_SPEED = 20  # char.s-1
+
 
 class MessageBox:
-    FONT_SIZE = 20  # pixel
-    FONT_COLOR = pr.Color(216, 216, 216, 255)
-    BORDER_SIZE = 10  # pixel
-    BUTTON_WIDTH = 100  # pixel
-    BUTTON_HEIGHT = 38  # pixel
-    BUTTON_COLOR = pr.Color(255, 125, 109, 192)
-    FG_COLOR = pr.Color(38, 51, 59, 255)
-    BG_COLOR = pr.Color(82, 96, 105, 216)
-    TITLE_COLOR = pr.Color(192, 192, 192, 255)
-    ICON_BORDER = 10  # pixel
-    TYPEWRITER_SPEED = 20  # char.s-1
-
     def __init__(
         self,
         size: pr.Vector2,
@@ -35,17 +35,17 @@ class MessageBox:
         self.callback = callback
         self.button_ok = Button(
             self._compute_button_position(self.get_bound()),
-            pr.Vector2(MessageBox.BUTTON_WIDTH, MessageBox.BUTTON_HEIGHT),
+            pr.Vector2(BUTTON_WIDTH, BUTTON_HEIGHT),
             "OK",
-            MessageBox.BUTTON_COLOR,
+            BUTTON_COLOR,
             self._button_is_clicked,
         )
         self.timer: float = 0
 
     def get_bound(self) -> pr.Rectangle:
         return pr.Rectangle(
-            (WINDOW_WIDTH - self.size.x) / 2,
-            (WINDOW_HEIGHT - self.size.y) / 2,
+            BORDER_SIZE,
+            WINDOW_HEIGHT - self.size.y - BORDER_SIZE,
             self.size.x,
             self.size.y,
         )
@@ -56,13 +56,13 @@ class MessageBox:
 
     def update(self, dt: float):
         self.button_ok.update(dt)
-        self.timer += MessageBox.TYPEWRITER_SPEED * dt
+        self.timer += TYPEWRITER_SPEED * dt
 
     def draw(self):
         bound = self.get_bound()
 
-        pr.draw_rectangle_rec(bound, MessageBox.BG_COLOR)
-        pr.draw_rectangle_lines_ex(bound, 2, MessageBox.FG_COLOR)
+        pr.draw_rectangle_rec(bound, BG_COLOR)
+        pr.draw_rectangle_lines_ex(bound, 2, FG_COLOR)
 
         if self.icon is not None:
             tex = res.load_texture(self.icon)
@@ -81,8 +81,8 @@ class MessageBox:
                 self.title,
                 int(pos.x),
                 int(pos.y),
-                MessageBox.FONT_SIZE,
-                MessageBox.TITLE_COLOR,
+                FONT_SIZE,
+                TITLE_COLOR,
             )
 
         pos = self._compute_text_position(bound)
@@ -91,48 +91,42 @@ class MessageBox:
             self.message[:mark],
             int(pos.x),
             int(pos.y),
-            MessageBox.FONT_SIZE,
-            MessageBox.FONT_COLOR,
+            FONT_SIZE,
+            FONT_COLOR,
         )
 
         self.button_ok.draw()
 
     def _compute_button_position(self, bound: pr.Rectangle) -> pr.Vector2:
-        pos_x = bound.x + bound.width - MessageBox.BORDER_SIZE - MessageBox.BUTTON_WIDTH
-        pos_y = bound.y + bound.height - MessageBox.BORDER_SIZE - MessageBox.BUTTON_HEIGHT
+        pos_x = bound.x + bound.width - BORDER_SIZE - BUTTON_WIDTH
+        pos_y = bound.y + bound.height - BORDER_SIZE - BUTTON_HEIGHT
         return pr.Vector2(pos_x, pos_y)
 
     def _compute_title_position(self, bound: pr.Rectangle) -> pr.Vector2:
         if self.icon is not None:
             pos_x = int(bound.x + bound.height)
-            pos_y = int(bound.y + MessageBox.BORDER_SIZE)
+            pos_y = int(bound.y + BORDER_SIZE)
         else:
-            pos_x = int(bound.x + MessageBox.BORDER_SIZE)
-            pos_y = int(bound.y + MessageBox.BORDER_SIZE)
+            pos_x = int(bound.x + BORDER_SIZE)
+            pos_y = int(bound.y + BORDER_SIZE)
         return pr.Vector2(pos_x, pos_y)
 
     def _compute_text_position(self, bound: pr.Rectangle) -> pr.Vector2:
         if self.icon is not None:
             pos_x = int(bound.x + bound.height)
-            pos_y = int(bound.y + MessageBox.BORDER_SIZE)
+            pos_y = int(bound.y + BORDER_SIZE)
         else:
-            hw = pr.measure_text(self.message, MessageBox.FONT_SIZE) / 2
-            pos_x = int(bound.x + bound.width / 2 - hw - MessageBox.BORDER_SIZE)
-            pos_y = int(
-                bound.y
-                + bound.height / 2
-                - MessageBox.FONT_SIZE / 2
-                - MessageBox.BUTTON_HEIGHT / 2
-                - MessageBox.BORDER_SIZE
-            )
+            hw = pr.measure_text(self.message, FONT_SIZE) / 2
+            pos_x = int(bound.x + bound.width / 2 - hw - BORDER_SIZE)
+            pos_y = int(bound.y + bound.height / 2 - FONT_SIZE / 2 - BUTTON_HEIGHT / 2 - BORDER_SIZE)
         if self.title is not None:
-            pos_y += MessageBox.FONT_SIZE
+            pos_y += FONT_SIZE
         return pr.Vector2(pos_x, pos_y)
 
     def _compute_icon_position(self, bound: pr.Rectangle) -> pr.Rectangle:
-        pos_x = int(bound.x + MessageBox.ICON_BORDER)
-        pos_y = int(bound.y + MessageBox.ICON_BORDER)
-        size = int(bound.height - MessageBox.ICON_BORDER * 2)
+        pos_x = int(bound.x + ICON_BORDER)
+        pos_y = int(bound.y + ICON_BORDER)
+        size = int(bound.height - ICON_BORDER * 2)
         return pr.Rectangle(pos_x, pos_y, size, size)
 
     def _button_is_clicked(self, button: Button):

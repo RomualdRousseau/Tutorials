@@ -130,7 +130,7 @@ class TaxiDriver:
 
         self.car.update(dt)
 
-    def draw(self, layer: int) -> None:
+    def draw(self, layer: int = 1) -> None:
         if self.pickup is not None:
             self.pickup.draw(layer)
 

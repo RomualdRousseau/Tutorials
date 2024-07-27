@@ -68,7 +68,7 @@ class Marker:
             if prev_in and not curr_in:
                 listener.on_leave(self)
 
-    def draw(self, layer: int) -> None:
+    def draw(self, layer: int = 1) -> None:
         if layer != 0:
             return
 

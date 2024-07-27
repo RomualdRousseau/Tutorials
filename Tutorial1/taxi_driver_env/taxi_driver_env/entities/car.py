@@ -132,7 +132,7 @@ class Car:
             self._input_human()
         self._update_physic(dt)
 
-    def draw(self, layer: int) -> None:
+    def draw(self, layer: int = 1) -> None:
         if layer != 1:
             return
 

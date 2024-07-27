@@ -1,14 +1,16 @@
-import numpy as np
 import pyray as pr
 from taxi_driver_env.math.geom import Point
+from taxi_driver_env.math.linalg import lst_2_vec
 
 COLOR = pr.Color(255, 255, 255, 255)
-MAX_LIFE = 60
+SPEED = [0, -1]
+MAX_LIFE = 120
+FONT_SIZE = 20
 
-
-class Badge:
-    def __init__(self, pos: Point, text: str) -> None:
-        self.pos = pos
+class Floating:
+    def __init__(self, pos: Point, camera: pr.Camera2D, text: str) -> None:
+        xy = pr.get_world_to_screen_2d(pos.to_vec(), camera)
+        self.pos = lst_2_vec([xy.x, xy.y])
         self.text = text
         self.life = MAX_LIFE
 
@@ -22,17 +24,17 @@ class Badge:
         pass
 
     def update(self, dt: float) -> None:
-        self.pos = Point(np.array([self.pos.xy[0], self.pos.xy[1] - 1]))
+        self.pos = self.pos + SPEED
         self.life = max(0, self.life - 1)
 
-    def draw(self, layer: int) -> None:
+    def draw(self, layer: int = 1) -> None:
         if layer != 1:
             return
 
         pr.draw_text(
             self.text,
-            int(self.pos.xy[0]),
-            int(self.pos.xy[1]),
-            1,
+            int(self.pos[0]),
+            int(self.pos[1]),
+            FONT_SIZE,
             pr.color_alpha(COLOR, (self.life / MAX_LIFE) * (COLOR.a / 256)),
         )

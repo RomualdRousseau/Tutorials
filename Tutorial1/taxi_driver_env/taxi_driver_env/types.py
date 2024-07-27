@@ -38,7 +38,7 @@ class Entity(Protocol):
     def update(self, dt: float) -> None:
         ...
 
-    def draw(self, layer: int) -> None:
+    def draw(self, layer: int = 1) -> None:
         ...
 
 

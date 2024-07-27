@@ -39,10 +39,7 @@ class CameraZoomer:
                 self.bound.y + self.bound.height + BORDER,
             )
         )
-        if abs(br.x - tl.x) >= abs(br.y - tl.y):
-            self.camera.zoom += ZOOM_RATE * min(tl.x, self.width - br.x, key=abs)
-        else:
-            self.camera.zoom += ZOOM_RATE * min(tl.y, self.height - br.y, key=abs)
+        self.camera.zoom += ZOOM_RATE * min(tl.x, self.width - br.x, tl.y, self.height - br.y)
 
     def draw(self) -> None:
         pass

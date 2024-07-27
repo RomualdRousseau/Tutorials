@@ -172,7 +172,7 @@ def update(dt: float) -> None:
     pass
 
 
-def draw(layer: int) -> None:
+def draw(layer: int = 1) -> None:
     world = get_singleton()
 
     def draw_bg():
