@@ -143,9 +143,6 @@ def update(dt: float) -> str:  # noqa: PLR0915
             pr.hide_cursor()
             ctx.state = 1
 
-    if ctx.message_box is not None:
-        ctx.message_box.update(dt)
-
     for entity in ctx.entities:
         entity.update(dt)
     ctx.entities = [entity for entity in ctx.entities if entity.is_alive()]
@@ -156,6 +153,9 @@ def update(dt: float) -> str:  # noqa: PLR0915
 
     ctx.minimap.update(dt)
     ctx.camera.update(dt)
+
+    if ctx.message_box is not None:
+        ctx.message_box.update(dt)
 
     if (
         is_bit_set(ctx.player.car.flags, car.FLAG_DAMAGED)
