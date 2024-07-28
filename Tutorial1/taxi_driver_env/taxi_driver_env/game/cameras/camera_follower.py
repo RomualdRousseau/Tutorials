@@ -1,6 +1,6 @@
 import pyray as pr
 from taxi_driver_env.constants import WINDOW_HEIGHT, WINDOW_WIDTH
-from taxi_driver_env.entities import car
+from taxi_driver_env.game.entities import car
 
 ZOOM_DEFAULT = 20
 ZOOM_ACCELERATION_COEF = 0.1

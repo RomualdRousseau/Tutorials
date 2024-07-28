@@ -1,10 +1,10 @@
 import pyray as pr
 from taxi_driver_env.constants import FRAME_RATE
-from taxi_driver_env.math.linalg import EPS
-from taxi_driver_env.types import Widget
+from taxi_driver_env.math.linalg import EPS, clamp
+from taxi_driver_env.render.types import Widget
 
 
-class OpenHorizontal:
+class OpenVertical:
     def __init__(self, widget: Widget, duration: float, color: pr.Color):
         self.duration = duration
         self.widget = widget
@@ -12,12 +12,12 @@ class OpenHorizontal:
 
     def get_bound(self) -> pr.Rectangle:
         t = self.timer / (self.duration + EPS)
-        width = int(pr.clamp(self.widget.get_bound().width * t, 0, self.widget.get_bound().width))
+        height = int(clamp(self.widget.get_bound().height * t, 0, self.widget.get_bound().height))
         return pr.Rectangle(
-            self.widget.get_bound().x + (self.widget.get_bound().width - width) / 2,
-            self.widget.get_bound().y,
-            width,
-            self.widget.get_bound().height,
+            self.widget.get_bound().x,
+            self.widget.get_bound().y + (self.widget.get_bound().height - height) / 2,
+            self.widget.get_bound().width,
+            height,
         )
 
     def is_playing(self, latency: float = 0.1) -> bool:
@@ -36,5 +36,5 @@ class OpenHorizontal:
             self.widget.draw()
         else:
             bound = self.get_bound()
-            if bound.width > 0:
+            if bound.height > 0:
                 pr.draw_rectangle_rec(bound, self.color)

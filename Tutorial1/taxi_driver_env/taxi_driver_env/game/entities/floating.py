@@ -7,6 +7,7 @@ SPEED = [0, -1]
 MAX_LIFE = 120
 FONT_SIZE = 20
 
+
 class Floating:
     def __init__(self, pos: Point, camera: pr.Camera2D, text: str) -> None:
         xy = pr.get_world_to_screen_2d(pos.to_vec(), camera)

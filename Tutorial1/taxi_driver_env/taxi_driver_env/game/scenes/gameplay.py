@@ -6,20 +6,20 @@ from functools import lru_cache
 from typing import Optional
 
 import pyray as pr
-
+import taxi_driver_env.render.pyrayex as prx
 import taxi_driver_env.resources as res
-import taxi_driver_env.utils.pyrayex as prx
-from taxi_driver_env.cameras.camera_follower import CameraFollower
-from taxi_driver_env.effects.fade_scr import FadeScr
-from taxi_driver_env.effects.open_vertical import OpenVertical
-from taxi_driver_env.entities import car, world
-from taxi_driver_env.entities.explosion import Explosion
-from taxi_driver_env.entities.floating import Floating
-from taxi_driver_env.entities.minimap import Minimap
-from taxi_driver_env.entities.taxi_driver import WAIT_TIMER, TaxiDriver
-from taxi_driver_env.types import Entity, Widget
+from taxi_driver_env.game.cameras.camera_follower import CameraFollower
+from taxi_driver_env.game.entities import car, world
+from taxi_driver_env.game.entities.explosion import Explosion
+from taxi_driver_env.game.entities.floating import Floating
+from taxi_driver_env.game.entities.taxi_driver import WAIT_TIMER, TaxiDriver
+from taxi_driver_env.game.widgets.minimap import Minimap
+from taxi_driver_env.physic.types import Entity
+from taxi_driver_env.render.effects.fade_scr import FadeScr
+from taxi_driver_env.render.effects.open_vertical import OpenVertical
+from taxi_driver_env.render.types import Widget
+from taxi_driver_env.render.widgets.message_box import BG_COLOR, MessageBox
 from taxi_driver_env.utils.bitbang import is_bit_set
-from taxi_driver_env.widgets.message_box import BG_COLOR, MessageBox
 
 CAR_COLOR = pr.Color(255, 255, 255, 255)
 CORRIDOR_COLOR = pr.Color(255, 255, 0, 64)

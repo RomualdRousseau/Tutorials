@@ -1,5 +1,5 @@
 import pyray as pr
-import taxi_driver_env.utils.pyrayex as prx
+import taxi_driver_env.render.pyrayex as prx
 from taxi_driver_env.constants import FRAME_RATE
 from taxi_driver_env.math.linalg import EPS, clamp
 

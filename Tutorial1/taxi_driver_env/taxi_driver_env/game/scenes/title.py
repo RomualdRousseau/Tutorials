@@ -2,10 +2,9 @@ from dataclasses import dataclass
 from functools import lru_cache
 
 import pyray as pr
-
 import taxi_driver_env.resources as res
-from taxi_driver_env.effects.fade_inout import FadeInOut
-from taxi_driver_env.widgets.screen import Screen
+from taxi_driver_env.render.effects.fade_inout import FadeInOut
+from taxi_driver_env.render.widgets.screen import Screen
 
 WAIT_TIME = 5  # s
 

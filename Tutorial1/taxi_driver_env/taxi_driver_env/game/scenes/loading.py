@@ -3,9 +3,8 @@ from dataclasses import dataclass
 from functools import lru_cache
 
 import pyray as pr
-
 from taxi_driver_env.constants import WINDOW_HEIGHT
-from taxi_driver_env.entities import world
+from taxi_driver_env.game.entities import world
 
 
 @dataclass

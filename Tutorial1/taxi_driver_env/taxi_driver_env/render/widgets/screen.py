@@ -1,6 +1,6 @@
 import pyray as pr
+import taxi_driver_env.render.pyrayex as prx
 import taxi_driver_env.resources as res
-import taxi_driver_env.utils.pyrayex as prx
 
 
 class Screen:

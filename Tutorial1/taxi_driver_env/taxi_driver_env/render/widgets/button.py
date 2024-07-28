@@ -1,6 +1,6 @@
 import pyray as pr
 
-FONT_SIZE = 20
+FONT_SIZE = 20  # pixel
 FG_COLOR = pr.Color(38, 51, 59, 255)
 
 RED = pr.Color(252, 127, 104, 192)

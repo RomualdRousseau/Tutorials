@@ -1,8 +1,8 @@
 from typing import Optional
 
 import pyray as pr
-from taxi_driver_env.entities import car, world
-from taxi_driver_env.entities.marker import Marker
+from taxi_driver_env.game.entities import car, world
+from taxi_driver_env.game.entities.marker import Marker
 from taxi_driver_env.math import envelope
 from taxi_driver_env.math.geom import Point
 

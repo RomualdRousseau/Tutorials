@@ -17,5 +17,5 @@ ignore = [
     "RUF005",  # Collection literal concatenation
     "PLR0912", # Too many branches
     "PLR0913", # Too many arguments to function call
-    "C901",    # Fucntion is too complex
+    "C901",    # Function is too complex
 ]

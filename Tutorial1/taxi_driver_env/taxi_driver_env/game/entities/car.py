@@ -4,7 +4,7 @@ import numpy as np
 import pyray as pr
 import taxi_driver_env.resources as res
 from taxi_driver_env.constants import GAMEPAD_AXIS_X, GAMEPAD_AXIS_Y, GAMEPAD_ID
-from taxi_driver_env.entities import world
+from taxi_driver_env.game.entities import world
 from taxi_driver_env.math import envelope
 from taxi_driver_env.math.geom import (
     Point,
@@ -15,6 +15,8 @@ from taxi_driver_env.math.geom import (
     nearest_point_segment,
 )
 from taxi_driver_env.math.linalg import EPS, lst_2_vec, norm, normalize
+from taxi_driver_env.physic import euler
+from taxi_driver_env.physic.constants import C_G
 from taxi_driver_env.utils.bitbang import bit_set, bit_set_if, bit_unset, is_bit_set
 
 MAX_LIFE = 100
@@ -26,7 +28,6 @@ MAX_ENGINE_POWER = 200.0  # kN
 MAX_SPEED = 125.0  # km.h-1
 DRAG_ROAD = 0.9  # Concrete/Rubber
 DRAG_ROLLING = 0.01  # Concrete/Rubber
-C_G = 9.81  # m.s-2
 
 FLAG_DAMAGED = 0
 FLAG_OUT_OF_TRACK = 1
@@ -107,6 +108,7 @@ class Car:
 
         self.pos = start_pos + start_off
         self.vel = np.zeros(2, dtype=np.float64)
+        self.mass = MASS
         self.head = start_dir
 
         self.life = MAX_LIFE
@@ -198,14 +200,7 @@ class Car:
         drag_rr = self.vel * -DRAG_ROLLING * MASS * C_G
         forces += drag_rr
 
-        # Second Newton law
-
-        acc = forces / MASS
-
-        # Simple Euler integration
-
-        self.vel += acc * dt
-        self.pos += self.vel * dt
+        euler.integrate(self, forces, dt)
 
         # Collisions
 

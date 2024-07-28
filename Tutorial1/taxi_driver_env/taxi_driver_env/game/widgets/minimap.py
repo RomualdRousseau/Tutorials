@@ -1,9 +1,9 @@
 import pyray as pr
 import taxi_driver_env.resources as res
-from taxi_driver_env.cameras.camera_zoomer import CameraZoomer
 from taxi_driver_env.constants import WINDOW_HEIGHT, WINDOW_WIDTH
-from taxi_driver_env.entities import world
-from taxi_driver_env.entities.taxi_driver import TaxiDriver
+from taxi_driver_env.game.cameras.camera_zoomer import CameraZoomer
+from taxi_driver_env.game.entities import world
+from taxi_driver_env.game.entities.taxi_driver import TaxiDriver
 
 BORDER = 0.01 * WINDOW_WIDTH
 BOUND_WIDTH = 0.128 * WINDOW_WIDTH

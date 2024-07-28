@@ -8,17 +8,16 @@ from typing import Optional
 
 import numpy as np
 import pyray as pr
-
-import taxi_driver_env.utils.pyrayex as prx
-from taxi_driver_env.cameras.camera_follower import CameraFollower
-from taxi_driver_env.cameras.camera_free import CameraFree
-from taxi_driver_env.entities import car, world
-from taxi_driver_env.entities.explosion import Explosion
-from taxi_driver_env.entities.marker import Marker
+import taxi_driver_env.render.pyrayex as prx
+from taxi_driver_env.game.cameras.camera_follower import CameraFollower
+from taxi_driver_env.game.cameras.camera_free import CameraFree
+from taxi_driver_env.game.entities import car, world
+from taxi_driver_env.game.entities.explosion import Explosion
+from taxi_driver_env.game.entities.marker import Marker
 from taxi_driver_env.math import envelope
 from taxi_driver_env.math.geom import Point, distance
 from taxi_driver_env.math.linalg import lst_2_vec
-from taxi_driver_env.types import Entity
+from taxi_driver_env.physic.types import Entity
 from taxi_driver_env.utils.bitbang import is_bit_set
 
 CAR_BEST_COLOR = pr.Color(255, 255, 255, 255)

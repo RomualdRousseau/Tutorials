@@ -29,4 +29,10 @@ requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.coverage.run]
-omit = ["tests/*", "taxi_driver_env/utils/*", "taxi_driver_env/math/linalg.py"]
+omit = [
+    "tests/*",
+    "taxi_driver_env/utils/*",
+    "taxi_driver_env/render/*",
+    "taxi_driver_env/game/*",
+    "taxi_driver_env/math/linalg.py",
+]

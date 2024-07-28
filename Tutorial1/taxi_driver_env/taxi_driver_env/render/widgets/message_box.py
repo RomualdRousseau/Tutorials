@@ -3,8 +3,8 @@ from typing import Callable, Optional
 import pyray as pr
 import taxi_driver_env.resources as res
 from taxi_driver_env.constants import WINDOW_HEIGHT
-from taxi_driver_env.types import Widget
-from taxi_driver_env.widgets.button import Button
+from taxi_driver_env.render.types import Widget
+from taxi_driver_env.render.widgets.button import Button
 
 FONT_SIZE = 20  # pixel
 FONT_COLOR = pr.Color(216, 216, 216, 255)

@@ -1,5 +1,5 @@
-from taxi_driver_env.scenes import gameplay, loading, title, trainer
-from taxi_driver_env.types import Scene
+from taxi_driver_env.game.scenes import gameplay, loading, title, trainer
+from taxi_driver_env.render.types import Scene
 
 SCENES = {"title": title, "loading": loading, "gameplay": gameplay, "trainer": trainer}
 

@@ -3,7 +3,7 @@ import random
 import numpy as np
 import pyray as pr
 
-import taxi_driver_env.utils.pyrayex as prx
+import taxi_driver_env.render.pyrayex as prx
 from taxi_driver_env.constants import (
     APP_NAME,
     FRAME_RATE,
@@ -11,7 +11,7 @@ from taxi_driver_env.constants import (
     WINDOW_HEIGHT,
     WINDOW_WIDTH,
 )
-from taxi_driver_env.scenes import first_scene, next_scene
+from taxi_driver_env.game.scenes import first_scene, next_scene
 
 
 def main():
