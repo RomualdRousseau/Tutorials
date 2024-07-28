@@ -2,7 +2,7 @@ import numpy as np
 from taxi_driver_env.physic.types import Integrable
 
 
-def integrate(object: Integrable, forces: np.ndarray, dt: float):
+def euler_integrate(object: Integrable, forces: np.ndarray, dt: float):
     # Second Newton law
 
     acc = forces / object.mass

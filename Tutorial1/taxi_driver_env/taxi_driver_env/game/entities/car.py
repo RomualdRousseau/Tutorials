@@ -15,8 +15,8 @@ from taxi_driver_env.math.geom import (
     nearest_point_segment,
 )
 from taxi_driver_env.math.linalg import EPS, lst_2_vec, norm, normalize
-from taxi_driver_env.physic import euler
 from taxi_driver_env.physic.constants import C_G
+from taxi_driver_env.physic.engine import euler_integrate
 from taxi_driver_env.utils.bitbang import bit_set, bit_set_if, bit_unset, is_bit_set
 
 MAX_LIFE = 100
@@ -194,13 +194,13 @@ class Car:
         tract = self.head * self.throttle
         forces += tract
 
-        drag_rd = self.vel * -DRAG_ROAD * MASS * C_G
+        drag_rd = self.vel * -DRAG_ROAD * self.mass * C_G
         forces += drag_rd
 
-        drag_rr = self.vel * -DRAG_ROLLING * MASS * C_G
+        drag_rr = self.vel * -DRAG_ROLLING * self.mass * C_G
         forces += drag_rr
 
-        euler.integrate(self, forces, dt)
+        euler_integrate(self, forces, dt)
 
         # Collisions
 
