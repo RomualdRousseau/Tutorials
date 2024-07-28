@@ -11,4 +11,3 @@ def integrate(object: Integrable, forces: np.ndarray, dt: float):
 
     object.vel += acc * dt
     object.pos += object.vel * dt
-
