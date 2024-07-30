@@ -10,7 +10,7 @@ from taxi_driver_env.constants import (
     WINDOW_HEIGHT,
     WINDOW_WIDTH,
 )
-from taxi_driver_env.scenes import trainer
+from taxi_driver_env.game.scenes import trainer
 
 
 class Tutorial1Env(gym.Env):

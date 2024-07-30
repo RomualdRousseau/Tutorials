@@ -35,3 +35,7 @@ run-cli +args="--help":
 profile: pre-commit
     poetry run python -m cProfile -o taxi_driver_agent.prof -m taxi_driver_agent
     poetry run python -m snakeviz taxi_driver_agent.prof
+
+# Bump version
+version: pre-commit
+    poetry version patch
