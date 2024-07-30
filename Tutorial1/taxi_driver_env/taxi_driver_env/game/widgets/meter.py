@@ -1,4 +1,5 @@
 import pyray as pr
+import taxi_driver_env.render.pyrayex as prx
 import taxi_driver_env.resources as res
 from taxi_driver_env.constants import WINDOW_HEIGHT, WINDOW_WIDTH
 from taxi_driver_env.game.entities.taxi_driver import TaxiDriver
@@ -40,13 +41,7 @@ class Meter:
             0,
             pr.WHITE,
         )
-        pr.draw_text(
-            "$0000000",
-            int(BORDER + LCD_OFFX),
-            int(BORDER + LCD_OFFY),
-            int(FONT_SIZE),
-            pr.color_alpha(FONT_COLOR, 0.1),
-        )
-        pr.draw_text(
-            f"${self.player.money:-9}", int(BORDER + LCD_OFFX), int(BORDER + LCD_OFFY), int(FONT_SIZE), FONT_COLOR
-        )
+
+        pos = pr.Vector2(BORDER + LCD_OFFX, BORDER + LCD_OFFY)
+        prx.draw_text_mono("$000000", pos, int(FONT_SIZE), pr.color_alpha(FONT_COLOR, 0.1))
+        prx.draw_text_mono(f"${self.player.money:-6}", pos, int(FONT_SIZE), FONT_COLOR)

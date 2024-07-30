@@ -1,3 +1,5 @@
+from functools import lru_cache
+
 import pyray as pr
 from taxi_driver_env.constants import WINDOW_HEIGHT, WINDOW_WIDTH
 
@@ -7,6 +9,11 @@ SCREEN = pr.Rectangle(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT)
 def init_gamepad():
     for i in range(5):
         pr.trace_log(pr.TraceLogLevel.LOG_INFO, f"GAMEPAD: id: {i} - {pr.get_gamepad_name(i)}")
+
+
+@lru_cache
+def get_max_width_font(font_size: int):
+    return max(pr.measure_text("W", font_size), pr.measure_text("M", font_size))
 
 
 def draw_text(
@@ -21,14 +28,48 @@ def draw_text(
     if align == "left":
         x = int(pos.x)
     elif align == "right":
-        len = pr.measure_text(text, font_size)
-        x = int(WINDOW_WIDTH - 1 - len - pos.x)
+        n = pr.measure_text(text, font_size)
+        x = int(WINDOW_WIDTH - 1 - n - pos.x)
     else:
-        len = pr.measure_text(text, font_size)
-        x = int(WINDOW_WIDTH / 2 - len / 2 - pos.x)
+        n = pr.measure_text(text, font_size)
+        x = int(WINDOW_WIDTH / 2 - n / 2 - pos.x)
+
     if shadow:
-        pr.draw_text(text, x + 2, int(pos.y) + 2, font_size, pr.BLACK)  # type: ignore
+        pr.draw_text(text, x + 2, int(pos.y) + 2, font_size, pr.BLACK)
+
     pr.draw_text(text, x, int(pos.y), font_size, color)
+
+
+def draw_text_mono(
+    text: str,
+    pos: pr.Vector2,
+    font_size: int,
+    color: pr.Color,
+    align: str = "left",
+    shadow: bool = False,
+):
+    assert align in ["left", "right", "center"]
+    dx = get_max_width_font(font_size)
+    if align == "left":
+        x = int(pos.x)
+    elif align == "right":
+        n = len(text) * dx
+        x = int(WINDOW_WIDTH - 1 - n - pos.x)
+    else:
+        n = len(text) * dx
+        x = int(WINDOW_WIDTH / 2 - n / 2 - pos.x)
+        dx = int(font_size * 0.75)
+
+    if shadow:
+        x_ = x
+        for c in text:
+            pr.draw_text(c, x + 2, int(pos.y) + 2, font_size, pr.BLACK)
+            x += dx
+        x = x_
+
+    for c in text:
+        pr.draw_text(c, x, int(pos.y), font_size, color)
+        x += dx
 
 
 def draw_line(
