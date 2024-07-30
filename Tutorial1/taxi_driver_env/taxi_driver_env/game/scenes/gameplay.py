@@ -13,6 +13,7 @@ from taxi_driver_env.game.entities import car, world
 from taxi_driver_env.game.entities.explosion import Explosion
 from taxi_driver_env.game.entities.floating import Floating
 from taxi_driver_env.game.entities.taxi_driver import WAIT_TIMER, TaxiDriver
+from taxi_driver_env.game.widgets.meter import Meter
 from taxi_driver_env.game.widgets.minimap import Minimap
 from taxi_driver_env.physic.types import Entity
 from taxi_driver_env.render.effects.fade_scr import FadeScr
@@ -35,9 +36,10 @@ class Context:
     minimap: Minimap
     entities: list[Entity]
     floatings: list[Entity]
+    widgets: list[Widget]
     fade_in: FadeScr
     message_box: Optional[OpenVertical]
-    minimap_visible: bool = True
+    widgets_visible: bool = True
 
 
 @lru_cache(1)
@@ -45,9 +47,12 @@ def get_singleton(name: str = "default"):
     player = TaxiDriver("human")
     camera = CameraFollower(player.car)
     minimap = Minimap(player)
+    meter = Meter(player)
     fade_in = FadeScr(1)
     entities: list[Entity] = [world, player]
-    return Context(0, player, camera, minimap, entities, [], fade_in, None)
+    floatings: list[Entity] = []
+    widgets: list[Widget] = [minimap, meter]
+    return Context(0, player, camera, minimap, entities, floatings, widgets, fade_in, None)
 
 
 def reset() -> None:
@@ -56,8 +61,11 @@ def reset() -> None:
     ctx.state = 0
     for x in ctx.entities:
         x.reset()
+    for x in ctx.floatings:
+        x.reset()
+    for x in ctx.widgets:
+        x.reset()
     ctx.camera.reset()
-    ctx.minimap.reset()
     ctx.fade_in.reset()
 
 
@@ -75,7 +83,7 @@ def update(dt: float) -> str:  # noqa: PLR0915
             if pr.is_key_pressed(pr.KeyboardKey.KEY_F1):
                 ctx.player.car.set_debug_mode(not ctx.player.car.debug_mode)
             if pr.is_key_pressed(pr.KeyboardKey.KEY_F2):
-                ctx.minimap_visible = not ctx.minimap_visible
+                ctx.widgets_visible = not ctx.widgets_visible
             if pr.is_key_pressed(pr.KeyboardKey.KEY_A):
                 ctx.player.accept_call(
                     world.get_singleton().borders.get_random_location(),
@@ -151,11 +159,13 @@ def update(dt: float) -> str:  # noqa: PLR0915
         floating.update(dt)
     ctx.floatings = [floating for floating in ctx.floatings if floating.is_alive()]
 
-    ctx.minimap.update(dt)
-    ctx.camera.update(dt)
+    for widget in ctx.widgets:
+        widget.update(dt)
 
     if ctx.message_box is not None:
         ctx.message_box.update(dt)
+
+    ctx.camera.update(dt)
 
     if (
         is_bit_set(ctx.player.car.flags, car.FLAG_DAMAGED)
@@ -191,8 +201,9 @@ def draw() -> None:
     for floating in ctx.floatings:
         floating.draw()
 
-    if ctx.minimap_visible:
-        ctx.minimap.draw()
+    if ctx.widgets_visible:
+        for widget in ctx.widgets:
+            widget.draw()
 
     if ctx.message_box is not None:
         ctx.message_box.draw()
@@ -202,8 +213,6 @@ def draw() -> None:
         prx.draw_text(f"Speed: {ctx.player.car.get_speed_in_kmh():.1f}km/h", pr.Vector2(2, 24), 20, pr.WHITE, shadow=True)  # type: ignore
         prx.draw_text(f"Time Elapsed: {datetime.timedelta(seconds=pr.get_time())}", pr.Vector2(2, 46), 20, pr.WHITE, shadow=True)  # type: ignore
         prx.draw_text(f"{pr.get_fps()}fps", pr.Vector2(2, 2), 20, pr.WHITE, align="right", shadow=True)  # type: ignore
-
-    prx.draw_text(f"${ctx.player.money}", pr.Vector2(2, 2), 20, pr.WHITE, align="left", shadow=True)  # type: ignore
 
     if ctx.state == 0:
         ctx.fade_in.draw()
