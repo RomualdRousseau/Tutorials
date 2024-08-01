@@ -143,6 +143,7 @@ def update(dt: float) -> str:  # noqa: PLR0915
                 ctx.message_box.widget.button_ok.click()  # type: ignore
 
         case 3:
+            print(ctx.player.state)
             if ctx.player.state == TaxiDriver.STATE_DROPOFF_WAIT:
                 ctx.floatings.append(Floating(ctx.player.car.curr_pos, ctx.camera.camera, "+$5"))
                 ctx.player.money += 5

@@ -8,8 +8,8 @@ BORDER = 0.01 * WINDOW_WIDTH
 BOUND_WIDTH = 0.128 * WINDOW_WIDTH
 BOUND_HEIGHT = 0.088 * WINDOW_HEIGHT
 LCD_OFFX = 0.018 * WINDOW_WIDTH
-LCD_OFFY = 0.045 * WINDOW_HEIGHT
-FONT_SIZE = 0.020 * WINDOW_WIDTH
+LCD_OFFY = 0.040 * WINDOW_HEIGHT
+FONT_SIZE = 0.025 * WINDOW_WIDTH
 FONT_COLOR = pr.Color(51, 51, 49, 255)
 
 
@@ -43,5 +43,6 @@ class Meter:
         )
 
         pos = pr.Vector2(BORDER + LCD_OFFX, BORDER + LCD_OFFY)
-        prx.draw_text_mono("$000000", pos, int(FONT_SIZE), pr.color_alpha(FONT_COLOR, 0.1))
-        prx.draw_text_mono(f"${self.player.money:-6}", pos, int(FONT_SIZE), FONT_COLOR)
+        font = res.load_font("mono", int(FONT_SIZE))
+        prx.draw_text("$000000", pos, int(FONT_SIZE), pr.color_alpha(FONT_COLOR, 0.1), font=font)
+        prx.draw_text(f"${self.player.money:-6}", pos, int(FONT_SIZE), FONT_COLOR, font=font)

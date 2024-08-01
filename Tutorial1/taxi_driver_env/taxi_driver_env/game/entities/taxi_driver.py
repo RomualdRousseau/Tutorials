@@ -8,7 +8,7 @@ from taxi_driver_env.math.geom import Point
 
 CAR_COLOR = pr.Color(255, 255, 255, 255)
 CORRIDOR_COLOR = pr.Color(255, 255, 0, 64)
-WAIT_TIMER = 2  # s
+WAIT_TIMER = 3600  # s
 
 
 class TaxiDriver:

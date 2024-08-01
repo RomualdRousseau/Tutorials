@@ -1,19 +1,15 @@
-from functools import lru_cache
+from typing import Optional
 
 import pyray as pr
 from taxi_driver_env.constants import WINDOW_HEIGHT, WINDOW_WIDTH
 
 SCREEN = pr.Rectangle(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT)
+DEFAULT_FONT_HEIGHT = 10
 
 
 def init_gamepad():
     for i in range(5):
         pr.trace_log(pr.TraceLogLevel.LOG_INFO, f"GAMEPAD: id: {i} - {pr.get_gamepad_name(i)}")
-
-
-@lru_cache
-def get_max_width_font(font_size: int):
-    return max(pr.measure_text("W", font_size), pr.measure_text("M", font_size))
 
 
 def draw_text(
@@ -23,53 +19,25 @@ def draw_text(
     color: pr.Color,
     align: str = "left",
     shadow: bool = False,
+    font: Optional[pr.Font] = None,
 ):
+    font = font or pr.get_font_default()
+    spacing = max(font_size / DEFAULT_FONT_HEIGHT, 1)
+
     assert align in ["left", "right", "center"]
     if align == "left":
-        x = int(pos.x)
+        x = pos.x
     elif align == "right":
         n = pr.measure_text(text, font_size)
-        x = int(WINDOW_WIDTH - 1 - n - pos.x)
+        x = WINDOW_WIDTH - 1 - n - pos.x
     else:
         n = pr.measure_text(text, font_size)
-        x = int(WINDOW_WIDTH / 2 - n / 2 - pos.x)
+        x = WINDOW_WIDTH / 2 - n / 2 - pos.x
 
     if shadow:
-        pr.draw_text(text, x + 2, int(pos.y) + 2, font_size, pr.BLACK)
+        pr.draw_text_ex(font, text, pr.Vector2(x + 2, pos.y + 2), font_size, spacing, pr.BLACK)
 
-    pr.draw_text(text, x, int(pos.y), font_size, color)
-
-
-def draw_text_mono(
-    text: str,
-    pos: pr.Vector2,
-    font_size: int,
-    color: pr.Color,
-    align: str = "left",
-    shadow: bool = False,
-):
-    assert align in ["left", "right", "center"]
-    dx = get_max_width_font(font_size)
-    if align == "left":
-        x = int(pos.x)
-    elif align == "right":
-        n = len(text) * dx
-        x = int(WINDOW_WIDTH - 1 - n - pos.x)
-    else:
-        n = len(text) * dx
-        x = int(WINDOW_WIDTH / 2 - n / 2 - pos.x)
-        dx = int(font_size * 0.75)
-
-    if shadow:
-        x_ = x
-        for c in text:
-            pr.draw_text(c, x + 2, int(pos.y) + 2, font_size, pr.BLACK)
-            x += dx
-        x = x_
-
-    for c in text:
-        pr.draw_text(c, x, int(pos.y), font_size, color)
-        x += dx
+    pr.draw_text_ex(font, text, pr.Vector2(x, pos.y), font_size, spacing, color)
 
 
 def draw_line(
