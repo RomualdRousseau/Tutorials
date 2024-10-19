@@ -2,6 +2,7 @@ from dataclasses import dataclass
 from functools import lru_cache
 
 import pyray as pr
+
 import taxi_driver_env.resources as res
 from taxi_driver_env.render.effects.fade_inout import FadeInOut
 from taxi_driver_env.render.widgets.screen import Screen

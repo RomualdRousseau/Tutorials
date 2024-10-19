@@ -2,6 +2,7 @@ from typing import Optional
 
 import numpy as np
 import pyray as pr
+
 import taxi_driver_env.resources as res
 from taxi_driver_env.constants import GAMEPAD_AXIS_X, GAMEPAD_AXIS_Y, GAMEPAD_ID
 from taxi_driver_env.game.entities import world

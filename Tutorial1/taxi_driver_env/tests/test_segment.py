@@ -1,4 +1,5 @@
 import numpy as np
+
 from taxi_driver_env.math.geom import (
     Point,
     Segment,

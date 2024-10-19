@@ -4,6 +4,7 @@ from typing import Optional, Protocol
 
 import numpy as np
 import pyray as pr
+
 import taxi_driver_env.resources as res
 from taxi_driver_env.math.envelope import Location
 from taxi_driver_env.math.geom import Point, point_in_polygon

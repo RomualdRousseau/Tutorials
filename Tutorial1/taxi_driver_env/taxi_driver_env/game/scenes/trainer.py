@@ -8,6 +8,7 @@ from typing import Optional
 
 import numpy as np
 import pyray as pr
+
 import taxi_driver_env.render.pyrayex as prx
 from taxi_driver_env.game.cameras.camera_follower import CameraFollower
 from taxi_driver_env.game.cameras.camera_free import CameraFree

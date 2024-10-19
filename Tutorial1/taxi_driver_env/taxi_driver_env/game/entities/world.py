@@ -6,6 +6,7 @@ from functools import lru_cache
 
 import numpy as np
 import pyray as pr
+
 import taxi_driver_env.resources as res
 from taxi_driver_env.math import envelope, graph
 from taxi_driver_env.math.geom import (

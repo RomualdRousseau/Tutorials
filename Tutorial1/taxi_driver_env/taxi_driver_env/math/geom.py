@@ -6,6 +6,7 @@ from typing import Any, Iterable, Optional
 import numpy as np
 import numpy.typing as npt
 import pyray as pr
+
 import taxi_driver_env.math.linalg as la
 import taxi_driver_env.render.pyrayex as prx
 from taxi_driver_env.constants import VIRTUAL_CELL, VIRTUAL_WIDTH

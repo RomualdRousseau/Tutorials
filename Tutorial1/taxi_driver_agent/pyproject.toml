@@ -1,9 +1,10 @@
 [tool.poetry]
 name = "taxi_driver_agent"
 version = "0.1.0"
-description = ""
+description = "Taxi Driver Agent"
 authors = ["Romuald Rousseau <romualdrousseau@gmail.com>"]
 readme = "README.md"
+packages = [{ include = "taxi_driver_agent" }]
 
 [tool.poetry.dependencies]
 python = "^3.11"
@@ -25,6 +26,29 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.black]
 line-length = 120
+
+[tool.ruff]
+select = [
+    "E",   # pycodestyle errors
+    "W",   # pycodestyle warnings
+    "F",   # pyflakes
+    "I",   # isort
+    "C",   # flake8-comprehensions
+    "B",   # flake8-bugbear
+    "N",   # pep8-naming
+    #"D",  # pydocstyle
+    "PD",  # pandas-vet
+    "PL",  # Pylint
+    "RUF", # Ruff-specific rules
+]
+ignore = [
+    "E501",    # Line too long, handled by black
+    "E731",    # Accept lambda
+    "RUF005",  # Collection literal concatenation
+    "PLR0912", # Too many branches
+    "PLR0913", # Too many arguments to function call
+    "C901",    # Function is too complex
+]
 
 [tool.coverage.run]
 omit = ["tests/*"]

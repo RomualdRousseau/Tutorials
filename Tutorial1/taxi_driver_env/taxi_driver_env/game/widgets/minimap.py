@@ -1,4 +1,5 @@
 import pyray as pr
+
 import taxi_driver_env.resources as res
 from taxi_driver_env.constants import WINDOW_HEIGHT, WINDOW_WIDTH
 from taxi_driver_env.game.cameras.camera_zoomer import CameraZoomer

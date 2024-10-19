@@ -9,7 +9,7 @@ help:
 
 # Install all tutorial dependencies
 install:
-    poetry install
+    poetry install --no-root
 
 # Update all tutorial dependencies
 update:

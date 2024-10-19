@@ -1,6 +1,7 @@
 from typing import Optional
 
 import pyray as pr
+
 from taxi_driver_env.constants import WINDOW_HEIGHT, WINDOW_WIDTH
 
 SCREEN = pr.Rectangle(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT)

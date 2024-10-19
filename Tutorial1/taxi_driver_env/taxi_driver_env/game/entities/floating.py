@@ -1,4 +1,5 @@
 import pyray as pr
+
 from taxi_driver_env.math.geom import Point
 from taxi_driver_env.math.linalg import lst_2_vec
 

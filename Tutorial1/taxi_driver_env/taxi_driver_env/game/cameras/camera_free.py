@@ -1,4 +1,5 @@
 import pyray as pr
+
 from taxi_driver_env.constants import WINDOW_HEIGHT, WINDOW_WIDTH
 from taxi_driver_env.math.geom import Point
 

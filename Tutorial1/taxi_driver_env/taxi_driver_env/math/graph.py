@@ -8,6 +8,7 @@ from typing import Iterable
 
 import numpy as np
 import pyray as pr
+
 from taxi_driver_env.constants import VIRTUAL_WIDTH
 from taxi_driver_env.math.geom import (
     Point,

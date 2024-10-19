@@ -4,6 +4,8 @@ from functools import lru_cache, reduce
 from typing import Any, Callable, Iterable
 
 import numpy as np
+from tqdm import tqdm, trange
+
 from taxi_driver_env.constants import VIRTUAL_WIDTH
 from taxi_driver_env.math import graph
 from taxi_driver_env.math.geom import (
@@ -17,7 +19,6 @@ from taxi_driver_env.math.geom import (
     polygon_to_segments,
 )
 from taxi_driver_env.math.linalg import lst_2_vec, normalize
-from tqdm import tqdm, trange
 
 Location = tuple[Segment, Point]
 ProgressCallBack = Callable[[float], None]

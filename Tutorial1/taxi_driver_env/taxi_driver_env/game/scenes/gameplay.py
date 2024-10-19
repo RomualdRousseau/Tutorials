@@ -6,6 +6,7 @@ from functools import lru_cache
 from typing import Optional
 
 import pyray as pr
+
 import taxi_driver_env.render.pyrayex as prx
 import taxi_driver_env.resources as res
 from taxi_driver_env.game.cameras.camera_follower import CameraFollower

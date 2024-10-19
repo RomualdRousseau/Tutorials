@@ -1,6 +1,7 @@
 from typing import Callable, Optional
 
 import pyray as pr
+
 import taxi_driver_env.resources as res
 from taxi_driver_env.constants import WINDOW_HEIGHT
 from taxi_driver_env.render.types import Widget
